@@ -1,0 +1,45 @@
+{
+    "name": "PenActions",
+    "maps": [
+        {
+            "name": "SPen",
+            "id": "f98895d4-21d7-44a0-8388-8437052e5bad",
+            "actions": [
+                {
+                    "name": "Draw",
+                    "type": "Value",
+                    "id": "b0208414-0956-497b-8acd-4bef7bb4ca4c",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "d6f5dd76-7b57-4a89-9550-5e4159300381",
+                    "path": "<Pen>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Draw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d385adb9-7fb1-4fd0-a2ec-e1707f52d900",
+                    "path": "<Touchscreen>/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Draw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
