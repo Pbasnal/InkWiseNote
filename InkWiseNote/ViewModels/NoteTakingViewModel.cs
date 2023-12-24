@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using InkWiseNote.Common;
+using InkWiseNote.Commons;
 using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
@@ -12,9 +12,9 @@ namespace InkWiseNote.ViewModels;
 public partial class NoteTakingViewModel : ObservableObject
 {
     [ObservableProperty]
-    private HandwrittenNote handwrittenNote;
+    private HandwrittenNoteCard handwrittenNote;
 
-    public void SetNote(HandwrittenNote note)
+    public void SetNote(HandwrittenNoteCard note)
     {
         HandwrittenNote = note;
     }
@@ -23,7 +23,7 @@ public partial class NoteTakingViewModel : ObservableObject
     {
         var noteNameEntry = new Entry
         {
-            Placeholder = "Untitled",
+            Placeholder = Constants.UNTITLED_NOTE_TITLE,
             FontSize = 20
         };
         noteNameEntry.SetBinding(Entry.TextProperty, nameof(HandwrittenNote.Title));

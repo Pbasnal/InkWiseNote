@@ -1,4 +1,6 @@
-﻿namespace Systems.SaveLoadSystem;
+﻿using InkWiseNote.Commons;
+
+namespace Systems.SaveLoadSystem;
 
 public class LoadSystem
 {

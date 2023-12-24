@@ -5,13 +5,12 @@ using UtilsLibrary;
 
 namespace InkWiseNote.Pages;
 
-[QueryProperty("HandwrittenNote", "HandwrittenNote")]
+[QueryProperty("HandwrittenNoteCard", "HandwrittenNoteCard")]
 public class NoteTakingPage : ContentPage
 {
     NoteTakingViewModel viewModel;
 
-
-    public HandwrittenNote HandwrittenNote
+    public HandwrittenNoteCard HandwrittenNoteCard
     {
         set { viewModel.SetNote(value); }
     }

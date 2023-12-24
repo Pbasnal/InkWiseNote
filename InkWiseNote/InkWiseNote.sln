@@ -7,7 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InkWiseNote", "InkWiseNote.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Systems", "..\Systems\Systems.csproj", "{FD54520D-D7A8-48DD-A917-0B624C761821}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UtilsLibrary", "..\UtilsLibrary\UtilsLibrary.csproj", "{24F4DA94-AACA-4AE4-94E8-D01AE40F08E5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UtilsLibrary", "..\UtilsLibrary\UtilsLibrary.csproj", "{24F4DA94-AACA-4AE4-94E8-D01AE40F08E5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commons", "..\Commons\Commons.csproj", "{9DFD890D-CF36-4AE2-87B7-17AAB7A867AB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +31,10 @@ Global
 		{24F4DA94-AACA-4AE4-94E8-D01AE40F08E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{24F4DA94-AACA-4AE4-94E8-D01AE40F08E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{24F4DA94-AACA-4AE4-94E8-D01AE40F08E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9DFD890D-CF36-4AE2-87B7-17AAB7A867AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9DFD890D-CF36-4AE2-87B7-17AAB7A867AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9DFD890D-CF36-4AE2-87B7-17AAB7A867AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9DFD890D-CF36-4AE2-87B7-17AAB7A867AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

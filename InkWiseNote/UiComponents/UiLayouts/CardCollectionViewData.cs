@@ -12,7 +12,7 @@ public partial class CardCollectionViewData : ObservableObject
 
 
     [ObservableProperty]
-    public ObservableCollection<HandwrittenNote> items;
+    public ObservableCollection<HandwrittenNoteCard> items;
 
     [ObservableProperty]
     public int numberOfNotesPerRow;
@@ -26,7 +26,7 @@ public partial class CardCollectionViewData : ObservableObject
         this.parent = parent;
         this.WidthOfNote = widthOfNote;
         this.NumberOfNotesPerRow = numberOfNotesPerRow; ;
-        this.items = new ObservableCollection<HandwrittenNote>();
+        this.items = new ObservableCollection<HandwrittenNoteCard>();
     }
 
     public void SetBindingContextOf(BindableObject bindableObject)

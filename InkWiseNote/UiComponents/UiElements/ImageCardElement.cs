@@ -87,7 +87,7 @@ internal class ImageCardElement : IUiElement
 
     public async Task OnElementTap(View view, TappedEventArgs e)
     {
-        HandwrittenNote? handwrittenNote = view.BindingContext as HandwrittenNote;
+        HandwrittenNoteCard? handwrittenNote = view.BindingContext as HandwrittenNoteCard;
         if (Objects.IsNull(handwrittenNote)) return;
 
         await handwrittenNote.OnNoteTap(handwrittenNote);

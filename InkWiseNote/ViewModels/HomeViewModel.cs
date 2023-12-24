@@ -2,7 +2,7 @@
 
 using InkWiseNote.Pages;
 using InkWiseNote.PageUtils;
-using InkWiseNote.Common;
+using InkWiseNote.Commons;
 using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
@@ -15,21 +15,11 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private CardCollectionViewData cardCollectionViewData;
 
-    private readonly int widthOfNote = 200;
-    private int numberOfNotesPerRow = 2;
-
     public HomeViewModel()
     {
         CardCollectionViewData = new CardCollectionViewData(this,
-            widthOfNote,
-            numberOfNotesPerRow);
-
-        CardCollectionViewData.Items.Add(new HandwrittenNote
-        {
-            Title = "New Note",
-            ImageName = "new_note.png",
-        });
-
+            Configs.WIDTH_OF_NOTE,
+            Configs.NUMBER_OF_NOTES_PER_ROW);
     }
 
     internal View GetContent()
@@ -42,43 +32,20 @@ public partial class HomeViewModel : ObservableObject
     {
         CardCollectionViewData.Items.Clear();
 
-        CardCollectionViewData.Items.Add(NewNoteCard());
+        CardCollectionViewData.Items.Add(HandwrittenNoteCardFactory.NewNoteCard(OnTappingNote));
 
         LoadSystem.ListFilesFromDirectory(rootDirectory)
-            .Select(HandWrittenNoteBuilder)
+            .Select(NotesFileSystem.FileNameToNoteTitle)
+            .Select(noteTitle => HandwrittenNoteCardFactory.NoteCard(noteTitle, OnTappingNote))
             .ToList()
             .ForEach(CardCollectionViewData.Items.Add);
     }
 
 
-    private static HandwrittenNote HandWrittenNoteBuilder(string noteFilePath)
+    private static async Task OnTappingNote(HandwrittenNoteCard handwrittenNote)
     {
-        return new HandwrittenNote
-        {
-            Title = noteFilePath.Split(Constants.PATH_FOLDER_SEPARATOR).Last().Split('.').First(),
-            OnNoteTap = OnTappingNote
-        };
-    }
-
-    private static HandwrittenNote NewNoteCard()
-    {
-        return new HandwrittenNote
-        {
-            Title = "",
-            ImageName = "new_note.png",
-            OnNoteTap = OnTappingNote,
-        };
-    }
-
-    private static async Task OnTappingNote(HandwrittenNote handwrittenNote)
-    {
-        //if (!File.Exists(handwrittenNote.Path))
-        //{
-        //    var file = File.Create(handwrittenNote.Path);
-        //    file.Close();
-        //}
         await NavigatePage.To<NoteTakingPage>()
-                    .WithParameter("HandwrittenNote", handwrittenNote)
+                    .WithParameter("HandwrittenNoteCard", handwrittenNote)
                     .Navigate();
     }
 }

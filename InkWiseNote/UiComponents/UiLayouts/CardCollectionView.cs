@@ -6,7 +6,7 @@ internal class CardCollectionView
 {
     public View GetCardCollectionView(CardCollectionViewData cardCollectionViewData, IUiElement cardTemplate)
     {
-        var notePageCollection = BuildCollectionView(cardCollectionViewData);
+        var notePageCollection = BuildCollectionView(nameof(cardCollectionViewData.NumberOfNotesPerRow));
 
         AddItemsToCollection(notePageCollection, 
             nameof(cardCollectionViewData.Items),
@@ -17,6 +17,18 @@ internal class CardCollectionView
 
         cardCollectionViewData.SetBindingContextOf(notePageCollection);
         return notePageCollection;
+
+    }
+
+    private CollectionView BuildCollectionView(string propertyName)
+    {
+        var gridItemsLayout = new GridItemsLayout(ItemsLayoutOrientation.Vertical);
+        gridItemsLayout.SetBinding(GridItemsLayout.SpanProperty, propertyName);
+
+        return new CollectionView
+        {
+            ItemsLayout = gridItemsLayout
+        };
 
     }
 
@@ -55,15 +67,5 @@ internal class CardCollectionView
     }
 
 
-    private CollectionView BuildCollectionView(CardCollectionViewData cardCollectionViewData)
-    {
-        var gridItemsLayout = new GridItemsLayout(ItemsLayoutOrientation.Vertical);
-        gridItemsLayout.SetBinding(GridItemsLayout.SpanProperty, nameof(cardCollectionViewData.NumberOfNotesPerRow));
 
-        return new CollectionView
-        {
-            ItemsLayout = gridItemsLayout
-        };
-
-    }
 }
