@@ -1,16 +1,14 @@
-﻿using UtilsLibrary;
-
-namespace InkWiseNote.UiComponents.UiLayouts;
+﻿namespace InkWiseNote.UiComponents.UiLayouts;
 
 internal class CardCollectionView
 {
-    public View GetCardCollectionView(CardCollectionViewData cardCollectionViewData, IUiElement cardTemplate)
+    public View GetCardCollectionView(CardCollectionViewData cardCollectionViewData, Func<IUiElement> cardElementFactory)
     {
         var notePageCollection = BuildCollectionView(nameof(cardCollectionViewData.NumberOfNotesPerRow));
 
         AddItemsToCollection(notePageCollection, 
             nameof(cardCollectionViewData.Items),
-            () => CreateCardElement(cardTemplate));
+            cardElementFactory);
 
         notePageCollection.SizeChanged += (object sender, EventArgs e) =>
             Resize(cardCollectionViewData, notePageCollection.Width);
@@ -38,22 +36,6 @@ internal class CardCollectionView
     {
         notePageCollection.SetBinding(ItemsView.ItemsSourceProperty, propertyName);
         notePageCollection.ItemTemplate = new DataTemplate(() => elementFactory().UiView);
-    }
-
-    private IUiElement CreateCardElement(IUiElement cardTemplate)
-    {
-        IUiElement cardElement = cardTemplate.InstantiateElement();
-        var tapGestureRecognizer = new TapGestureRecognizer();
-        tapGestureRecognizer.Tapped += async (s, e) =>
-        {
-            var handwrittenNoteGrid = s as View;
-            if (Objects.IsNull(handwrittenNoteGrid)) return;
-
-            await cardElement.OnElementTap(handwrittenNoteGrid, e);
-        };
-        cardElement.UiView.GestureRecognizers.Add(tapGestureRecognizer);
-
-        return cardElement;
     }
 
     private void Resize(CardCollectionViewData cardCollectionViewData, double width)

@@ -7,6 +7,7 @@ using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
 using Systems.SaveLoadSystem;
+using UtilsLibrary;
 
 namespace InkWiseNote.ViewModels;
 
@@ -25,27 +26,36 @@ public partial class HomeViewModel : ObservableObject
     internal View GetContent()
     {
         CardCollectionView cardCollectionView = new CardCollectionView();
-        return cardCollectionView.GetCardCollectionView(CardCollectionViewData, new ImageCardElement());
+        var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(CardCollectionViewData, CreateImageCardView);
+        CardCollectionViewData.SetBindingContextOf(cardCollectionViewForNotes);
+        
+        return cardCollectionViewForNotes;
     }
 
-    internal void LoadNotesFrom(string rootDirectory)
+    // this method will get called for each data element that gets created by
+    // LoadImageCardData() function
+    private IUiElement CreateImageCardView()
+    {
+        return new ImageCardElement();
+    }
+
+    internal void LoadImageCardData(string rootDirectory)
     {
         CardCollectionViewData.Items.Clear();
 
-        CardCollectionViewData.Items.Add(HandwrittenNoteCardFactory.NewNoteCard(OnTappingNote));
+        CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNote));
 
         LoadSystem.ListFilesFromDirectory(rootDirectory)
             .Select(NotesFileSystem.FileNameToNoteTitle)
-            .Select(noteTitle => HandwrittenNoteCardFactory.NoteCard(noteTitle, OnTappingNote))
+            .Select(noteTitle => NoteCardFactory.NoteCard(noteTitle, OnTappingNote))
             .ToList()
             .ForEach(CardCollectionViewData.Items.Add);
     }
 
-
-    private static async Task OnTappingNote(HandwrittenNoteCard handwrittenNote)
+    private static async Task OnTappingNote(IHaveImageCardData handwrittenNote)
     {
         await NavigatePage.To<NoteTakingPage>()
-                    .WithParameter("HandwrittenNoteCard", handwrittenNote)
+                    .WithParameter("HandwrittenNoteCard", (object)handwrittenNote)
                     .Navigate();
     }
 }

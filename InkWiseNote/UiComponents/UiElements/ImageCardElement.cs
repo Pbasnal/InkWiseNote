@@ -1,5 +1,5 @@
-﻿using InkWiseNote.Pages;
-using InkWiseNote.PageUtils;
+﻿using CommunityToolkit.Maui.Markup;
+
 using InkWiseNote.UiComponents.UiLayouts;
 
 using Microsoft.Maui.Controls.Shapes;
@@ -10,25 +10,24 @@ namespace InkWiseNote.UiComponents.UiElements;
 
 internal class ImageCardElement : IUiElement
 {
-    public View UiView => border;
+    public View UiView { get; private set; }
 
-    private Grid gridView;
-    private Border border;
 
     public ImageCardElement()
     {
-        gridView = new Grid();
+        //gridView = new Grid();
 
-        gridView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(200) });
-        gridView.RowDefinitions.Add(new RowDefinition { Height = new GridLength(50) });
-        gridView.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-        gridView.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+        Grid gridView = GridLayoutBuilder.NewGrid()
+            .HasRows(200, 50, GridLength.Auto)
+            .HasColumns(GridLength.Star)
+            //.HorizontalOptions = LayoutOptions.Fill;
+            .HasChildren(GetCardImage().Row(0).Column(0))
+            .HasChildren(GetCardTitleLabel().Row(1).Column(0));
 
         gridView.HorizontalOptions = LayoutOptions.Fill;
         //gridView.BackgroundColor = Colors.AliceBlue;
 
-        border = new Border
+        UiView = new Border
         {
             Content = gridView,
             StrokeShape = new RoundRectangle
@@ -39,22 +38,19 @@ internal class ImageCardElement : IUiElement
             BackgroundColor = Colors.Grey,
             HorizontalOptions = LayoutOptions.Fill,
         };
+
+
+        var tapGestureRecognizer = new TapGestureRecognizer();
+        tapGestureRecognizer.Tapped += OnElementTap;
+
+        UiView.GestureRecognizers.Add(tapGestureRecognizer);
     }
 
-    public static ImageCardElement GetImageCard()
-    {
-        var imageCard = new ImageCardElement();
-
-        imageCard.gridView.Add(GetCardImage(), column: 0, row: 0);
-        imageCard.gridView.Add(GetCardTitleLabel(), column: 0, row: 1);
-
-        return imageCard;
-    }
 
     private static View GetCardImage()
     {
         Image image = new();
-        image.SetBinding(Image.SourceProperty, nameof(IHaveImageWithTitle.ImageName));
+        image.SetBinding(Image.SourceProperty, nameof(IHaveImageCardData.ImageName));
 
         return image;
     }
@@ -70,27 +66,19 @@ internal class ImageCardElement : IUiElement
             VerticalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.Fill
         };
-        titleLabel.SetBinding(Label.TextProperty, nameof(IHaveImageWithTitle.Title));
+        titleLabel.SetBinding(Label.TextProperty, nameof(IHaveImageCardData.Title));
 
         return titleLabel;
     }
 
-    public IUiElement InstantiateElement()
+    public async void OnElementTap(Object? sender, TappedEventArgs e)
     {
-        var imageCard = new ImageCardElement();
+        var view = sender as View;
+        if (Objects.IsNull(view)) return;
 
-        imageCard.gridView.Add(GetCardImage(), column: 0, row: 0);
-        imageCard.gridView.Add(GetCardTitleLabel(), column: 0, row: 1);
+        IHaveImageCardData? imageCardData = view.BindingContext as IHaveImageCardData;
+        if (Objects.IsNull(imageCardData)) return;
 
-        return imageCard;
-    }
-
-    public async Task OnElementTap(View view, TappedEventArgs e)
-    {
-        HandwrittenNoteCard? handwrittenNote = view.BindingContext as HandwrittenNoteCard;
-        if (Objects.IsNull(handwrittenNote)) return;
-
-        await handwrittenNote.OnNoteTap(handwrittenNote);
-        
+        await imageCardData.OnNoteTap(imageCardData);
     }
 }

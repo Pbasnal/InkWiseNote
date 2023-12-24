@@ -57,6 +57,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Resources\Images\default_note.svg" />
 	  <None Remove="Resources\Images\new_note.svg" />
 	</ItemGroup>
 

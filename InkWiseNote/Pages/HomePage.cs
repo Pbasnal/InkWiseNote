@@ -22,7 +22,7 @@ public class HomePage : ContentPage
             .HandleIfThrows(HandleContentCreationException)
             .GetResult;
 
-        viewModel.LoadNotesFrom(Configs.ROOT_DIRECTORY);
+        viewModel.LoadImageCardData(Configs.ROOT_DIRECTORY);
     }
 
     private void HandleContentCreationException(Exception exception)
