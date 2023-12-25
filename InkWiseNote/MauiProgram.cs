@@ -8,6 +8,8 @@ using InkWiseNote.ViewModels;
 
 using Microsoft.Extensions.Logging;
 
+using Systems.BackgroundJob;
+
 namespace InkWiseNote
 {
     public static class MauiProgram
@@ -34,6 +36,7 @@ namespace InkWiseNote
             // Register view models
             builder.Services.AddSingleton<HomeViewModel>();
             builder.Services.AddSingleton<NoteTakingViewModel>();
+            builder.Services.AddSingleton<JobSystem>();
 
 #if DEBUG
             builder.Logging.AddDebug();
