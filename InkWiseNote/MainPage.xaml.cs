@@ -6,7 +6,7 @@ namespace InkWiseNote
     public partial class MainPage : ContentPage
     {
         int count = 0;
-
+        
         public MainPage()
         {
             InitializeComponent();
@@ -15,6 +15,18 @@ namespace InkWiseNote
         protected async override void OnAppearing()
         {
             base.OnAppearing();
+
+            PermissionStatus storageReadStatus = PermissionStatus.Unknown;
+            while (storageReadStatus != PermissionStatus.Granted)
+            {
+                storageReadStatus = await Permissions.RequestAsync<Permissions.StorageRead>();
+            }
+
+            PermissionStatus storageWriteStatus = PermissionStatus.Unknown;
+            while (storageWriteStatus != PermissionStatus.Granted)
+            {
+                storageWriteStatus = await Permissions.RequestAsync<Permissions.StorageWrite>();
+            }
 
             await NavigatePage
                  .To<HomePage>()

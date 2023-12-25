@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Markup;
+using CommunityToolkit.Maui.Storage;
 
 using InkWiseNote.Pages;
 using InkWiseNote.ViewModels;
@@ -26,6 +27,7 @@ namespace InkWiseNote
                 });
 
             // Register Pages
+            builder.Services.AddSingleton<MainPage>();
             builder.Services.AddSingleton<HomePage>();
             builder.Services.AddSingleton<NoteTakingPage>();
 
@@ -34,7 +36,7 @@ namespace InkWiseNote
             builder.Services.AddSingleton<NoteTakingViewModel>();
 
 #if DEBUG
-    		builder.Logging.AddDebug();
+            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

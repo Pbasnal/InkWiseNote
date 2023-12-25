@@ -1,19 +1,13 @@
-﻿using CommunityToolkit.Maui.Core;
-using System.Collections.ObjectModel;
-
-using CommunityToolkit.Maui.Markup;
-using CommunityToolkit.Maui.Views;
+﻿using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using InkWiseNote.Commons;
 using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
-using static CommunityToolkit.Maui.Markup.GridRowsColumns;
-using Microsoft.Maui.Controls.Shapes;
 using Newtonsoft.Json;
-using System.Reflection;
-using System.Runtime.Serialization;
+
+using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
 namespace InkWiseNote.ViewModels;
 

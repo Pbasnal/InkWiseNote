@@ -29,6 +29,12 @@ public class NoteTakingPage : ContentPage
             .GetResult;
     }
 
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        viewModel.SaveNote();
+    }
+
     protected override bool OnBackButtonPressed()
     {
         viewModel.SaveNote();

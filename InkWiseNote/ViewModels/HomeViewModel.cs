@@ -1,13 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
+using InkWiseNote.Commons;
 using InkWiseNote.Pages;
 using InkWiseNote.PageUtils;
-using InkWiseNote.Commons;
 using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
 using Systems.SaveLoadSystem;
-using UtilsLibrary;
 
 namespace InkWiseNote.ViewModels;
 
@@ -44,6 +43,8 @@ public partial class HomeViewModel : ObservableObject
         CardCollectionViewData.Items.Clear();
 
         CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNote));
+
+        NotesFileSystem.CreateRootDirectoryIfNotExists(rootDirectory);
 
         LoadSystem.ListFilesFromDirectory(rootDirectory)
             .Select(NotesFileSystem.FileNameToNoteTitle)
