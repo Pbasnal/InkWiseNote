@@ -2,13 +2,14 @@
 
 internal class CardCollectionView
 {
-    public View GetCardCollectionView(CardCollectionViewData cardCollectionViewData, Func<IUiElement> cardElementFactory)
+    public View GetCardCollectionView(CardCollectionViewData cardCollectionViewData,
+        DataTemplateSelector cardViewSelector)
     {
         var notePageCollection = BuildCollectionView(nameof(cardCollectionViewData.NumberOfNotesPerRow));
 
-        AddItemsToCollection(notePageCollection, 
+        AddItemsToCollection(notePageCollection,
             nameof(cardCollectionViewData.Items),
-            cardElementFactory);
+            cardViewSelector);
 
         notePageCollection.SizeChanged += (object sender, EventArgs e) =>
             Resize(cardCollectionViewData, notePageCollection.Width);
@@ -32,10 +33,10 @@ internal class CardCollectionView
 
     private void AddItemsToCollection(CollectionView notePageCollection,
         string propertyName,
-        Func<IUiElement> elementFactory)
+        DataTemplateSelector cardViewSelector)
     {
         notePageCollection.SetBinding(ItemsView.ItemsSourceProperty, propertyName);
-        notePageCollection.ItemTemplate = new DataTemplate(() => elementFactory().UiView);
+        notePageCollection.ItemTemplate = cardViewSelector;
     }
 
     private void Resize(CardCollectionViewData cardCollectionViewData, double width)

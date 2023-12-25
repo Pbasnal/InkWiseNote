@@ -1,6 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 
 using InkWiseNote.Commons;
 using InkWiseNote.Pages;
@@ -32,17 +30,11 @@ public partial class HomeViewModel : ObservableObject
     internal View GetContent()
     {
         CardCollectionView cardCollectionView = new CardCollectionView();
-        var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(CardCollectionViewData, CreateImageCardView);
+        var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(CardCollectionViewData,
+            new CardViewTemplateSelector());
         CardCollectionViewData.SetBindingContextOf(cardCollectionViewForNotes);
 
         return cardCollectionViewForNotes;
-    }
-
-    // this method will get called for each data element that gets created by
-    // LoadImageCardData() function
-    private IUiElement CreateImageCardView()
-    {
-        return new ImageCardElement();
     }
 
     internal void LoadImageCardData(string rootDirectory)
@@ -73,5 +65,48 @@ public partial class HomeViewModel : ObservableObject
         await NavigatePage.To<NoteTakingPage>()
                     .WithParameter("HandwrittenNoteCard", (object)handwrittenNote)
                     .Navigate();
+    }
+}
+
+
+public class CardViewTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate AmericanMonkey { get; set; }
+    public DataTemplate OtherMonkey { get; set; }
+
+    protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
+    {
+        if (item is NewNoteCard)
+        {
+            return new DataTemplate(() => new ImageCardElement().UiView);
+        }
+
+        return new DataTemplate(() =>
+        {
+            var cardView = new ImageCardElement();
+
+            cardView.SetPlaceHolder(new VerticalStackLayout
+            {
+                Children =
+                {
+                    new BoxView {
+                        HeightRequest = 1,
+                        Color = Colors.LightGray
+                    },
+                    new HorizontalStackLayout {
+                        HorizontalOptions = LayoutOptions.Center,
+                        Children =
+                        {
+                            new Label
+                            {
+                                Text = "Delete",
+                            }
+                        }
+                    }
+                }
+            });
+
+            return cardView.UiView;
+        });
     }
 }

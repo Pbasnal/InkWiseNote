@@ -11,14 +11,12 @@ namespace InkWiseNote.UiComponents.UiElements;
 internal class ImageCardElement : IUiElement
 {
     public View UiView { get; private set; }
-
+    private Grid gridView;
 
     public ImageCardElement()
     {
-        //gridView = new Grid();
-
-        Grid gridView = GridLayoutBuilder.NewGrid()
-            .HasRows(200, 50, GridLength.Auto)
+        gridView = GridLayoutBuilder.NewGrid()
+            .HasRows(200, 50, 30)
             .HasColumns(GridLength.Star)
             //.HorizontalOptions = LayoutOptions.Fill;
             .HasChildren(GetCardImage().Row(0).Column(0))
@@ -80,5 +78,10 @@ internal class ImageCardElement : IUiElement
         if (Objects.IsNull(imageCardData)) return;
 
         await imageCardData.OnNoteTap(imageCardData);
+    }
+
+    public void SetPlaceHolder(View element)
+    {
+        gridView.Children.Add(element.Row(2).Column(0));
     }
 }
