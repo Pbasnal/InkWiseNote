@@ -8,6 +8,8 @@ using InkWiseNote.UiComponents.UiLayouts;
 
 using Systems.SaveLoadSystem;
 
+using UtilsLibrary;
+
 namespace InkWiseNote.ViewModels;
 
 public partial class HomeViewModel : ObservableObject
@@ -31,7 +33,7 @@ public partial class HomeViewModel : ObservableObject
     {
         CardCollectionView cardCollectionView = new CardCollectionView();
         var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(CardCollectionViewData,
-            new CardViewTemplateSelector());
+            new CardViewTemplateBuilder());
         CardCollectionViewData.SetBindingContextOf(cardCollectionViewForNotes);
 
         return cardCollectionViewForNotes;
@@ -40,9 +42,6 @@ public partial class HomeViewModel : ObservableObject
     internal void LoadImageCardData(string rootDirectory)
     {
         NotesFileSystem.CreateRootDirectoryIfNotExists(rootDirectory);
-
-        //CardCollectionViewData.Items.Clear();
-        //CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNote));
 
         LoadSystem.ListFilesFromDirectory(rootDirectory)
             .Select(NotesFileSystem.FileNameToNoteTitle)
@@ -69,42 +68,49 @@ public partial class HomeViewModel : ObservableObject
 }
 
 
-public class CardViewTemplateSelector : DataTemplateSelector
+public class CardViewTemplateBuilder : DataTemplateSelector
 {
     public DataTemplate AmericanMonkey { get; set; }
     public DataTemplate OtherMonkey { get; set; }
 
     protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
     {
-        if (item is NewNoteCard)
+        return If.Condition(item is NewNoteCard)
+            .IsTrue(NewNoteDataTemplate())
+            .OrElse(NoteDataTemplate());
+    }
+
+    private static DataTemplate NewNoteDataTemplate() =>
+        new DataTemplate(() => new ImageCardElement().UiView);
+
+    private static DataTemplate NoteDataTemplate()
+    {
+
+        var cardMenuContainer = new VerticalStackLayout();
+        var dividerBetweenMenuAndCard = new BoxView
         {
-            return new DataTemplate(() => new ImageCardElement().UiView);
-        }
+            HeightRequest = 1,
+            Color = Colors.LightGray
+        };
+
+        var cardMenu = new HorizontalStackLayout
+        {
+            HorizontalOptions = LayoutOptions.Center,
+        };
+        var deleteMenuOption = new Label
+        {
+            Text = "Delete",
+        };
+
+        cardMenu.Children.Add(deleteMenuOption);
+        cardMenuContainer.Children.Add(dividerBetweenMenuAndCard);
+        cardMenuContainer.Children.Add(cardMenu);
 
         return new DataTemplate(() =>
         {
             var cardView = new ImageCardElement();
 
-            cardView.SetPlaceHolder(new VerticalStackLayout
-            {
-                Children =
-                {
-                    new BoxView {
-                        HeightRequest = 1,
-                        Color = Colors.LightGray
-                    },
-                    new HorizontalStackLayout {
-                        HorizontalOptions = LayoutOptions.Center,
-                        Children =
-                        {
-                            new Label
-                            {
-                                Text = "Delete",
-                            }
-                        }
-                    }
-                }
-            });
+            cardView.SetPlaceHolder(cardMenuContainer);
 
             return cardView.UiView;
         });

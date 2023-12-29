@@ -1,30 +1,30 @@
 ﻿namespace UtilsLibrary;
 
-public class Condition
+public class If
 {
     protected bool conditionResult;
 
-    protected Condition(bool condition)
+    protected If(bool condition)
     {
         conditionResult = condition;
     }
 
-    public static Condition If(bool condition)
+    public static If Condition(bool condition)
     {
-        return new Condition(condition);
+        return new If(condition);
     }
 
-    public ConditionWithResult<T> OnTrue<T>(T value)
+    public IfWithResult<T> IsTrue<T>(T value)
     {
-        return new ConditionWithResult<T>(value, conditionResult);
+        return new IfWithResult<T>(value, conditionResult);
     }
 }
 
-public class ConditionWithResult<T> : Condition
+public class IfWithResult<T> : If
 {
     private T resultValue;
 
-    public ConditionWithResult(T resultValue, bool condition) : base(condition)
+    public IfWithResult(T resultValue, bool condition) : base(condition)
     {
         this.resultValue = resultValue;
     }
