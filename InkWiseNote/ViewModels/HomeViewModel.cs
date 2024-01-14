@@ -33,17 +33,39 @@ public partial class HomeViewModel : ObservableObject
     {
         CardCollectionView cardCollectionView = new CardCollectionView();
         var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(CardCollectionViewData,
-            new CardViewTemplateBuilder());
+            new CardViewTemplateBuilder(OnDeleteNote));
         CardCollectionViewData.SetBindingContextOf(cardCollectionViewForNotes);
 
         return cardCollectionViewForNotes;
+    }
+
+    public void Clear()
+    {
+        existingCardTitles.Clear();
+        CardCollectionViewData.Items.Clear();
+        CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNewNote));
+    }
+
+    public void OnDeleteNote(Object? sender, TappedEventArgs e)
+    {
+        var view = sender as View;
+        if (Objects.IsNull(view)) return;
+
+        HandwrittenNoteCard? noteData = view.BindingContext as HandwrittenNoteCard;
+        if (Objects.IsNull(noteData)) return;
+
+        NotesFileSystem.DeleteNote(noteData.Path);
+
+        var noteTitle = noteData.Title;
+        existingCardTitles.Remove(noteTitle);
+        CardCollectionViewData.Items.Remove(noteData);
     }
 
     internal void LoadImageCardData(string rootDirectory)
     {
         NotesFileSystem.CreateRootDirectoryIfNotExists(rootDirectory);
 
-        LoadSystem.ListFilesFromDirectory(rootDirectory)
+        NotesFileSystem.ListFilesFromDirectory(rootDirectory)
             .Select(NotesFileSystem.FileNameToNoteTitle)
             .Where(noteTitle => !existingCardTitles.Contains(noteTitle))
             .Select(noteTitle => { existingCardTitles.Add(noteTitle); return noteTitle; })
@@ -70,8 +92,17 @@ public partial class HomeViewModel : ObservableObject
 
 public class CardViewTemplateBuilder : DataTemplateSelector
 {
+    private EventHandler<TappedEventArgs> onTapAction;
+
     public DataTemplate AmericanMonkey { get; set; }
     public DataTemplate OtherMonkey { get; set; }
+
+    
+
+    public CardViewTemplateBuilder(EventHandler<TappedEventArgs> onTapAction)
+    {
+        this.onTapAction = onTapAction;
+    }
 
     protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
     {
@@ -80,10 +111,10 @@ public class CardViewTemplateBuilder : DataTemplateSelector
             .OrElse(NoteDataTemplate());
     }
 
-    private static DataTemplate NewNoteDataTemplate() =>
+    private DataTemplate NewNoteDataTemplate() =>
         new DataTemplate(() => new ImageCardElement().UiView);
 
-    private static DataTemplate NoteDataTemplate()
+    private DataTemplate NoteDataTemplate()
     {
 
         var cardMenuContainer = new VerticalStackLayout();
@@ -101,6 +132,12 @@ public class CardViewTemplateBuilder : DataTemplateSelector
         {
             Text = "Delete",
         };
+
+
+        var tapGestureRecognizer = new TapGestureRecognizer();
+        tapGestureRecognizer.Tapped += onTapAction;
+
+        deleteMenuOption.GestureRecognizers.Add(tapGestureRecognizer);
 
         cardMenu.Children.Add(deleteMenuOption);
         cardMenuContainer.Children.Add(dividerBetweenMenuAndCard);

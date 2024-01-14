@@ -1,4 +1,8 @@
-﻿using CommunityToolkit.Maui.Markup;
+﻿using CommunityToolkit.Maui.Core.Views;
+using CommunityToolkit.Maui.Core;
+using System.Collections.ObjectModel;
+
+using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using InkWiseNote.Commons;
@@ -8,6 +12,7 @@ using InkWiseNote.UiComponents.UiLayouts;
 using Newtonsoft.Json;
 
 using static CommunityToolkit.Maui.Markup.GridRowsColumns;
+using Systems.SaveLoadSystem;
 
 namespace InkWiseNote.ViewModels;
 
@@ -18,15 +23,32 @@ public partial class NoteTakingViewModel : ObservableObject
 
     [ObservableProperty]
     private DrawingCanvasData drawingCanvasData;
+    [ObservableProperty]
+    private DrawingCanvasData drawingBackgroundCanvasData;
+
+    private int verticalDistanceBetweenRuleLines = 50;
+
+    private string originalNotePath = string.Empty;
 
     public NoteTakingViewModel()
     {
         drawingCanvasData = new DrawingCanvasData();
+        drawingBackgroundCanvasData = new DrawingCanvasData
+        {
+            BackgroundColor = Colors.Transparent,
+        };
+
     }
 
     public void SetNote(HandwrittenNoteCard note)
     {
         HandwrittenNote = note;
+        originalNotePath = note.Path;
+
+        DrawingBackgroundCanvasData = new DrawingCanvasData
+        {
+            BackgroundColor = Colors.White,
+        };
 
         if (File.Exists(HandwrittenNote.Path))
         {
@@ -35,11 +57,15 @@ public partial class NoteTakingViewModel : ObservableObject
             {
                 TypeNameHandling = TypeNameHandling.Objects
             });
+            DrawingCanvasData.BackgroundColor = Colors.Transparent;
         }
         else
         {
-            drawingCanvasData = new DrawingCanvasData();
+            DrawingCanvasData = new DrawingCanvasData {
+                BackgroundColor = Colors.Transparent,
+            };
         }
+        
     }
 
     internal View GetContent()
@@ -51,13 +77,22 @@ public partial class NoteTakingViewModel : ObservableObject
         };
         noteNameEntry.SetBinding(Entry.TextProperty, nameof(HandwrittenNote.Title));
 
+        var notePageBackground = GetDrawingView(DrawingBackgroundCanvasData);
         Grid gridView = GridLayoutBuilder.NewGrid()
             .HasColumns(30, Star)
             .HasRows(50, Star)
             .HasChildren(noteNameEntry.Row(0).ColumnSpan(2))
-            .HasChildren(GetDrawingView().Row(1).ColumnSpan(2));
+            .HasChildren(notePageBackground.Row(1).Column(2))
+            .HasChildren(GetDrawingView(DrawingCanvasData).Row(1).ColumnSpan(2));
 
         noteNameEntry.BindingContext = HandwrittenNote;
+
+        notePageBackground.SizeChanged += (object sender, EventArgs e) =>
+        {
+            DrawingBackgroundCanvasData.Lines = GetPageLines(verticalDistanceBetweenRuleLines,
+                        (int)notePageBackground.Width,
+                        (int)notePageBackground.Height);
+        };
 
         return gridView;
     }
@@ -69,19 +104,42 @@ public partial class NoteTakingViewModel : ObservableObject
             HandwrittenNote.Title = Constants.UNTITLED_NOTE_TITLE;
         }
 
-        File.WriteAllText(HandwrittenNote.Path, JsonConvert.SerializeObject(drawingCanvasData, Formatting.Indented, new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Objects,
-            TypeNameAssemblyFormat = System.Runtime.Serialization.Formatters.FormatterAssemblyStyle.Simple
-        }));
+        NotesFileSystem.WriteNoteToFile(HandwrittenNote.Path, drawingCanvasData);
 
+        if (originalNotePath != HandwrittenNote.Path)
+        {
+            NotesFileSystem.DeleteNote(originalNotePath);
+        }
     }
 
-    private View GetDrawingView()
+    private View GetDrawingView(DrawingCanvasData drawingCanvasData)
     {
         var drawingViewElement = new DrawingViewElement();
         drawingViewElement.UiView.BindingContext = drawingCanvasData;
 
         return drawingViewElement.UiView;
+    }
+
+    private ObservableCollection<IDrawingLine> GetPageLines(int lineGap, int pageWidth, int pageHeight)
+    {
+        var lines = new ObservableCollection<IDrawingLine>();
+
+        for (int lineY = lineGap; lineY < pageHeight; lineY += lineGap)
+        {
+            var line = new DrawingLine
+            {
+                LineColor = Colors.Blue,
+                LineWidth = 1,
+                Points = new ObservableCollection<PointF>
+                {
+                    new PointF(0, lineY),
+                    new PointF(pageWidth, lineY),
+                }
+            };
+
+            lines.Add(line);
+        }
+
+        return lines;
     }
 }
