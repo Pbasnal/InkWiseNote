@@ -21,6 +21,8 @@ public class HomePage : ContentPage
         this.viewModel = viewModel;
         this.jobSystem = jobSystem;
 
+        ReloadNotesFromDirectory();
+
         jobSystem.RegisterJob(DIRECTORY_READER_JOB,
             ReloadNotesFromDirectory,
             WAIT_TIME_BEFORE_DIRECTORY_READER_JOB_STARTS_MS,
@@ -31,12 +33,12 @@ public class HomePage : ContentPage
     {
         base.OnAppearing();
 
-        viewModel.Clear();
+        //viewModel.Clear();
         Content = Try<View>.Executing(viewModel.GetContent)
             .HandleIfThrows(HandleContentCreationException)
             .GetResult;
 
-        jobSystem.StartJob(DIRECTORY_READER_JOB);
+        //jobSystem.StartJob(DIRECTORY_READER_JOB);
     }
 
     protected override void OnDisappearing()

@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 
 using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 using Systems.SaveLoadSystem;
+using Systems.InMemoryDataStore;
 
 namespace InkWiseNote.ViewModels;
 
@@ -29,8 +30,10 @@ public partial class NoteTakingViewModel : ObservableObject
     private int verticalDistanceBetweenRuleLines = 50;
 
     private string originalNotePath = string.Empty;
+    private string originalNoteTitle = string.Empty;
 
-    public NoteTakingViewModel()
+    private ExisitingCardTitlesTable exisitingCardTitlesTable;
+    public NoteTakingViewModel(InMemoryDb inMemoryDb)
     {
         drawingCanvasData = new DrawingCanvasData();
         drawingBackgroundCanvasData = new DrawingCanvasData
@@ -38,12 +41,14 @@ public partial class NoteTakingViewModel : ObservableObject
             BackgroundColor = Colors.Transparent,
         };
 
+        exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
     }
 
     public void SetNote(HandwrittenNoteCard note)
     {
         HandwrittenNote = note;
         originalNotePath = note.Path;
+        originalNoteTitle = note.Title;
 
         DrawingBackgroundCanvasData = new DrawingCanvasData
         {
@@ -109,6 +114,7 @@ public partial class NoteTakingViewModel : ObservableObject
         if (originalNotePath != HandwrittenNote.Path)
         {
             NotesFileSystem.DeleteNote(originalNotePath);
+            exisitingCardTitlesTable.Remove(originalNoteTitle);
         }
     }
 

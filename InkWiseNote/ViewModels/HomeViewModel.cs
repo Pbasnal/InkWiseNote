@@ -6,6 +6,7 @@ using InkWiseNote.PageUtils;
 using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
+using Systems.InMemoryDataStore;
 using Systems.SaveLoadSystem;
 
 using UtilsLibrary;
@@ -17,16 +18,25 @@ public partial class HomeViewModel : ObservableObject
     [ObservableProperty]
     private CardCollectionViewData cardCollectionViewData;
 
-    private HashSet<string> existingCardTitles;
+    private ExisitingCardTitlesTable exisitingCardTitlesTable;
 
-    public HomeViewModel()
+    public HomeViewModel(InMemoryDb inMemoryDb)
     {
         CardCollectionViewData = new CardCollectionViewData(this,
             Configs.WIDTH_OF_NOTE,
             Configs.NUMBER_OF_NOTES_PER_ROW);
 
-        existingCardTitles = new HashSet<string>();
         CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNewNote));
+
+        exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
+
+        exisitingCardTitlesTable.OnDataDeleteEvent += DeleteCardWithTitle;
+    }
+
+    private void DeleteCardWithTitle(string cardTitle)
+    {
+        var cardToDelete = CardCollectionViewData.Items.FirstOrDefault(card => cardTitle.Equals(card.Title));
+        CardCollectionViewData.Items.Remove(cardToDelete);
     }
 
     internal View GetContent()
@@ -37,13 +47,6 @@ public partial class HomeViewModel : ObservableObject
         CardCollectionViewData.SetBindingContextOf(cardCollectionViewForNotes);
 
         return cardCollectionViewForNotes;
-    }
-
-    public void Clear()
-    {
-        existingCardTitles.Clear();
-        CardCollectionViewData.Items.Clear();
-        CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNewNote));
     }
 
     public void OnDeleteNote(Object? sender, TappedEventArgs e)
@@ -57,8 +60,7 @@ public partial class HomeViewModel : ObservableObject
         NotesFileSystem.DeleteNote(noteData.Path);
 
         var noteTitle = noteData.Title;
-        existingCardTitles.Remove(noteTitle);
-        CardCollectionViewData.Items.Remove(noteData);
+        exisitingCardTitlesTable.Remove(noteTitle);
     }
 
     internal void LoadImageCardData(string rootDirectory)
@@ -67,8 +69,8 @@ public partial class HomeViewModel : ObservableObject
 
         NotesFileSystem.ListFilesFromDirectory(rootDirectory)
             .Select(NotesFileSystem.FileNameToNoteTitle)
-            .Where(noteTitle => !existingCardTitles.Contains(noteTitle))
-            .Select(noteTitle => { existingCardTitles.Add(noteTitle); return noteTitle; })
+            .Where(noteTitle => !exisitingCardTitlesTable.Contains(noteTitle))
+            .Select(noteTitle => { exisitingCardTitlesTable.Add(noteTitle); return noteTitle; })
             .Select(noteTitle => NoteCardFactory.NoteCard(noteTitle, OnTappingNote))
             .ToList()
             .ForEach(CardCollectionViewData.Items.Add);

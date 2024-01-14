@@ -9,6 +9,7 @@ using InkWiseNote.ViewModels;
 using Microsoft.Extensions.Logging;
 
 using Systems.BackgroundJob;
+using Systems.InMemoryDataStore;
 
 namespace InkWiseNote
 {
@@ -38,6 +39,8 @@ namespace InkWiseNote
             builder.Services.AddSingleton<NoteTakingViewModel>();
             builder.Services.AddSingleton<JobSystem>();
 
+
+            builder.Services.AddSingleton<InMemoryDb>();
 #if DEBUG
             builder.Logging.AddDebug();
 #endif
