@@ -13,19 +13,22 @@ public interface IHaveDrawingViewData
     Color LineColor { get; }
 
     Color BackgroundColor { get; }
-    float LineWidth { get; }
+    int LineWidth { get; }
 }
+
 
 public class DrawingViewElement : IUiElement
 {
     public View UiView { get; private set; }
+
+    public DrawingView DrawingView => (DrawingView) UiView;
 
     public DrawingViewElement()
     {
         UiView = new DrawingView
         {
             IsMultiLineModeEnabled = true,
-            ShouldClearOnFinish = false,
+            ShouldClearOnFinish = false
         };
 
         UiView.SetBinding(DrawingView.LinesProperty, nameof(IHaveDrawingViewData.Lines));

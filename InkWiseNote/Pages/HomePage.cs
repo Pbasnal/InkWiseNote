@@ -12,7 +12,7 @@ public class HomePage : ContentPage
     private HomeViewModel viewModel;
     private JobSystem jobSystem;
 
-    private const string DIRECTORY_READER_JOB = "DIRECTORY_READER_JOB";
+    private const string DIRECTORY_READER_JOB = "NOTES_PARSER_JOB";
     private const int WAIT_TIME_BEFORE_DIRECTORY_READER_JOB_STARTS_MS = 10;
     private const int WAIT_TIME_BETWEEN_DIRECTORY_READS_MS = 1000;
 
@@ -38,7 +38,7 @@ public class HomePage : ContentPage
             .HandleIfThrows(HandleContentCreationException)
             .GetResult;
 
-        //jobSystem.StartJob(DIRECTORY_READER_JOB);
+        jobSystem.StartJob(DIRECTORY_READER_JOB);
     }
 
     protected override void OnDisappearing()
@@ -49,7 +49,7 @@ public class HomePage : ContentPage
 
     private void ReloadNotesFromDirectory()
     {
-        viewModel.LoadImageCardData(Configs.ROOT_DIRECTORY);
+        viewModel.LoadImageCardData();
     }
 
     private void HandleContentCreationException(Exception exception)

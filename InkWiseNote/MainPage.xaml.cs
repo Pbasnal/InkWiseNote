@@ -1,15 +1,18 @@
 ﻿using InkWiseNote.Pages;
 using InkWiseNote.PageUtils;
 
+using Systems.TextProcessingSystem;
+
 namespace InkWiseNote
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
-        
-        public MainPage()
+        private int count = 0;
+        private TermFrequencySystem termFrequencySystem;
+        public MainPage(TermFrequencySystem termFrequencySystem)
         {
             InitializeComponent();
+            this.termFrequencySystem = termFrequencySystem;
         }
 
         protected async override void OnAppearing()
@@ -32,8 +35,6 @@ namespace InkWiseNote
                  .To<HomePage>()
                  .Navigate();
         }
-
-
 
         private void OnCounterClicked(object sender, EventArgs e)
         {

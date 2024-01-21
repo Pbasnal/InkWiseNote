@@ -9,6 +9,7 @@ namespace InkWiseNote.Pages;
 public class NoteTakingPage : ContentPage
 {
     NoteTakingViewModel viewModel;
+    bool isSaving = false;
 
     public HandwrittenNoteCard HandwrittenNoteCard
     {
@@ -23,6 +24,9 @@ public class NoteTakingPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        isSaving = false;
+
+        viewModel.OnAppearing();
 
         Content = Try<View>.Executing(viewModel.GetContent)
             .HandleIfThrows(HandleContentCreationException)
@@ -32,12 +36,20 @@ public class NoteTakingPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        viewModel.SaveNote();
+        if (!isSaving)
+        {
+            isSaving = true;
+            viewModel.SaveNote();
+        }
     }
 
     protected override bool OnBackButtonPressed()
     {
-        viewModel.SaveNote();
+        if (!isSaving)
+        {
+            isSaving = true;
+            viewModel.SaveNote();
+        }
         return base.OnBackButtonPressed();
     }
 

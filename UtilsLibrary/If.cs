@@ -18,6 +18,30 @@ public class If
     {
         return new IfWithResult<T>(value, conditionResult);
     }
+
+    public IfWithAction RunIfTrue(Action action)
+    {
+        return new IfWithAction(action, conditionResult);
+    }
+}
+
+public class IfWithAction : If
+{
+    private Action ifTrueAction;
+
+    public IfWithAction(Action ifTrueAction, bool condition) : base(condition)
+    {
+        this.ifTrueAction = ifTrueAction;
+    }
+
+
+    public void OrElse(Action elseAction)
+    {
+        if (conditionResult)
+            ifTrueAction.Invoke();
+        else
+            elseAction.Invoke();
+    }
 }
 
 public class IfWithResult<T> : If

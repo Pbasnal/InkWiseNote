@@ -1,4 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using Commons.Models;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using InkWiseNote.Commons;
 using InkWiseNote.Pages;
@@ -8,6 +10,7 @@ using InkWiseNote.UiComponents.UiLayouts;
 
 using Systems.InMemoryDataStore;
 using Systems.SaveLoadSystem;
+using Systems.TextProcessingSystem;
 
 using UtilsLibrary;
 
@@ -20,7 +23,9 @@ public partial class HomeViewModel : ObservableObject
 
     private ExisitingCardTitlesTable exisitingCardTitlesTable;
 
-    public HomeViewModel(InMemoryDb inMemoryDb)
+    private TermFrequencySystem termFrequencySystem;
+
+    public HomeViewModel(InMemoryDb inMemoryDb, TermFrequencySystem termFrequencySystem)
     {
         CardCollectionViewData = new CardCollectionViewData(this,
             Configs.WIDTH_OF_NOTE,
@@ -31,6 +36,8 @@ public partial class HomeViewModel : ObservableObject
         exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
 
         exisitingCardTitlesTable.OnDataDeleteEvent += DeleteCardWithTitle;
+
+        this.termFrequencySystem = termFrequencySystem;
     }
 
     private void DeleteCardWithTitle(string cardTitle)
@@ -57,17 +64,27 @@ public partial class HomeViewModel : ObservableObject
         HandwrittenNoteCard? noteData = view.BindingContext as HandwrittenNoteCard;
         if (Objects.IsNull(noteData)) return;
 
-        NotesFileSystem.DeleteNote(noteData.Path);
+        FileSystemUtils.DeleteFile(noteData.Path);
+
+        VisionResponse visionResponse = LoadVisionResponse(noteData.Title);
+        termFrequencySystem.LoadVocabulary();
+        if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
+            termFrequencySystem.RemoveDocumentFromVocabulary(new Document(noteData.Title, visionResponse.readResult.content));
+
+        FileSystemUtils.DeleteFile(noteData.ParsedNote);
 
         var noteTitle = noteData.Title;
         exisitingCardTitlesTable.Remove(noteTitle);
     }
 
-    internal void LoadImageCardData(string rootDirectory)
+    private VisionResponse LoadVisionResponse(string handwrittenNoteTitle)
     {
-        NotesFileSystem.CreateRootDirectoryIfNotExists(rootDirectory);
+        return SaveSystem.ReadFromFile<VisionResponse>(Configs.PARSED_NOTES_DIRECTORY, handwrittenNoteTitle);
+    }
 
-        NotesFileSystem.ListFilesFromDirectory(rootDirectory)
+    internal void LoadImageCardData()
+    {
+        NotesFileSystem.ListAllNotes()
             .Select(NotesFileSystem.FileNameToNoteTitle)
             .Where(noteTitle => !exisitingCardTitlesTable.Contains(noteTitle))
             .Select(noteTitle => { exisitingCardTitlesTable.Add(noteTitle); return noteTitle; })
@@ -99,7 +116,7 @@ public class CardViewTemplateBuilder : DataTemplateSelector
     public DataTemplate AmericanMonkey { get; set; }
     public DataTemplate OtherMonkey { get; set; }
 
-    
+
 
     public CardViewTemplateBuilder(EventHandler<TappedEventArgs> onTapAction)
     {

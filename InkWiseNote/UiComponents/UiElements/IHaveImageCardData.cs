@@ -17,7 +17,7 @@ public partial class HandwrittenNoteCard : ObservableObject, IHaveImageCardData
     [ObservableProperty]
     public string title = string.Empty;
     public string Path => $"{Configs.ROOT_DIRECTORY}/{Title}.json";
-    public int Id { get; set; }
+    public string ParsedNote => $"{Configs.PARSED_NOTES_DIRECTORY}/{Title}.json";
     public string ImageName { get; set; } = "default_note.png";
 
     public Func<IHaveImageCardData, Task> OnNoteTap { get; set; }

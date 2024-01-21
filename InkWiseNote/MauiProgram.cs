@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 
 using Systems.BackgroundJob;
 using Systems.InMemoryDataStore;
+using Systems.TextProcessingSystem;
 
 namespace InkWiseNote
 {
@@ -37,8 +38,10 @@ namespace InkWiseNote
             // Register view models
             builder.Services.AddSingleton<HomeViewModel>();
             builder.Services.AddSingleton<NoteTakingViewModel>();
-            builder.Services.AddSingleton<JobSystem>();
 
+            // Custom systems
+            builder.Services.AddSingleton<JobSystem>();
+            builder.Services.AddSingleton<TermFrequencySystem>();
 
             builder.Services.AddSingleton<InMemoryDb>();
 #if DEBUG

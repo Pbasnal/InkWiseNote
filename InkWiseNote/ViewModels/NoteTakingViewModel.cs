@@ -1,19 +1,28 @@
-﻿using CommunityToolkit.Maui.Core.Views;
-using CommunityToolkit.Maui.Core;
-using System.Collections.ObjectModel;
+﻿using Commons.Models;
 
+using CommunityToolkit.Maui.Core;
+using CommunityToolkit.Maui.Core.Views;
 using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using InkWiseNote.Commons;
+using InkWiseNote.Pages;
+using InkWiseNote.PageUtils;
 using InkWiseNote.UiComponents.UiElements;
 using InkWiseNote.UiComponents.UiLayouts;
 
 using Newtonsoft.Json;
 
-using static CommunityToolkit.Maui.Markup.GridRowsColumns;
-using Systems.SaveLoadSystem;
+using System.Collections.ObjectModel;
+using System.Net.Http.Headers;
+
 using Systems.InMemoryDataStore;
+using Systems.SaveLoadSystem;
+using Systems.TextProcessingSystem;
+
+using UtilsLibrary;
+
+using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
 namespace InkWiseNote.ViewModels;
 
@@ -33,7 +42,12 @@ public partial class NoteTakingViewModel : ObservableObject
     private string originalNoteTitle = string.Empty;
 
     private ExisitingCardTitlesTable exisitingCardTitlesTable;
-    public NoteTakingViewModel(InMemoryDb inMemoryDb)
+    private TermFrequencySystem termFrequencySystem;
+    private IDictionary<string, HashSet<string>> allRelatedNotes;
+
+    DrawingViewElement notePage;
+
+    public NoteTakingViewModel(InMemoryDb inMemoryDb, TermFrequencySystem termFrequencySystem)
     {
         drawingCanvasData = new DrawingCanvasData();
         drawingBackgroundCanvasData = new DrawingCanvasData
@@ -42,6 +56,42 @@ public partial class NoteTakingViewModel : ObservableObject
         };
 
         exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
+        this.termFrequencySystem = termFrequencySystem;
+        //OnAppearing();
+    }
+
+    public void OnAppearing()
+    {
+        termFrequencySystem.LoadVocabulary();
+        IDictionary<string, HashSet<string>> groupedOnTerm = termFrequencySystem.GetTermFrequency()
+             .Where(tf => tf.TfIdfScore > Configs.MINIMUM_TF_IDF_SCORE)
+             .GroupBy(tf => tf.Term)
+             .ToDictionary(group => group.Key, GetRelatedNotes);
+
+        allRelatedNotes = new Dictionary<string, HashSet<string>>();
+        foreach (string term in groupedOnTerm.Keys)
+        {
+            foreach (string noteName in groupedOnTerm[term])
+            {
+                if (!allRelatedNotes.ContainsKey(noteName))
+                {
+                    allRelatedNotes.Add(noteName, new HashSet<string>());
+                }
+                foreach (string relatedNoteName in groupedOnTerm[term])
+                {
+                    if (relatedNoteName == noteName) continue;
+                    allRelatedNotes[noteName].Add(relatedNoteName);
+                }
+            }
+        }
+    }
+
+    private HashSet<string> GetRelatedNotes(IGrouping<string, TermWithFrequency> grouping)
+    {
+        return grouping
+            .Select(tf => tf.Document)
+            .Where(documentName => documentName != grouping.Key)
+            .ToHashSet();
     }
 
     public void SetNote(HandwrittenNoteCard note)
@@ -57,20 +107,14 @@ public partial class NoteTakingViewModel : ObservableObject
 
         if (File.Exists(HandwrittenNote.Path))
         {
-            var serialisedCanvasData = File.ReadAllText(HandwrittenNote.Path);
-            DrawingCanvasData = JsonConvert.DeserializeObject<DrawingCanvasData>(serialisedCanvasData, new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.Objects
-            });
-            DrawingCanvasData.BackgroundColor = Colors.Transparent;
+            var canvasModel = NotesFileSystem.ReadFromFile<CanvasModel>(Configs.ROOT_DIRECTORY, HandwrittenNote.Title);
+            DrawingCanvasData = DrawingCanvasData.FromCanvasModel(canvasModel);
         }
         else
         {
-            DrawingCanvasData = new DrawingCanvasData {
-                BackgroundColor = Colors.Transparent,
-            };
+            DrawingCanvasData = new DrawingCanvasData();
         }
-        
+        DrawingCanvasData.BackgroundColor = Colors.Transparent;
     }
 
     internal View GetContent()
@@ -83,23 +127,82 @@ public partial class NoteTakingViewModel : ObservableObject
         noteNameEntry.SetBinding(Entry.TextProperty, nameof(HandwrittenNote.Title));
 
         var notePageBackground = GetDrawingView(DrawingBackgroundCanvasData);
+        notePage = GetDrawingView(DrawingCanvasData);
+
+        View relatedNotes = GetRelatedNotes(HandwrittenNote.Title);
+
         Grid gridView = GridLayoutBuilder.NewGrid()
             .HasColumns(30, Star)
-            .HasRows(50, Star)
+            .HasRows(50, 50, Star)
             .HasChildren(noteNameEntry.Row(0).ColumnSpan(2))
-            .HasChildren(notePageBackground.Row(1).Column(2))
-            .HasChildren(GetDrawingView(DrawingCanvasData).Row(1).ColumnSpan(2));
+            .HasChildren(relatedNotes.Row(1).ColumnSpan(2))
+            .HasChildren(notePageBackground.UiView.Row(2).Column(2))
+            .HasChildren(notePage.UiView.Row(2).ColumnSpan(2));
 
         noteNameEntry.BindingContext = HandwrittenNote;
 
-        notePageBackground.SizeChanged += (object sender, EventArgs e) =>
+        notePageBackground.UiView.SizeChanged += (object sender, EventArgs e) =>
         {
             DrawingBackgroundCanvasData.Lines = GetPageLines(verticalDistanceBetweenRuleLines,
-                        (int)notePageBackground.Width,
-                        (int)notePageBackground.Height);
+                        (int)notePageBackground.UiView.Width,
+                        (int)notePageBackground.UiView.Height);
         };
 
         return gridView;
+    }
+
+    private Grid GetRelatedNotes(string noteTitle)
+    {
+        HashSet<string> relatedNotes;
+        if (allRelatedNotes.ContainsKey(noteTitle) && allRelatedNotes[noteTitle].Count() > 0)
+        {
+            relatedNotes = allRelatedNotes[noteTitle];
+        }
+        else
+        {
+            relatedNotes = new HashSet<string>
+            {
+                "No related note"
+            };
+        }
+        GridLayoutBuilder gridViewBuilder = GridLayoutBuilder.NewGrid()
+            .HasColumns(relatedNotes.Select(n => new GridLength(100)).ToArray())
+            .HasRows(50);
+
+        int column = 0;
+        foreach (var relatedNote in relatedNotes)
+        {
+            Label relatedNoteLabel = new Label
+            {
+                Text = relatedNote
+            };
+            gridViewBuilder.HasChildren(relatedNoteLabel.Row(0).Column(column++));
+
+            var tapGestureRecognizer = new TapGestureRecognizer();
+            tapGestureRecognizer.Tapped += OnRelatedNoteTap;
+
+            relatedNoteLabel.GestureRecognizers.Add(tapGestureRecognizer);
+        }
+
+        return gridViewBuilder;
+    }
+
+    private async void OnRelatedNoteTap(object? sender, TappedEventArgs e)
+    {
+
+        Label relatedNoteLabel = sender as Label;
+        if (Objects.IsNull(relatedNoteLabel)) return;
+
+        string relatedNotename = relatedNoteLabel.Text;
+
+        HandwrittenNoteCard noteCard = new HandwrittenNoteCard
+        {
+            Title = relatedNotename,
+        };
+
+        await NavigatePage.To<NoteTakingPage>()
+                   .WithParameter("HandwrittenNoteCard", (object)noteCard)
+                   .Navigate();
     }
 
     internal void SaveNote()
@@ -109,21 +212,27 @@ public partial class NoteTakingViewModel : ObservableObject
             HandwrittenNote.Title = Constants.UNTITLED_NOTE_TITLE;
         }
 
-        NotesFileSystem.WriteNoteToFile(HandwrittenNote.Path, drawingCanvasData);
+        NotesFileSystem.WriteNoteToFile(Configs.ROOT_DIRECTORY, HandwrittenNote.Title, CanvasModel.FromCanvasData(drawingCanvasData));
 
         if (originalNotePath != HandwrittenNote.Path)
         {
             NotesFileSystem.DeleteNote(originalNotePath);
             exisitingCardTitlesTable.Remove(originalNoteTitle);
+
+            VisionResponse visionResponse = LoadVisionResponse(originalNoteTitle);
+            if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
+                termFrequencySystem.RemoveDocumentFromVocabulary(new Document(originalNoteTitle, visionResponse.readResult.content));
         }
+
+        ProcessNoteContent(HandwrittenNote);
     }
 
-    private View GetDrawingView(DrawingCanvasData drawingCanvasData)
+    private DrawingViewElement GetDrawingView(DrawingCanvasData drawingCanvasData)
     {
         var drawingViewElement = new DrawingViewElement();
         drawingViewElement.UiView.BindingContext = drawingCanvasData;
 
-        return drawingViewElement.UiView;
+        return drawingViewElement;
     }
 
     private ObservableCollection<IDrawingLine> GetPageLines(int lineGap, int pageWidth, int pageHeight)
@@ -148,4 +257,79 @@ public partial class NoteTakingViewModel : ObservableObject
 
         return lines;
     }
+
+
+    private void ProcessNoteContent(HandwrittenNoteCard handwrittenNote)
+    {
+        Task.Factory.StartNew(() =>
+        {
+            VisionResponse visionResponse = LoadVisionResponse(handwrittenNote.Title);
+            if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
+                termFrequencySystem.RemoveDocumentFromVocabulary(new Document(handwrittenNote.Title, visionResponse.readResult.content));
+
+            var imageStream = notePage.DrawingView.GetImageStream(notePage.DrawingView.Width,
+                notePage.DrawingView.Height).Result;
+
+            visionResponse = ApplyOcr(imageStream);
+
+            If.Condition(Objects.IsNotNull(visionResponse))
+            .RunIfTrue(() => UpdateTfIdfScores(handwrittenNote.Title, visionResponse.readResult.content))
+            .OrElse(() => { });
+        });
+    }
+
+    private VisionResponse LoadVisionResponse(string handwrittenNoteTitle)
+    {
+        return SaveSystem.ReadFromFile<VisionResponse>(Configs.PARSED_NOTES_DIRECTORY, handwrittenNoteTitle);
+    }
+
+    public VisionResponse ApplyOcr(Stream imageStream)
+    {
+        VisionResponse visionResponse = null;
+        try
+        {
+            string textConverstionResponse = ConvertHandwritingToText(imageStream);
+            NotesFileSystem.WriteNoteToFile(Configs.PARSED_NOTES_DIRECTORY, HandwrittenNote.Title, textConverstionResponse, isJson: true);
+
+            visionResponse = JsonConvert.DeserializeObject<VisionResponse>(textConverstionResponse);
+        }
+        catch (Exception ex)
+        {
+        }
+
+        return visionResponse;
+    }
+
+    public void UpdateTfIdfScores(string noteTitle, string noteContent)
+    {
+        Document document = new Document(noteTitle, noteContent);
+        termFrequencySystem.UpdateVocabulary(document);
+
+        termFrequencySystem.SaveVocabulary();
+    }
+
+    private string ConvertHandwritingToText(Stream imageStream)
+    {
+        var client = new HttpClient();
+
+        byte[] imageBytes = new byte[imageStream.Length];
+        imageStream.Read(imageBytes, 0, imageBytes.Length);
+        string contents = Convert.ToBase64String(imageBytes);
+        HttpContent content = new ByteArrayContent(imageBytes);//, Encoding.UTF8, "image/*");
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+
+        client.BaseAddress = new Uri(Configs.VISION_END_POINT);
+        //client.DefaultRequestHeaders.Add("Content-Type", "image/png");
+        client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Configs.VISION_KEY);
+
+        var result = client.PostAsync("/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=read&language=en", content).Result;
+        string resultContent = result.Content.ReadAsStringAsync().Result;
+
+        //VisionResponse visionResponse = JsonConvert.DeserializeObject<VisionResponse>(resultContent);
+
+        return resultContent;
+    }
+
+   
 }
