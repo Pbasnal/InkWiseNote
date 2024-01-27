@@ -43,7 +43,7 @@ public class SaveSystem
         var serialisedCanvasData = File.ReadAllText(filePath);
         return JsonConvert.DeserializeObject<T>(serialisedCanvasData, new JsonSerializerSettings
         {
-            TypeNameHandling = TypeNameHandling.Objects
+            TypeNameHandling = TypeNameHandling.None
         });
     }
 }

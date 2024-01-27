@@ -1,9 +1,8 @@
-﻿using static System.Runtime.InteropServices.JavaScript.JSType;
-using static CommunityToolkit.Maui.Markup.GridRowsColumns;
+﻿using static CommunityToolkit.Maui.Markup.GridRowsColumns;
 
-namespace InkWiseNote.UiComponents.UiLayouts;
+namespace InkWiseCore.UiComponents.UiLayouts;
 
-internal class GridLayoutBuilder
+public class GridLayoutBuilder
 {
     private ColumnDefinitionCollection ColumnDefinitions;
     private RowDefinitionCollection RowDefinitions;
@@ -33,7 +32,7 @@ internal class GridLayoutBuilder
         return this;
     }
 
-    internal GridLayoutBuilder HasChildren(View view)
+    public GridLayoutBuilder HasChildren(View view)
     {
         elements.Add(view);
         return this;

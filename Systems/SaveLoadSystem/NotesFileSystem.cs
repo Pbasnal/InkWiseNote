@@ -21,7 +21,7 @@ public class NotesFileSystem
     // including parsedNotes.
     // Or every system should listen to delete not event and 
     // do the necessary cleanup
-    public static void DeleteNote(string path) => UtilsLibrary.FileSystemUtils.DeleteFile(path);
+    public static void DeleteNote(string directoryPath, string path) => UtilsLibrary.FileSystemUtils.DeleteFile(Path.Combine(directoryPath, path));
 
     public static void WriteNoteToFile(string directoryPath, string fileName, object data, bool isJson = false)
         => SaveSystem.SaveData(directoryPath, fileName, data, isJson);

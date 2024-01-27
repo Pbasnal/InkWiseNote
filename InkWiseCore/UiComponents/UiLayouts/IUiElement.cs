@@ -1,4 +1,4 @@
-﻿namespace InkWiseNote.UiComponents.UiLayouts;
+﻿namespace InkWiseCore.UiComponents.UiLayouts;
 
 public interface IUiElement
 {

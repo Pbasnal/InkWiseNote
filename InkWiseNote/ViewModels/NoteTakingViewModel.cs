@@ -1,20 +1,20 @@
-﻿using Commons.Models;
+﻿using Commons;
+using Commons.Models;
 
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Core.Views;
 using CommunityToolkit.Maui.Markup;
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using InkWiseCore.NotesFuncationalities;
+using InkWiseCore.UiComponents.UiElements;
+using InkWiseCore.UiComponents.UiLayouts;
+
 using InkWiseNote.Commons;
 using InkWiseNote.Pages;
 using InkWiseNote.PageUtils;
-using InkWiseNote.UiComponents.UiElements;
-using InkWiseNote.UiComponents.UiLayouts;
-
-using Newtonsoft.Json;
 
 using System.Collections.ObjectModel;
-using System.Net.Http.Headers;
 
 using Systems.InMemoryDataStore;
 using Systems.SaveLoadSystem;
@@ -62,36 +62,11 @@ public partial class NoteTakingViewModel : ObservableObject
 
     public void OnAppearing()
     {
-        termFrequencySystem.LoadVocabulary();
-        IDictionary<string, HashSet<string>> groupedOnTerm = termFrequencySystem.GetTermFrequency()
-             .Where(tf => tf.TfIdfScore > Configs.MINIMUM_TF_IDF_SCORE)
-             .GroupBy(tf => tf.Term)
-             .ToDictionary(group => group.Key, GetRelatedNotes);
+        // After initial load, the latest vocabulary should stay in memory
+        //termFrequencySystem.LoadVocabulary();
+        IDictionary<string, HashSet<string>> groupedOnKeyword = NotesKeywords.GetNotesGroupedByKeywords(termFrequencySystem);
 
-        allRelatedNotes = new Dictionary<string, HashSet<string>>();
-        foreach (string term in groupedOnTerm.Keys)
-        {
-            foreach (string noteName in groupedOnTerm[term])
-            {
-                if (!allRelatedNotes.ContainsKey(noteName))
-                {
-                    allRelatedNotes.Add(noteName, new HashSet<string>());
-                }
-                foreach (string relatedNoteName in groupedOnTerm[term])
-                {
-                    if (relatedNoteName == noteName) continue;
-                    allRelatedNotes[noteName].Add(relatedNoteName);
-                }
-            }
-        }
-    }
-
-    private HashSet<string> GetRelatedNotes(IGrouping<string, TermWithFrequency> grouping)
-    {
-        return grouping
-            .Select(tf => tf.Document)
-            .Where(documentName => documentName != grouping.Key)
-            .ToHashSet();
+        allRelatedNotes = NotesKeywords.RelateNotesByCommonKeywords(groupedOnKeyword);
     }
 
     public void SetNote(HandwrittenNoteCard note)
@@ -102,7 +77,7 @@ public partial class NoteTakingViewModel : ObservableObject
 
         DrawingBackgroundCanvasData = new DrawingCanvasData
         {
-            BackgroundColor = Colors.White,
+            BackgroundColor = AppSettings.Current.CanvasBackgroundColour,
         };
 
         if (File.Exists(HandwrittenNote.Path))
@@ -114,7 +89,7 @@ public partial class NoteTakingViewModel : ObservableObject
         {
             DrawingCanvasData = new DrawingCanvasData();
         }
-        DrawingCanvasData.BackgroundColor = Colors.Transparent;
+        DrawingCanvasData.BackgroundColor = AppSettings.Current.CanvasColor;
     }
 
     internal View GetContent()
@@ -129,7 +104,7 @@ public partial class NoteTakingViewModel : ObservableObject
         var notePageBackground = GetDrawingView(DrawingBackgroundCanvasData);
         notePage = GetDrawingView(DrawingCanvasData);
 
-        View relatedNotes = GetRelatedNotes(HandwrittenNote.Title);
+        View relatedNotes = GetRelatedNotesView(HandwrittenNote.Title);
 
         Grid gridView = GridLayoutBuilder.NewGrid()
             .HasColumns(30, Star)
@@ -151,20 +126,37 @@ public partial class NoteTakingViewModel : ObservableObject
         return gridView;
     }
 
-    private Grid GetRelatedNotes(string noteTitle)
+    private Grid GetRelatedNotesView(string noteTitle)
     {
-        HashSet<string> relatedNotes;
+        List<Label> relatedNotes;
         if (allRelatedNotes.ContainsKey(noteTitle) && allRelatedNotes[noteTitle].Count() > 0)
         {
-            relatedNotes = allRelatedNotes[noteTitle];
+
+            relatedNotes = allRelatedNotes[noteTitle].Select(n =>
+            {
+                Label relatedNoteLabel = new Label
+                {
+                    Text = n
+                };
+
+                var tapGestureRecognizer = new TapGestureRecognizer();
+                tapGestureRecognizer.Tapped += OnRelatedNoteTap;
+
+                relatedNoteLabel.GestureRecognizers.Add(tapGestureRecognizer);
+                return relatedNoteLabel;
+            }).ToList();
         }
         else
         {
-            relatedNotes = new HashSet<string>
+            relatedNotes = new List<Label>
             {
-                "No related note"
+                new Label
+                {
+                    Text = "No related note"
+                }
             };
         }
+
         GridLayoutBuilder gridViewBuilder = GridLayoutBuilder.NewGrid()
             .HasColumns(relatedNotes.Select(n => new GridLength(100)).ToArray())
             .HasRows(50);
@@ -172,16 +164,7 @@ public partial class NoteTakingViewModel : ObservableObject
         int column = 0;
         foreach (var relatedNote in relatedNotes)
         {
-            Label relatedNoteLabel = new Label
-            {
-                Text = relatedNote
-            };
-            gridViewBuilder.HasChildren(relatedNoteLabel.Row(0).Column(column++));
-
-            var tapGestureRecognizer = new TapGestureRecognizer();
-            tapGestureRecognizer.Tapped += OnRelatedNoteTap;
-
-            relatedNoteLabel.GestureRecognizers.Add(tapGestureRecognizer);
+            gridViewBuilder.HasChildren(relatedNote.Row(0).Column(column++));
         }
 
         return gridViewBuilder;
@@ -189,10 +172,9 @@ public partial class NoteTakingViewModel : ObservableObject
 
     private async void OnRelatedNoteTap(object? sender, TappedEventArgs e)
     {
+        if (Objects.IsNull(sender) || !(sender is Label)) return;
 
         Label relatedNoteLabel = sender as Label;
-        if (Objects.IsNull(relatedNoteLabel)) return;
-
         string relatedNotename = relatedNoteLabel.Text;
 
         HandwrittenNoteCard noteCard = new HandwrittenNoteCard
@@ -207,25 +189,48 @@ public partial class NoteTakingViewModel : ObservableObject
 
     internal void SaveNote()
     {
-        if (string.IsNullOrWhiteSpace(HandwrittenNote?.Title))
-        {
-            HandwrittenNote.Title = Constants.UNTITLED_NOTE_TITLE;
-        }
+        EnsureNoteHasAName();
 
-        NotesFileSystem.WriteNoteToFile(Configs.ROOT_DIRECTORY, HandwrittenNote.Title, CanvasModel.FromCanvasData(drawingCanvasData));
-
-        if (originalNotePath != HandwrittenNote.Path)
+        if (HasNoteNameChanged())
         {
-            NotesFileSystem.DeleteNote(originalNotePath);
+            Notes.UpdateNote(originalNoteTitle, HandwrittenNote.Title, DrawingCanvasData, termFrequencySystem);
+            NotesKeywords.RemoveNoteFromVocabulary(originalNoteTitle, termFrequencySystem);
+
             exisitingCardTitlesTable.Remove(originalNoteTitle);
-
-            VisionResponse visionResponse = LoadVisionResponse(originalNoteTitle);
-            if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
-                termFrequencySystem.RemoveDocumentFromVocabulary(new Document(originalNoteTitle, visionResponse.readResult.content));
+        }
+        else
+        {
+            Notes.SaveNote(HandwrittenNote.Title, DrawingCanvasData);
         }
 
-        ProcessNoteContent(HandwrittenNote);
+        NotesKeywords.RemoveNoteFromVocabulary(HandwrittenNote.Title, termFrequencySystem);
+
+        Task.Factory.StartNew(() => {
+            var imageStream = GetHandwrittenNoteAsImageStream();
+            VisionResponse ocrResult = OcrFunctionalities.ApplyOcrOnNote(HandwrittenNote.Title, imageStream).Result;
+
+            if (!OcrFunctionalities.isVisionResponseValid(ocrResult))
+            {
+                return;
+            }
+
+            NotesKeywords.UpdateNoteInVocabulary(HandwrittenNote.Title, ocrResult.readResult.content,
+                 termFrequencySystem);
+        });
     }
+
+    private void EnsureNoteHasAName()
+    {
+        HandwrittenNote.Title = If.Condition(string.IsNullOrWhiteSpace(HandwrittenNote?.Title))
+            .IsTrue(Constants.UNTITLED_NOTE_TITLE)
+            .OrElse(HandwrittenNote.Title);
+    }
+
+    private bool HasNoteNameChanged() => string.Equals(originalNotePath, HandwrittenNote.Path);
+
+    // Invalid operation, Sequence contains no elements
+    private Stream GetHandwrittenNoteAsImageStream() => notePage.DrawingView.GetImageStream(notePage.DrawingView.Width,
+                notePage.DrawingView.Height).Result;
 
     private DrawingViewElement GetDrawingView(DrawingCanvasData drawingCanvasData)
     {
@@ -257,79 +262,4 @@ public partial class NoteTakingViewModel : ObservableObject
 
         return lines;
     }
-
-
-    private void ProcessNoteContent(HandwrittenNoteCard handwrittenNote)
-    {
-        Task.Factory.StartNew(() =>
-        {
-            VisionResponse visionResponse = LoadVisionResponse(handwrittenNote.Title);
-            if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
-                termFrequencySystem.RemoveDocumentFromVocabulary(new Document(handwrittenNote.Title, visionResponse.readResult.content));
-
-            var imageStream = notePage.DrawingView.GetImageStream(notePage.DrawingView.Width,
-                notePage.DrawingView.Height).Result;
-
-            visionResponse = ApplyOcr(imageStream);
-
-            If.Condition(Objects.IsNotNull(visionResponse))
-            .RunIfTrue(() => UpdateTfIdfScores(handwrittenNote.Title, visionResponse.readResult.content))
-            .OrElse(() => { });
-        });
-    }
-
-    private VisionResponse LoadVisionResponse(string handwrittenNoteTitle)
-    {
-        return SaveSystem.ReadFromFile<VisionResponse>(Configs.PARSED_NOTES_DIRECTORY, handwrittenNoteTitle);
-    }
-
-    public VisionResponse ApplyOcr(Stream imageStream)
-    {
-        VisionResponse visionResponse = null;
-        try
-        {
-            string textConverstionResponse = ConvertHandwritingToText(imageStream);
-            NotesFileSystem.WriteNoteToFile(Configs.PARSED_NOTES_DIRECTORY, HandwrittenNote.Title, textConverstionResponse, isJson: true);
-
-            visionResponse = JsonConvert.DeserializeObject<VisionResponse>(textConverstionResponse);
-        }
-        catch (Exception ex)
-        {
-        }
-
-        return visionResponse;
-    }
-
-    public void UpdateTfIdfScores(string noteTitle, string noteContent)
-    {
-        Document document = new Document(noteTitle, noteContent);
-        termFrequencySystem.UpdateVocabulary(document);
-
-        termFrequencySystem.SaveVocabulary();
-    }
-
-    private string ConvertHandwritingToText(Stream imageStream)
-    {
-        var client = new HttpClient();
-
-        byte[] imageBytes = new byte[imageStream.Length];
-        imageStream.Read(imageBytes, 0, imageBytes.Length);
-        string contents = Convert.ToBase64String(imageBytes);
-        HttpContent content = new ByteArrayContent(imageBytes);//, Encoding.UTF8, "image/*");
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-
-
-        client.BaseAddress = new Uri(Configs.VISION_END_POINT);
-        //client.DefaultRequestHeaders.Add("Content-Type", "image/png");
-        client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Configs.VISION_KEY);
-
-        var result = client.PostAsync("/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=read&language=en", content).Result;
-        string resultContent = result.Content.ReadAsStringAsync().Result;
-
-        //VisionResponse visionResponse = JsonConvert.DeserializeObject<VisionResponse>(resultContent);
-
-        return resultContent;
-    }
-
-   
 }

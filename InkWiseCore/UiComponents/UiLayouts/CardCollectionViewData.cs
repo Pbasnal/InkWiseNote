@@ -2,9 +2,9 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using InkWiseNote.UiComponents.UiElements;
+using InkWiseCore.UiComponents.UiElements;
 
-namespace InkWiseNote.UiComponents.UiLayouts;
+namespace InkWiseCore.UiComponents.UiLayouts;
 
 public partial class CardCollectionViewData : ObservableObject
 {

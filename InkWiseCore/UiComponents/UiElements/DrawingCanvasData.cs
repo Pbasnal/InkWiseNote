@@ -1,12 +1,12 @@
-﻿using System.Collections.ObjectModel;
-
-using CommunityToolkit.Maui.Core;
+﻿using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Core.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using InkWiseNote.Commons;
 
-namespace InkWiseNote.UiComponents.UiElements;
+using System.Collections.ObjectModel;
+
+namespace InkWiseCore.UiComponents.UiElements;
 
 public partial class DrawingCanvasData : ObservableObject, IHaveDrawingViewData
 {

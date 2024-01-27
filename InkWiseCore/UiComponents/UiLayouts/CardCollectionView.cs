@@ -1,6 +1,6 @@
-﻿namespace InkWiseNote.UiComponents.UiLayouts;
+﻿namespace InkWiseCore.UiComponents.UiLayouts;
 
-internal class CardCollectionView
+public class CardCollectionView
 {
     public View GetCardCollectionView(CardCollectionViewData cardCollectionViewData,
         DataTemplateSelector cardViewSelector)

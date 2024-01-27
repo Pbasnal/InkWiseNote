@@ -2,11 +2,12 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using InkWiseCore.UiComponents.UiElements;
+using InkWiseCore.UiComponents.UiLayouts;
+
 using InkWiseNote.Commons;
 using InkWiseNote.Pages;
 using InkWiseNote.PageUtils;
-using InkWiseNote.UiComponents.UiElements;
-using InkWiseNote.UiComponents.UiLayouts;
 
 using Systems.InMemoryDataStore;
 using Systems.SaveLoadSystem;

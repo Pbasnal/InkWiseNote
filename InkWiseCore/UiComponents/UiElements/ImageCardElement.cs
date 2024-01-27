@@ -1,14 +1,14 @@
 ﻿using CommunityToolkit.Maui.Markup;
 
-using InkWiseNote.UiComponents.UiLayouts;
+using InkWiseCore.UiComponents.UiLayouts;
 
 using Microsoft.Maui.Controls.Shapes;
 
 using UtilsLibrary;
 
-namespace InkWiseNote.UiComponents.UiElements;
+namespace InkWiseCore.UiComponents.UiElements;
 
-internal class ImageCardElement : IUiElement
+public class ImageCardElement : IUiElement
 {
     public View UiView { get; private set; }
     private Grid gridView;

@@ -13,6 +13,7 @@ namespace InkWiseNote
         {
             InitializeComponent();
             this.termFrequencySystem = termFrequencySystem;
+            termFrequencySystem.LoadVocabulary();
         }
 
         protected async override void OnAppearing()

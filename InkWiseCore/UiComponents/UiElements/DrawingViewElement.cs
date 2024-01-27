@@ -3,9 +3,9 @@
 using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Maui.Views;
 
-using InkWiseNote.UiComponents.UiLayouts;
+using InkWiseCore.UiComponents.UiLayouts;
 
-namespace InkWiseNote.UiComponents.UiElements;
+namespace InkWiseCore.UiComponents.UiElements;
 
 public interface IHaveDrawingViewData
 {

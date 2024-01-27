@@ -1,4 +1,5 @@
-using InkWiseNote.UiComponents.UiElements;
+using InkWiseCore.UiComponents.UiElements;
+
 using InkWiseNote.ViewModels;
 
 using UtilsLibrary;

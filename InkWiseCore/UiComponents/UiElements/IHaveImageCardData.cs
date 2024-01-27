@@ -2,7 +2,7 @@
 
 using InkWiseNote.Commons;
 
-namespace InkWiseNote.UiComponents.UiElements;
+namespace InkWiseCore.UiComponents.UiElements;
 
 public interface IHaveImageCardData
 {
