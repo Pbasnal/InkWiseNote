@@ -51,7 +51,7 @@ public class NoteTakingPage : ContentPage
             isSaving = true;
             viewModel.SaveNote();
         }
-        return base.OnBackButtonPressed();
+        return  base.OnBackButtonPressed();
     }
 
 

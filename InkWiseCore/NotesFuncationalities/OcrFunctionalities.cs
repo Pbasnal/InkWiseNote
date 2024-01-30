@@ -14,10 +14,20 @@ namespace InkWiseCore.NotesFuncationalities;
 
 public static class OcrFunctionalities
 {
-
     public static async Task<VisionResponse> ApplyOcrOnNote(string noteName,
         Stream noteImage)
     {
+        if (Objects.IsNull(noteImage))
+        {
+            return await Task.FromResult(new VisionResponse
+            {
+                readResult = new ReadResult
+                {
+                    content = string.Empty
+                }
+            });
+        }
+
         return await Task.Factory.StartNew(() => ApplyOcr(noteName, noteImage));
     }
 
@@ -71,6 +81,8 @@ public static class OcrFunctionalities
 
     public static bool isVisionResponseValid(VisionResponse visionResponse)
     {
-        return Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content);
+        return Objects.IsNotNull(visionResponse) 
+            && Objects.IsNotNull(visionResponse.readResult) 
+            && !string.IsNullOrWhiteSpace(visionResponse.readResult.content);
     }
 }

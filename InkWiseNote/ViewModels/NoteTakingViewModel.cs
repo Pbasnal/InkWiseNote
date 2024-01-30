@@ -57,13 +57,10 @@ public partial class NoteTakingViewModel : ObservableObject
 
         exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
         this.termFrequencySystem = termFrequencySystem;
-        //OnAppearing();
     }
 
     public void OnAppearing()
     {
-        // After initial load, the latest vocabulary should stay in memory
-        //termFrequencySystem.LoadVocabulary();
         IDictionary<string, HashSet<string>> groupedOnKeyword = NotesKeywords.GetNotesGroupedByKeywords(termFrequencySystem);
 
         allRelatedNotes = NotesKeywords.RelateNotesByCommonKeywords(groupedOnKeyword);
@@ -187,8 +184,10 @@ public partial class NoteTakingViewModel : ObservableObject
                    .Navigate();
     }
 
-    internal void SaveNote()
+    internal async Task SaveNote()
     {
+        if (!ShouldSaveNote()) return;
+
         EnsureNoteHasAName();
 
         if (HasNoteNameChanged())
@@ -205,7 +204,8 @@ public partial class NoteTakingViewModel : ObservableObject
 
         NotesKeywords.RemoveNoteFromVocabulary(HandwrittenNote.Title, termFrequencySystem);
 
-        Task.Factory.StartNew(() => {
+       await Task.Factory.StartNew(() =>
+        {
             var imageStream = GetHandwrittenNoteAsImageStream();
             VisionResponse ocrResult = OcrFunctionalities.ApplyOcrOnNote(HandwrittenNote.Title, imageStream).Result;
 
@@ -219,6 +219,14 @@ public partial class NoteTakingViewModel : ObservableObject
         });
     }
 
+    private bool ShouldSaveNote()
+    {
+        bool noteHasTitle = !string.IsNullOrWhiteSpace(HandwrittenNote?.Title);
+        bool noteHasContent = DrawingCanvasData.Lines.Count > 0;
+        
+        return noteHasTitle || noteHasContent;
+    }
+
     private void EnsureNoteHasAName()
     {
         HandwrittenNote.Title = If.Condition(string.IsNullOrWhiteSpace(HandwrittenNote?.Title))
@@ -226,11 +234,15 @@ public partial class NoteTakingViewModel : ObservableObject
             .OrElse(HandwrittenNote.Title);
     }
 
-    private bool HasNoteNameChanged() => string.Equals(originalNotePath, HandwrittenNote.Path);
+    private bool HasNoteNameChanged() => !string.Equals(originalNotePath, HandwrittenNote.Path);
 
-    // Invalid operation, Sequence contains no elements
-    private Stream GetHandwrittenNoteAsImageStream() => notePage.DrawingView.GetImageStream(notePage.DrawingView.Width,
-                notePage.DrawingView.Height).Result;
+    private Stream GetHandwrittenNoteAsImageStream()
+    {
+        return If.Condition(DrawingCanvasData.Lines.Count > 0)
+             .IsTrueRun(() => notePage.DrawingView.GetImageStream(notePage.DrawingView.Width,
+                    notePage.DrawingView.Height).Result)
+             .OrElse(() => null);
+    }
 
     private DrawingViewElement GetDrawingView(DrawingCanvasData drawingCanvasData)
     {

@@ -23,6 +23,12 @@ public class If
     {
         return new IfWithAction(action, conditionResult);
     }
+
+
+    public IfWithFunc<T> IsTrueRun<T>(Func<T> actionWithResult)
+    {
+        return new IfWithFunc<T>(actionWithResult, conditionResult);
+    }
 }
 
 public class IfWithAction : If
@@ -34,13 +40,30 @@ public class IfWithAction : If
         this.ifTrueAction = ifTrueAction;
     }
 
-
     public void OrElse(Action elseAction)
     {
         if (conditionResult)
             ifTrueAction.Invoke();
         else
             elseAction.Invoke();
+    }
+}
+
+public class IfWithFunc<T> : If
+{
+    private Func<T> ifTrueFunc;
+
+    public IfWithFunc(Func<T> ifTrueFunc, bool condition) : base(condition)
+    {
+        this.ifTrueFunc = ifTrueFunc;
+    }
+
+    public T OrElse(Func<T> elseFunc)
+    {
+        if (conditionResult)
+           return ifTrueFunc.Invoke();
+        else
+            return elseFunc.Invoke();
     }
 }
 

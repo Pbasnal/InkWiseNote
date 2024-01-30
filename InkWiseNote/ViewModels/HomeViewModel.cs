@@ -85,11 +85,16 @@ public partial class HomeViewModel : ObservableObject
 
     internal void LoadImageCardData()
     {
-        NotesFileSystem.ListAllNotes()
+        List<string> sortedNoteNames = NotesFileSystem.ListAllNotes()
             .Select(NotesFileSystem.FileNameToNoteTitle)
             .Where(noteTitle => !exisitingCardTitlesTable.Contains(noteTitle))
             .Select(noteTitle => { exisitingCardTitlesTable.Add(noteTitle); return noteTitle; })
-            .Select(noteTitle => NoteCardFactory.NoteCard(noteTitle, OnTappingNote))
+            .ToList();
+        
+        // shouldn't be needed.
+        sortedNoteNames.Sort();
+
+        sortedNoteNames.Select(noteTitle => NoteCardFactory.NoteCard(noteTitle, OnTappingNote))
             .ToList()
             .ForEach(CardCollectionViewData.Items.Add);
     }
