@@ -25,11 +25,31 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v2
         with:
-          api-level: 34
-          build-tools: 34.0.0
+          api-level: 34  # Target SDK and Compile SDK level
+          build-tools: 34.0.0  # Corresponding build tools version
 
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-wrapper-
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/kotlin
+            ~/.gradle/daemon
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-caches-
 
       - name: Build with Gradle
         run: ./gradlew build

@@ -27,6 +27,26 @@ jobs:
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-wrapper-
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/kotlin
+            ~/.gradle/daemon
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-caches-
+
       - name: Build APK
         run: ./gradlew assembleRelease
 
