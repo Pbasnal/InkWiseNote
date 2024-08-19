@@ -6,7 +6,7 @@
                                                    android:layout_height="match_parent"
                                                    tools:context=".NoteActivity">
 
-    <com.example.hellodroid.DrawingView
+    <com.originb.inkwisenote.DrawingView
             android:id="@+id/drawing_view"
             android:layout_width="0dp"
             android:layout_height="0dp"

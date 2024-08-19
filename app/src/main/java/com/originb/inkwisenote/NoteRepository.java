@@ -1,8 +1,7 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.widget.Toast;
 
 import java.io.*;
 

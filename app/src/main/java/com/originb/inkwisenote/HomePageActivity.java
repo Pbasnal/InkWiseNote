@@ -1,17 +1,12 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -37,7 +32,6 @@ public class HomePageActivity extends AppCompatActivity implements NoteGridAdapt
 
         noteGridAdapter = new NoteGridAdapter(noteRepository.listNotes(), this);
 
-//        noteAdapter = new NoteAdapter(noteRepository.listNotes(), this);
         recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
 

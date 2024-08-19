@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HelloDroid"
+rootProject.name = "InkWiseNote"
 include(":app")
  

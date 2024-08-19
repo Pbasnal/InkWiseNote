@@ -1,4 +1,4 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -7,8 +7,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
-import java.io.File;
 
 public class NoteActivity extends AppCompatActivity {
     private DrawingView drawingView;

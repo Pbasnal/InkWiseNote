@@ -1,4 +1,4 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;

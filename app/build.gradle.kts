@@ -3,11 +3,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.hellodroid"
+    namespace = "com.originb.inkwisenote"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.hellodroid"
+        applicationId = "com.originb.inkwisenote"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.hellodroid;
+package com.example.inkwisenote;
 
 import org.junit.Test;
 

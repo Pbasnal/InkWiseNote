@@ -1,4 +1,4 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.content.Context;
 import android.graphics.*;
@@ -74,7 +74,7 @@ public class DrawingView extends View {
         for (MyPath myPath : this.paths) {
             myPath.loadThisPath();
         }
-        Log.w("helloDroid", "Number of paths: " + (long) this.paths.size());
+        Log.w("inkWise", "Number of paths: " + (long) this.paths.size());
 
         this.paints = paints.stream().map(Note.PaintData::toPaint).collect(Collectors.toList());
     }

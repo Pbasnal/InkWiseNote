@@ -1,4 +1,4 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.graphics.Path;
 

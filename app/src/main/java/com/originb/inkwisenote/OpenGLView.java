@@ -1,4 +1,4 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;

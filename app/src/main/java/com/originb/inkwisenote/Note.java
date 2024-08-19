@@ -1,7 +1,6 @@
-package com.example.hellodroid;
+package com.originb.inkwisenote;
 
 import android.graphics.Paint;
-import android.graphics.Path;
 
 import java.io.Serializable;
 import java.util.ArrayList;
