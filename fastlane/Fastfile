@@ -1,0 +1,12 @@
+default_platform(:android)
+
+   platform :android do
+     desc "Deploy the app to the Google Play Store"
+     lane :deploy do
+       # Ensure the correct gradle task is called
+       gradle(task: "assembleRelease")
+
+       # Upload the app to Google Play
+       upload_to_play_store(track: 'production', json_key: ENV['GOOGLE_PLAY_SERVICE_ACCOUNT_JSON'])
+     end
+   end
