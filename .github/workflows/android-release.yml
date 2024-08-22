@@ -58,14 +58,23 @@ jobs:
           name: release-apk
           path: app/build/outputs/apk/release/app-release.apk
 
+      - name: Create and push a new tag
+        run: |
+          git config --global user.email "your-email@example.com"
+          git config --global user.name "your-username"
+          git tag v1.${{ github.run_number }}
+          git push origin v1.${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: v1.${{ github.run_number }}
+          release_name: Release v1.${{ github.run_number }}
           body: |
             Changes in this Release:
             - Description of changes
