@@ -1,9 +1,10 @@
 name: Android Build Release APK
 
 on:
-  release:
-    types: [created]
-  workflow_dispatch: # Adds a button for manual triggering
+  workflow_run:
+    workflows: [ "Android Build" ]
+    types:
+      - completed
 
 jobs:
   build:
