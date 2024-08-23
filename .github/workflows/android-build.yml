@@ -81,5 +81,5 @@ jobs:
         with:
           serviceAccountJson: service_account.json
           packageName: com.originb.inkwisenote
-          releaseFile: app/build/outputs/bundle/prodRelease/app-prod release.aab
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
           track: beta
