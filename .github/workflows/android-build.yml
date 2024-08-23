@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - master-android
-  pull_request:
-    branches:
-      - master-android
 
 jobs:
   build:
@@ -51,5 +48,38 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-caches-
 
+      - name: Bump version number
+        uses: chkfung/android-version-actions@v1.1
+        with:
+          gradlePath: app/build.gradle
+          versionCode: ${{ github.run_number }}
+
       - name: Build with Gradle
         run: ./gradlew build
+
+      - name: Build Release AAB
+        id: buildRelease
+        run: ./gradlew bundleRelease
+
+      - name: Sign Release AAB
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/bundle/prodRelease
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+      - name: Create service_account.json
+        id: createServiceAccount
+        run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' >    service_account.json
+
+      - name: Publish to Play Store BETA
+        id: publish
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: service_account.json
+          packageName: com.originb.inkwisenote
+          releaseFile: app/build/outputs/bundle/prodRelease/app-prod release.aab
+          track: beta
