@@ -11,13 +11,11 @@ import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.originb.inkwisenote.NoteRepository;
+import com.originb.inkwisenote.noterepository.NoteRepository;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.activities.NoteActivity;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {

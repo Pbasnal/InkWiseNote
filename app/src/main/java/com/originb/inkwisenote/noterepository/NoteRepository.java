@@ -1,12 +1,13 @@
-package com.originb.inkwisenote;
+package com.originb.inkwisenote.noterepository;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import com.originb.inkwisenote.Note;
+import com.originb.inkwisenote.filemanager.FileInfo;
+import com.originb.inkwisenote.filemanager.FileType;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class NoteRepository {
@@ -32,6 +33,22 @@ public class NoteRepository {
 
         noteFile.delete();
         bitmapFile.delete();
+    }
+
+    public List<FileInfo> getNoteFilesToSave(Note note, Bitmap bitmap) {
+        List<FileInfo> filesToWrite = new ArrayList<>();
+        filesToWrite.add(new FileInfo(directory + "/" + note.getNoteName() + ".note", FileType.NOTE, note));
+        filesToWrite.add(new FileInfo(directory + "/" + note.getBitmapName() + ".png", FileType.BITMAP, bitmap));
+
+        return filesToWrite;
+    }
+
+    public List<FileInfo> getNoteFilesToLoad(String noteName) {
+        List<FileInfo> filesToRead = new ArrayList<>();
+        filesToRead.add(new FileInfo(directory + "/" + noteName + ".note", FileType.NOTE, Note.class));
+        filesToRead.add(new FileInfo(directory + "/" + noteName + ".png", FileType.BITMAP, Bitmap.class));
+
+        return filesToRead;
     }
 
     // Save Note object to disk

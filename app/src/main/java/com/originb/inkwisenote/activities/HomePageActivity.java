@@ -10,7 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.originb.inkwisenote.NoteRepository;
+import com.originb.inkwisenote.noterepository.NoteRepository;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 
