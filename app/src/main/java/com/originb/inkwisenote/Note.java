@@ -1,15 +1,21 @@
 package com.originb.inkwisenote;
 
+import android.graphics.Bitmap;
 import android.graphics.Paint;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
 public class Note implements Serializable {
     private static final long serialVersionUID = 1L;
+    public Function<String, Bitmap> bitmapLoader;
+
+    private String noteName;
+    private String bitmapName;
 
     // List to store drawing paths
     private List<MyPath> paths;
@@ -17,11 +23,33 @@ public class Note implements Serializable {
     // List to store corresponding paint objects for each path
     private List<PaintData> paints;
 
-
-
     public Note() {
         paths = new ArrayList<>();
         paints = new ArrayList<>();
+    }
+
+    public void setBitmapLoader(Function<String, Bitmap> bitmapLoader) {
+        this.bitmapLoader = bitmapLoader;
+    }
+
+    public Bitmap loadBitmapFromDisk() {
+        return bitmapLoader.apply(noteName);
+    }
+
+    public void setNoteName(String noteName) {
+        this.noteName = noteName;
+    }
+
+    public String getNoteName() {
+        return noteName;
+    }
+
+    public void setBitmapName(String bitmapName) {
+        this.bitmapName = bitmapName;
+    }
+
+    public String getBitmapName() {
+        return bitmapName;
     }
 
     // Add a path with its corresponding paint

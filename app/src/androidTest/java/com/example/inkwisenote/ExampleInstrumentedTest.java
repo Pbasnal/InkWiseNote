@@ -1,4 +1,4 @@
-package com.example.inkwisenote;
+package com.originb.inkwisenote;
 
 import android.content.Context;
 import androidx.test.platform.app.InstrumentationRegistry;

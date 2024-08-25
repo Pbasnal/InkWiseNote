@@ -4,6 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import java.io.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class NoteRepository {
     private final File directory;
@@ -17,18 +21,31 @@ public class NoteRepository {
         }
     }
 
+    public void deleteNoteFromDisk(String noteName) {
+        assert !noteName.contains(".");
+
+        String noteFileName = noteName + ".note";
+        String noteBitmapFileName = noteName + ".png";
+
+        File noteFile = new File(directory, noteFileName);
+        File bitmapFile = new File(directory, noteBitmapFileName);
+
+        noteFile.delete();
+        bitmapFile.delete();
+    }
+
     // Save Note object to disk
-    public void saveNoteToDisk(Note note, String fileName) throws Exception {
-        File file = new File(directory, fileName);
+    public void saveNoteToDisk(Note note, Bitmap bitmap) throws Exception {
+
+        String noteFileName = note.getNoteName() + ".note";
+        File file = new File(directory, noteFileName);
         try (FileOutputStream fos = new FileOutputStream(file);
              ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(note);
         }
-    }
 
-    public void saveBitmapToDisk(Bitmap bitmap, String fileName) throws Exception {
-
-        File file = new File(directory, fileName);
+        String noteBitmapFileName = note.getBitmapName() + ".png";
+        file = new File(directory, noteBitmapFileName);
         try (FileOutputStream fos = new FileOutputStream(file)) {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.flush();
@@ -36,37 +53,45 @@ public class NoteRepository {
     }
 
     // Load Note object from disk
-    public Note loadNoteFromDisk(String fileName) throws Exception {
-        File file = new File(directory, fileName);
+    public Note loadNoteFromDisk(String noteName) throws Exception {
+        assert !noteName.contains(".");
+
+        noteName = noteName + ".note";
+
+        Note note = null;
+        File file = new File(directory, noteName);
         try (FileInputStream fis = new FileInputStream(file);
              ObjectInputStream ois = new ObjectInputStream(fis)) {
-            return (Note) ois.readObject();
+            note = (Note) ois.readObject();
         }
+
+        return note;
     }
 
     public Bitmap loadBitmapFromDisk(String fileName) {
+        assert !fileName.contains(".");
+        fileName = fileName + ".png";
+
         File file = new File(directory, fileName);
-        Bitmap bitmap = loadBitmapWithCompletePath(file.getAbsolutePath());
-        return bitmap;
-    }
-    public static Bitmap loadBitmapWithCompletePath(String filePath) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        return BitmapFactory.decodeFile(filePath);
+        return BitmapFactory.decodeFile(file.getAbsolutePath());
     }
 
-    public static Bitmap getScaledBitmap(String filePath, int reqWidth, int reqHeight) {
+    public Bitmap getScaledBitmap(String fileName, int reqWidth, int reqHeight) {
+        assert !fileName.contains(".");
+        fileName = fileName + ".png";
+
+        File bitmapFile = new File(directory, fileName);
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(filePath, options);
-
         // Calculate inSampleSize
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeFile(filePath, options);
+        return BitmapFactory.decodeFile(bitmapFile.getAbsolutePath(), options);
     }
 
     public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
@@ -90,9 +115,12 @@ public class NoteRepository {
     }
 
     // List all saved notes
-    public File[] listNotes() {
-        return directory.listFiles((dir, name) -> name.endsWith(".note")
-                //|| name.endsWith(".png") // use to debug if the png image was created or not
-        );
+    public List<String> listNoteNamesInDirectory() {
+        return Arrays.stream(Objects.requireNonNull(directory.listFiles((dir, name) -> name.endsWith(".note")
+                        //|| name.endsWith(".png") // use to debug if the png image was created or not
+                )))
+                .map(File::getName)
+                .map(name -> name.substring(0, name.lastIndexOf('.')))
+                .collect(Collectors.toList());
     }
 }

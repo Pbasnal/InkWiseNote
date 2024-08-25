@@ -10,6 +10,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DrawingView extends View {
@@ -49,6 +50,10 @@ public class DrawingView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        if (Objects.isNull(bitmap)) {
+            bitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
+        }
+
         if (w != oldw || h != oldh) {
             Bitmap newBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             Canvas newCanvas = new Canvas(newBitmap);

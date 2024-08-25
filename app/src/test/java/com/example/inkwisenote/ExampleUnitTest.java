@@ -1,4 +1,4 @@
-package com.example.inkwisenote;
+package com.originb.inkwisenote;
 
 import org.junit.Test;
 

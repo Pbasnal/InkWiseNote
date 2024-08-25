@@ -1,4 +1,4 @@
-package com.originb.inkwisenote;
+package com.originb.inkwisenote.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,13 +10,13 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.originb.inkwisenote.NoteRepository;
+import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.adapters.NoteGridAdapter;
 
-import java.io.File;
-
-public class HomePageActivity extends AppCompatActivity implements NoteGridAdapter.OnNoteClickListener {
+public class HomePageActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
     private RecyclerView recyclerView;
-    //    private NoteAdapter noteAdapter;
     private NoteGridAdapter noteGridAdapter;
 
     @Override
@@ -26,40 +26,39 @@ public class HomePageActivity extends AppCompatActivity implements NoteGridAdapt
 
         noteRepository = new NoteRepository(getFilesDir());
 
+        createGridLayoutToShowNotes();
+        createNewNoteButton();
+    }
+
+    public void createGridLayoutToShowNotes() {
         recyclerView = findViewById(R.id.recycler_view);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(noteRepository.listNotes(), this);
+        noteGridAdapter = new NoteGridAdapter(noteRepository.listNoteNamesInDirectory(),
+                this,
+                noteRepository);
 
         recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
+    }
 
+    public void createNewNoteButton() {
         FloatingActionButton fab = findViewById(R.id.fab_add_note);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Start NoteActivity to create a new note
-                Intent intent = new Intent(HomePageActivity.this, NoteActivity.class);
-                startActivity(intent);
-            }
-        });
-
-
+        fab.setOnClickListener(onNewNoteTapCallback);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         // Refresh the note list on resume
-        noteGridAdapter.updateNotes(noteRepository.listNotes());
+        noteGridAdapter.updateNotes(noteRepository.listNoteNamesInDirectory());
     }
 
-    @Override
-    public void onNoteClick(File noteFile) {
-        // Open NoteActivity with the selected note
-        Intent intent = new Intent(this, NoteActivity.class);
-        intent.putExtra("noteFileName", noteFile.getName());
+    public View.OnClickListener onNewNoteTapCallback = v -> {
+        // Start NoteActivity to create a new note
+        Intent intent = new Intent(HomePageActivity.this, NoteActivity.class);
         startActivity(intent);
-    }
+    };
+
 }

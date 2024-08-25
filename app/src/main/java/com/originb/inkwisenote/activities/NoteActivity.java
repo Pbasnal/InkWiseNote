@@ -1,4 +1,4 @@
-package com.originb.inkwisenote;
+package com.originb.inkwisenote.activities;
 
 import android.os.Bundle;
 import android.view.Menu;
@@ -7,12 +7,16 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import com.originb.inkwisenote.DrawingView;
+import com.originb.inkwisenote.Note;
+import com.originb.inkwisenote.NoteRepository;
+import com.originb.inkwisenote.R;
 
 public class NoteActivity extends AppCompatActivity {
     private DrawingView drawingView;
     private NoteRepository noteRepository;
     private Note note;
-    private String noteFileName;
+    private String noteName;
     private String noteBitmapName;
 
     @Override
@@ -23,11 +27,11 @@ public class NoteActivity extends AppCompatActivity {
         drawingView = findViewById(R.id.drawing_view);
         noteRepository = new NoteRepository(getFilesDir());
 
-        noteFileName = getIntent().getStringExtra("noteFileName");
-        noteBitmapName = noteFileName + ".png";
-        if (noteFileName != null) {
+        noteName = getIntent().getStringExtra("noteFileName");
+        noteBitmapName = noteName;
+        if (noteName != null) {
             try {
-                note = noteRepository.loadNoteFromDisk(noteFileName);
+                note = noteRepository.loadNoteFromDisk(noteName);
                 drawingView.bitmap = noteRepository.loadBitmapFromDisk(noteBitmapName);
                 drawingView.setPaths(note.getPaths(), note.getPaints());
             } catch (Exception e) {
@@ -65,13 +69,13 @@ public class NoteActivity extends AppCompatActivity {
     private void saveNote() {
         note.setNoteData(drawingView.getPaths(), drawingView.getPaints());
 
-        if (noteFileName == null) {
-            noteFileName = "note_" + System.currentTimeMillis() + ".note";
-            noteBitmapName = noteFileName + ".png";
+        if (note.getNoteName() == null) {
+            noteName = "note_" + System.currentTimeMillis();
+            note.setNoteName(noteName);
+            note.setBitmapName(noteName);
         }
         try {
-            noteRepository.saveNoteToDisk(note, noteFileName);
-            noteRepository.saveBitmapToDisk(drawingView.bitmap, noteBitmapName);
+            noteRepository.saveNoteToDisk(note, drawingView.bitmap);
             Toast.makeText(this, "Note saved", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(this, "Failed to save note", Toast.LENGTH_SHORT).show();

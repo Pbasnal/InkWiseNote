@@ -10,8 +10,8 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.InkWiseNote">
 
-        <activity android:name=".NoteActivity" />
-        <activity android:name=".HomePageActivity"
+        <activity android:name=".activities.NoteActivity" />
+        <activity android:name=".activities.HomePageActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
