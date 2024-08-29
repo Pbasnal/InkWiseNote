@@ -9,11 +9,12 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.originb.inkwisenote.DrawingView;
-import com.originb.inkwisenote.Note;
+import com.originb.inkwisenote.data.Note;
 import com.originb.inkwisenote.filemanager.BitmapFileManager;
+import com.originb.inkwisenote.filemanager.FileInfo;
 import com.originb.inkwisenote.filemanager.FileType;
 import com.originb.inkwisenote.filemanager.JsonFileManager;
-import com.originb.inkwisenote.noterepository.NoteRepository;
+import com.originb.inkwisenote.repositories.NoteRepository;
 import com.originb.inkwisenote.R;
 
 public class NoteActivity extends AppCompatActivity {
@@ -21,7 +22,6 @@ public class NoteActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
     private Note note;
     private String noteName;
-    private String noteBitmapName;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -32,7 +32,6 @@ public class NoteActivity extends AppCompatActivity {
         noteRepository = new NoteRepository(getFilesDir());
 
         noteName = getIntent().getStringExtra("noteFileName");
-        noteBitmapName = noteName;
         if (noteName != null) {
             try {
                 noteRepository.getNoteFilesToLoad(noteName).forEach(fileInfo ->
@@ -40,7 +39,8 @@ public class NoteActivity extends AppCompatActivity {
                     if (FileType.NOTE.equals(fileInfo.fileType)) {
                         note = JsonFileManager.<Note>readDataFromDisk(fileInfo).data;
                     } else {
-                        drawingView.bitmap = BitmapFileManager.<Bitmap>readDataFromDisk(fileInfo).data;
+                        FileInfo<Bitmap> bitmapInfo = BitmapFileManager.<Bitmap>readDataFromDisk(fileInfo);
+                        drawingView.bitmap = bitmapInfo.data;
                         drawingView.setPaths(note.getPaths(), note.getPaints());
                     }
                 });
@@ -92,7 +92,6 @@ public class NoteActivity extends AppCompatActivity {
                             JsonFileManager.writeDataToDisk(fileInfo);
                         } else BitmapFileManager.writeDataToDisk(fileInfo);
                     });
-//            noteRepository.saveNoteToDisk(note, drawingView.bitmap);
             // TODO: launch a callback from here to update the list of notes with the saved information
             // This will be need to updated the thumbnail if user saves by pressing back button
             Toast.makeText(this, "Note saved", Toast.LENGTH_SHORT).show();

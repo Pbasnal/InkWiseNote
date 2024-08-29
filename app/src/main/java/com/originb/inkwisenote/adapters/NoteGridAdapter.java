@@ -11,7 +11,9 @@ import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.originb.inkwisenote.noterepository.NoteRepository;
+import com.originb.inkwisenote.filemanager.BitmapFileManager;
+import com.originb.inkwisenote.filemanager.FileInfo;
+import com.originb.inkwisenote.repositories.NoteRepository;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.activities.NoteActivity;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +45,8 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
     @Override
     public void onBindViewHolder(@NonNull @NotNull NoteGridAdapter.NoteCardHolder noteCardHolder, int position) {
         String note = notes.get(position);
-        Bitmap noteThumbnail = noteRepository.getScaledBitmap(note, 150, 150);
-        noteCardHolder.noteImage.setImageBitmap(noteThumbnail);
+        FileInfo<Bitmap> noteThumbnailInfo = BitmapFileManager.readDataFromDisk(noteRepository.getThumbnailInfo(note));
+        noteCardHolder.noteImage.setImageBitmap(noteThumbnailInfo.data);
         noteCardHolder.noteTitle.setText(note);
     }
 
