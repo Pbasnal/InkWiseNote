@@ -1,7 +1,8 @@
-package com.originb.inkwisenote;
+package com.originb.inkwisenote.data;
 
 import android.graphics.Bitmap;
 import android.graphics.Paint;
+import com.originb.inkwisenote.MyPath;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import com.originb.inkwisenote.data.Note;
 
 import java.util.ArrayList;
 import java.util.List;
