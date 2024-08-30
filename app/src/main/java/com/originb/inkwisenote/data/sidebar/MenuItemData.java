@@ -1,9 +1,5 @@
 package com.originb.inkwisenote.data.sidebar;
 
-import lombok.Getter;
-
-
-@Getter
 public class MenuItemData {
     private int parentMenuId;
     private int groupId;

@@ -3,9 +3,7 @@ package com.originb.inkwisenote.data;
 import android.graphics.Bitmap;
 import com.originb.inkwisenote.filemanager.FileInfo;
 import com.originb.inkwisenote.filemanager.FileType;
-import lombok.Getter;
 
-@Getter
 public class BitmapFileInfo extends FileInfo<Bitmap> {
     public BitmapFileInfo(String filePath, Bitmap bitmap) {
         super(filePath, FileType.BITMAP, bitmap);

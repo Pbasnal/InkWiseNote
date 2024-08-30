@@ -1,8 +1,5 @@
 package com.originb.inkwisenote.data.repositories;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.io.File;
 
 public class FolderItem {
