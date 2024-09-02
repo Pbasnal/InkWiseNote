@@ -1,20 +1,30 @@
 package com.originb.inkwisenote.data.sidebar;
 
-public class MenuItemData {
-    private int parentMenuId;
-    private int groupId;
-    private int itemId;
-    private int order;
-    private String title;
-    private int icon;
+import lombok.Getter;
 
-    public MenuItemData(int parentMenuId, int groupId, int itemId, int order, String title, int icon) {
-        this.parentMenuId = parentMenuId;
-        this.groupId = groupId;
+import java.util.ArrayList;
+import java.util.List;
+
+@Getter
+public class MenuItemData {
+    private int itemId;
+    private String title;
+    private List<MenuItemData> childItems;
+    private boolean isExpanded;
+
+    public MenuItemData(int itemId, String title) {
         this.itemId = itemId;
-        this.order = order;
         this.title = title;
-        this.icon = icon;
+        childItems = new ArrayList<>();
     }
+
+    public void addChildItem(MenuItemData child) {
+        childItems.add(child);
+    }
+
+    public void setExpanded(boolean isExpanded) {
+        this.isExpanded = isExpanded;
+    }
+
 }
 
