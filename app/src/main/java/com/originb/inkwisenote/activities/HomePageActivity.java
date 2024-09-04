@@ -43,7 +43,6 @@ public class HomePageActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
 
-//        getSupportActionBar().hide();
         noteRepository = new NoteRepository(getFilesDir());
         fileRepository = new FileRepository(getFilesDir());
         DirectoryContents directoryContents = fileRepository.getFilesInDirectory();
@@ -62,15 +61,10 @@ public class HomePageActivity extends AppCompatActivity {
 
         List<MenuItemData> menuItems = new ArrayList<>();
 
-        for (int i = 0; i < 5; i++) {
-            MenuItemData menuItem = new MenuItemData(i, "Menu item " + i);
-            for (int j = 0; j < 2; j++) {
-                int childId = i * 100 + j;
-                MenuItemData menuItemChild = new MenuItemData(i * 10 + j, "Menu item child" + childId);
-                menuItem.addChildItem(menuItemChild);
-            }
+        folders.forEach(folder -> {
+            MenuItemData menuItem = new MenuItemData(folder.getId(), folder.getFolderName());
             menuItems.add(menuItem);
-        }
+        });
 
         expandableMenuListAdapter = new ExpandableMenuListAdapter(menuItems);
         navigationRecyclerView.setLayoutManager(new GridLayoutManager(this, 1));
