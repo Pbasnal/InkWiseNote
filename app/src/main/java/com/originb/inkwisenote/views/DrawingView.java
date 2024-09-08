@@ -5,8 +5,8 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
+import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.data.views.WriteablePath;
 import com.originb.inkwisenote.data.Note;
 import lombok.Getter;
@@ -26,16 +26,16 @@ public class DrawingView extends View {
      * onDraw is called --> canvas draws updated bitmap
      *                  --> canvas draws updated path. [this is the path that user is currently drawing]
      * */
-    public Bitmap bitmap;
-    private Canvas bitmapCanvas;
+    private Bitmap userDrawingBitmap;
+    private Bitmap pageTemplateBitmap;
+    private Canvas userDrwaingCanvas;
 
+    private BasicPageTemplate basicPageTemplate;
 
     private Paint paint;
     private WriteablePath path;
     private List<WriteablePath> paths;
     private List<Paint> paints;
-    private ScaleGestureDetector scaleDetector;
-    private float scaleFactor = 1.0f;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -52,30 +52,45 @@ public class DrawingView extends View {
         paths = new ArrayList<>();
         paints = new ArrayList<>();
 
-        bitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
-        bitmapCanvas = new Canvas(bitmap);
+        userDrawingBitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
 
+        userDrwaingCanvas = new Canvas(userDrawingBitmap);
+        basicPageTemplate = new BasicPageTemplate(1000, 1000);
 
-        scaleDetector = new ScaleGestureDetector(context, new ScaleListener());
+        pageTemplateBitmap = basicPageTemplate.drawTemplate();
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        if (Objects.isNull(bitmap)) {
-            bitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
-        }
-
+        sizeChangeUserDrawingBitmap(w, h, oldw, oldh);
         if (w != oldw || h != oldh) {
             Bitmap newBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             Canvas newCanvas = new Canvas(newBitmap);
 
             // Draw the old bitmap onto the new one
-            newCanvas.drawBitmap(bitmap, 0, 0, null);
+            newCanvas.drawBitmap(userDrawingBitmap, 0, 0, null);
 
-            bitmap = newBitmap;
-            bitmapCanvas = newCanvas;
+            userDrawingBitmap = newBitmap;
+            userDrwaingCanvas = newCanvas;
         }
+
+        basicPageTemplate.onSizeChanged(w, h, oldw, oldh);
+        pageTemplateBitmap = basicPageTemplate.drawTemplate();
+    }
+
+    private void sizeChangeUserDrawingBitmap(int w, int h, int oldw, int oldh) {
+        if (Objects.isNull(userDrawingBitmap)) {
+            userDrawingBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        }
+    }
+
+    public Bitmap getBitmap() {
+        return userDrawingBitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        this.userDrawingBitmap = bitmap;
     }
 
     public void setPaths(List<WriteablePath> paths, List<Note.PaintData> paints) {
@@ -93,13 +108,9 @@ public class DrawingView extends View {
         super.onDraw(canvas);
 
         canvas.save();
-        canvas.scale(scaleFactor, scaleFactor);
         // Draw the cached bitmap
-        canvas.drawBitmap(bitmap, 0, 0, null);
-//        //TODO: use a combination of bitmap and paths
-//        for (int i = 0; i < paths.size(); i++) {
-//            canvas.drawPath(paths.get(i), paints.get(i));
-//        }
+        canvas.drawBitmap(pageTemplateBitmap, 0, 0, null);
+        canvas.drawBitmap(userDrawingBitmap, 0, 0, null);
         canvas.drawPath(path, paint);
 
         canvas.restore();
@@ -107,39 +118,36 @@ public class DrawingView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        scaleDetector.onTouchEvent(event);
+        float y = event.getY();
+        float x = event.getX();
 
-        if (!scaleDetector.isInProgress()) {
-            float x = event.getX() / scaleFactor;
-            float y = event.getY() / scaleFactor;
-
-            switch (event.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    path.moveTo(x, y);
-                    break;
-                case MotionEvent.ACTION_MOVE:
-                    path.lineTo(x, y);
-                    break;
-                case MotionEvent.ACTION_UP:
-                    bitmapCanvas.drawPath(path, paint); // Draw the current path onto the bitmap
-                    path = new WriteablePath(); // Create a new path for the next touch event
-                    break;
-                default:
-                    return false;
-            }
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                path.moveTo(x, y);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                path.lineTo(x, y);
+                break;
+            case MotionEvent.ACTION_UP:
+                userDrwaingCanvas.drawPath(path, paint); // Draw the current path onto the bitmap
+                path = new WriteablePath(); // Create a new path for the next touch event
+                break;
+            default:
+                return false;
         }
 
         invalidate();
         return true;
     }
 
-    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
-        @Override
-        public boolean onScale(ScaleGestureDetector detector) {
-            scaleFactor *= detector.getScaleFactor();
-            scaleFactor = Math.max(0.1f, Math.min(scaleFactor, 10.0f));
-            invalidate();
-            return true;
+    public PageTemplate getPageTemplate() {
+        return basicPageTemplate.getPageTemplate();
+    }
+
+    public void setPageTemplate(PageTemplate data) {
+        if (Objects.isNull(data)) {
+            return;
         }
+        basicPageTemplate.setPageTemplate(data);
     }
 }

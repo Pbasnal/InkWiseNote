@@ -1,0 +1,12 @@
+{
+  "enabledFeatures": [
+    "HOME_PAGE_NAVIGATION_SIDEBAR"
+  ],
+  "pageTemplates": {
+    "BASIC_RULED_PAGE_TEMPLATE": {
+      "lineSpacing": 100,
+      "lineColor": "#600b182e",
+      "lineWidth": 5
+    }
+  }
+}

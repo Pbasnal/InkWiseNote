@@ -1,15 +1,21 @@
 package com.originb.inkwisenote.config;
 
 import android.content.Context;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.originb.inkwisenote.R;
+import lombok.Getter;
 
 import java.io.InputStream;
-import java.util.Properties;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 
+@Getter
 public class ConfigReader {
-    private static ConfigReader instance;
+    private AppConfig appConfig;
 
-    private Properties properties;
+    @Getter
+    private static ConfigReader instance;
 
     public static ConfigReader fromContext(Context context) {
         if (instance == null) {
@@ -19,21 +25,26 @@ public class ConfigReader {
     }
 
     private ConfigReader(Context context) {
-        properties = new Properties();
         try {
-            InputStream rawResource = context.getResources().openRawResource(R.raw.config);
-            properties.load(rawResource);
+            InputStream is = context.getResources().openRawResource(R.raw.config);
+            InputStreamReader reader = new InputStreamReader(is, "UTF-8");
+            Gson gson = new Gson();
+
+            Type type = new TypeToken<AppConfig>() {
+            }.getType();
+            appConfig = gson.fromJson(reader, type);
+            reader.close();
+            is.close();
         } catch (Exception e) {
+            appConfig = AppConfig.createDefault();
             e.printStackTrace();
         }
     }
 
-    public String getProperty(String key) {
-        return properties.getProperty(key);
-    }
-
     public boolean isFeatureEnabled(Feature featureName) {
-        String featureFlag = "feature." + featureName;
-        return Boolean.parseBoolean(properties.getProperty(featureFlag));
+        if (appConfig.getEnabledFeatures() != null) {
+            return appConfig.getEnabledFeatures().contains(featureName);
+        }
+        return false;
     }
 }

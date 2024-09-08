@@ -2,5 +2,6 @@ package com.originb.inkwisenote.filemanager;
 
 public enum FileType {
     NOTE,
-    BITMAP
+    BITMAP,
+    PAGE_TEMPLATE,
 }
