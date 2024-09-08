@@ -1,4 +1,4 @@
-package com.originb.inkwisenote;
+package com.originb.inkwisenote.views;
 
 import android.content.Context;
 import android.graphics.*;
@@ -7,21 +7,32 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import com.originb.inkwisenote.data.views.WriteablePath;
 import com.originb.inkwisenote.data.Note;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Getter
 public class DrawingView extends View {
+    /*
+     * The bitmap is used to cache the drawing so that it doesn't have to be redrawn every time onDraw is called.
+     * The bitmapCanvas is used to draw the paths onto the bitmap.
+     *
+     * user draws a path on the screen --> updates path --> bitmapCanvas updates bitmap
+     * onDraw is called --> canvas draws updated bitmap
+     *                  --> canvas draws updated path. [this is the path that user is currently drawing]
+     * */
     public Bitmap bitmap;
     private Canvas bitmapCanvas;
 
 
     private Paint paint;
-    private MyPath path;
-    private List<MyPath> paths;
+    private WriteablePath path;
+    private List<WriteablePath> paths;
     private List<Paint> paints;
     private ScaleGestureDetector scaleDetector;
     private float scaleFactor = 1.0f;
@@ -37,7 +48,7 @@ public class DrawingView extends View {
         paint.setAntiAlias(true);
         paint.setStrokeCap(Paint.Cap.ROUND);
 
-        path = new MyPath();
+        path = new WriteablePath();
         paths = new ArrayList<>();
         paints = new ArrayList<>();
 
@@ -67,18 +78,10 @@ public class DrawingView extends View {
         }
     }
 
-    public List<MyPath> getPaths() {
-        return paths;
-    }
-
-    public List<Paint> getPaints() {
-        return paints;
-    }
-
-    public void setPaths(List<MyPath> paths, List<Note.PaintData> paints) {
+    public void setPaths(List<WriteablePath> paths, List<Note.PaintData> paints) {
         this.paths = paths;
-        for (MyPath myPath : this.paths) {
-            myPath.loadThisPath();
+        for (WriteablePath writeablePath : this.paths) {
+            writeablePath.loadThisPath();
         }
         Log.w("inkWise", "Number of paths: " + (long) this.paths.size());
 
@@ -119,7 +122,7 @@ public class DrawingView extends View {
                     break;
                 case MotionEvent.ACTION_UP:
                     bitmapCanvas.drawPath(path, paint); // Draw the current path onto the bitmap
-                    path = new MyPath(); // Create a new path for the next touch event
+                    path = new WriteablePath(); // Create a new path for the next touch event
                     break;
                 default:
                     return false;

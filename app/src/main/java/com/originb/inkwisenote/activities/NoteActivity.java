@@ -8,8 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;
-import com.originb.inkwisenote.DrawingView;
+import com.originb.inkwisenote.views.DrawingView;
 import com.originb.inkwisenote.data.Note;
 import com.originb.inkwisenote.filemanager.BitmapFileManager;
 import com.originb.inkwisenote.filemanager.FileInfo;

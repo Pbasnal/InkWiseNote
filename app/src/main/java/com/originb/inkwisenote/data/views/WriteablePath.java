@@ -1,4 +1,4 @@
-package com.originb.inkwisenote;
+package com.originb.inkwisenote.data.views;
 
 import android.graphics.Path;
 
@@ -6,7 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public  class MyPath extends Path implements Serializable {
+public  class WriteablePath extends Path implements Serializable {
 
     public enum PathActionType {LINE_TO, MOVE_TO};
     public static class PathData implements Serializable {
