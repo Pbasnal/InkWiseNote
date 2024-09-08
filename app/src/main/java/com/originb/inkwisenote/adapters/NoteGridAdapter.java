@@ -41,12 +41,13 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         return new NoteGridAdapter.NoteCardHolder(itemView, parentActivity);
     }
 
-
     @Override
     public void onBindViewHolder(@NonNull @NotNull NoteGridAdapter.NoteCardHolder noteCardHolder, int position) {
         String note = notes.get(position);
-        FileInfo<Bitmap> noteThumbnailInfo = BitmapFileManager.readDataFromDisk(noteRepository.getThumbnailInfo(note));
-        noteCardHolder.noteImage.setImageBitmap(noteThumbnailInfo.data);
+        FileInfo<Bitmap> noteThumbnailInfo = noteRepository.getThumbnailInfo(note);
+        BitmapFileManager.readBitmapFromFile(noteThumbnailInfo.filePath, 0.1f)
+                .ifPresent(noteCardHolder.noteImage::setImageBitmap);
+
         noteCardHolder.noteTitle.setText(note);
     }
 
