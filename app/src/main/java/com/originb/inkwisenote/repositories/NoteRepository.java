@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import com.originb.inkwisenote.data.BitmapFileInfo;
 import com.originb.inkwisenote.data.NoteFileInfo;
 import com.originb.inkwisenote.data.Note;
+import com.originb.inkwisenote.data.PageTemplateFileInfo;
+import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.filemanager.FileInfo;
 
 import java.io.*;
@@ -35,13 +37,12 @@ public class NoteRepository {
         bitmapFile.delete();
     }
 
-    public List<FileInfo> getNoteFilesToSave(Note note, Bitmap bitmap) {
+    public List<FileInfo> getNoteFilesToSave(Note note, Bitmap bitmap, PageTemplate pageTemplate) {
         List<FileInfo> filesToWrite = new ArrayList<>();
         filesToWrite.add(new NoteFileInfo(directory + "/" + note.getNoteName() + ".note", note));
         filesToWrite.add(new BitmapFileInfo(directory + "/" + note.getBitmapName() + ".png", bitmap));
-        bitmap.getWidth();
-        bitmap.getHeight();
-        bitmap.getDensity();
+        filesToWrite.add(new PageTemplateFileInfo(directory + "/" + note.getNoteName() + ".pagetemplate", pageTemplate));
+
         return filesToWrite;
     }
 
@@ -52,6 +53,7 @@ public class NoteRepository {
 
         filesToRead.add(new NoteFileInfo(directory + "/" + noteName + ".note"));
         filesToRead.add(new BitmapFileInfo(directory + "/" + noteName + ".png"));
+        filesToRead.add(new PageTemplateFileInfo(directory + "/" + noteName + ".pagetemplate"));
 
         return filesToRead;
     }

@@ -8,8 +8,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;
-import com.originb.inkwisenote.DrawingView;
+import com.originb.inkwisenote.data.config.PageTemplate;
+import com.originb.inkwisenote.views.DrawingView;
 import com.originb.inkwisenote.data.Note;
 import com.originb.inkwisenote.filemanager.BitmapFileManager;
 import com.originb.inkwisenote.filemanager.FileInfo;
@@ -18,10 +18,13 @@ import com.originb.inkwisenote.filemanager.JsonFileManager;
 import com.originb.inkwisenote.repositories.NoteRepository;
 import com.originb.inkwisenote.R;
 
+import java.util.Objects;
+
 public class NoteActivity extends AppCompatActivity {
     private DrawingView drawingView;
     private NoteRepository noteRepository;
     private Note note;
+
     private String noteName;
 
     private boolean isSaved = false;
@@ -39,18 +42,22 @@ public class NoteActivity extends AppCompatActivity {
             try {
                 noteRepository.getNoteFilesToLoad(noteName).forEach(fileInfo ->
                 {
-                    if (FileType.NOTE.equals(fileInfo.fileType)) {
+                    if (FileType.BITMAP.equals(fileInfo.fileType)) {
+                        FileInfo<Bitmap> bitmapInfo = BitmapFileManager.<Bitmap>readDataFromDisk(fileInfo);
+                        drawingView.setBitmap(bitmapInfo.data);
+                        drawingView.setPaths(note.getPaths(), note.getPaints());
+                    } else if (FileType.NOTE.equals(fileInfo.fileType)) {
                         note = JsonFileManager.<Note>readDataFromDisk(fileInfo).data;
                     } else {
-                        FileInfo<Bitmap> bitmapInfo = BitmapFileManager.<Bitmap>readDataFromDisk(fileInfo);
-                        drawingView.bitmap = bitmapInfo.data;
-                        drawingView.setPaths(note.getPaths(), note.getPaints());
+                        drawingView.setPageTemplate(JsonFileManager.<PageTemplate>readDataFromDisk(fileInfo).data);
                     }
                 });
             } catch (Exception e) {
                 Toast.makeText(this, "Failed to load note", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
-                note = new Note();
+                if (Objects.isNull(note)) {
+                    note = new Note();
+                }
             }
         } else {
             note = new Note();
@@ -99,12 +106,12 @@ public class NoteActivity extends AppCompatActivity {
             note.setBitmapName(noteName);
         }
         try {
-            noteRepository.getNoteFilesToSave(note, drawingView.bitmap)
+            noteRepository.getNoteFilesToSave(note, drawingView.getBitmap(), drawingView.getPageTemplate()).stream()
                     .forEach(fileInfo ->
                     {
-                        if (FileType.NOTE.equals(fileInfo.fileType)) {
-                            JsonFileManager.writeDataToDisk(fileInfo);
-                        } else BitmapFileManager.writeDataToDisk(fileInfo);
+                        if (FileType.BITMAP.equals(fileInfo.fileType)) {
+                            BitmapFileManager.writeDataToDisk(fileInfo);
+                        } else JsonFileManager.writeDataToDisk(fileInfo);
                     });
             // TODO: launch a callback from here to update the list of notes with the saved information
             // This will be need to updated the thumbnail if user saves by pressing back button

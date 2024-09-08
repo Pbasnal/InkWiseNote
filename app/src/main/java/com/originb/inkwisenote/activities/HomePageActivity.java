@@ -15,8 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
-import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.config.Feature;
+import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.repositories.DirectoryContents;
 import com.originb.inkwisenote.data.repositories.FolderItem;
 import com.originb.inkwisenote.data.sidebar.MenuItemData;

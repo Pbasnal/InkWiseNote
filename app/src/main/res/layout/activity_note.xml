@@ -12,7 +12,7 @@
         android:backgroundTint="@color/white"
         tools:context=".activities.NoteActivity">
 
-    <com.originb.inkwisenote.DrawingView
+    <com.originb.inkwisenote.views.DrawingView
             android:id="@+id/drawing_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
