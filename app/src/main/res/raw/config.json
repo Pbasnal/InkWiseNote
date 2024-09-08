@@ -4,9 +4,9 @@
   ],
   "pageTemplates": {
     "BASIC_RULED_PAGE_TEMPLATE": {
-      "lineSpacing": 100,
+      "lineSpacing": 50,
       "lineColor": "#600b182e",
-      "lineWidth": 5
+      "lineWidth": 1
     }
   }
 }

@@ -7,12 +7,12 @@ import com.originb.inkwisenote.data.BitmapFileInfo;
 import java.io.*;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class BitmapFileManager {
-    public static <T> void writeDataToDisk(FileInfo<T> fileInfo) {
-        File file = new File(fileInfo.filePath);
+    public static void writeDataToDisk(String filePath, Bitmap bitmap) {
+        File file = new File(filePath);
         try (FileOutputStream fos = new FileOutputStream(file)) {
-            Bitmap bitmap = (Bitmap) fileInfo.data;
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
             fos.flush();
         } catch (IOException e) {
@@ -20,22 +20,18 @@ public class BitmapFileManager {
         }
     }
 
-    public static <T> FileInfo<T> readDataFromDisk(FileInfo<T> fileInfo) {
-        File file = new File(fileInfo.filePath);
-
-        float bitmapScale = getScale(fileInfo);
+    public static Optional<Bitmap> readBitmapFromFile(String filePath, float bitmapScale) {
+        File file = new File(filePath);
         if (bitmapScale < 1) {
-            return getScaledImage(fileInfo, bitmapScale);
+            return getScaledImage(filePath, bitmapScale);
         }
 
         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-        fileInfo.setData(bitmap);
-
-        return fileInfo;
+        return Optional.ofNullable(bitmap);
     }
 
-    private static <T> FileInfo<T> getScaledImage(FileInfo<T> fileInfo, float scale) {
-        File file = new File(fileInfo.filePath);
+    private static Optional<Bitmap> getScaledImage(String filePath, float scale) {
+        File file = new File(filePath);
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(file.getAbsolutePath(), options);
@@ -44,9 +40,7 @@ public class BitmapFileManager {
         options.inJustDecodeBounds = false;
 
         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-        fileInfo.setData(bitmap);
-
-        return fileInfo;
+        return Optional.ofNullable(bitmap);
     }
 
     private static int calculateInSampleSize(BitmapFactory.Options options, float scale) {
@@ -76,13 +70,5 @@ public class BitmapFileManager {
         }
 
         return inSampleSize;
-    }
-
-    private static <T> float getScale(FileInfo<T> fileInfo) {
-        Map<String, Float> extraFields = fileInfo.getExtraFields();
-        if (Objects.isNull(extraFields)) return 1f;
-        else {
-            return extraFields.getOrDefault("scale", 1f);
-        }
     }
 }
