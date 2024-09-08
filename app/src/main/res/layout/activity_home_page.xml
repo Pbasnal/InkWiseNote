@@ -19,6 +19,7 @@
         <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/appbar"
                 android:layout_height="wrap_content"
+                android:background="@color/white"
                 android:layout_width="match_parent">
 
             <com.google.android.material.appbar.CollapsingToolbarLayout
@@ -27,7 +28,7 @@
                     app:title="@string/app_name"
                     app:layout_scrollFlags="scroll|snap|exitUntilCollapsed"
                     app:layout_scrollInterpolator="@android:anim/decelerate_interpolator"
-                    app:contentScrim="@color/purple_700"
+                    app:contentScrim="@color/dark_gray"
                     app:titleEnabled="true"
                     app:expandedTitleGravity="bottom|center"
                     app:collapsedTitleTextColor="@color/white"
@@ -35,9 +36,9 @@
 
                 <ImageView
                         android:id="@+id/app_bar_image"
-                        android:layout_width="200dp"
-                        android:layout_height="200dp"
-                        android:layout_marginBottom="20dp"
+                        android:layout_width="1500dp"
+                        android:layout_height="150dp"
+                        android:layout_marginBottom="40dp"
                         android:layout_marginTop="40dp"
                         android:src="@drawable/ic_app_icon"
                         android:layout_gravity="center"
@@ -90,12 +91,18 @@
     <!-- Navigation view for the sidebar -->
 
     <LinearLayout
+            android:layout_gravity="start"
             android:layout_width="250dp"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:layout_gravity="start"
             android:background="@drawable/sidebar_gradient_background"
             android:padding="10dp">
+
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="The sidebar navigation is under construction"
+                />
 
         <ImageView
                 android:layout_width="40dp"
@@ -115,7 +122,14 @@
                 android:id="@+id/navigation_sidebar_view"
                 android:padding="10dp"
                 android:layout_width="250dp"
-                android:layout_height="match_parent"/>
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
 
+        <Button
+                android:id="@+id/btn_new_folder"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add New Folder"
+                android:layout_gravity="center"/>
     </LinearLayout>
 </androidx.drawerlayout.widget.DrawerLayout>

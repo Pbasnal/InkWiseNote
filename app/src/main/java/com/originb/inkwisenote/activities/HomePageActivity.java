@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
+import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.data.repositories.DirectoryContents;
 import com.originb.inkwisenote.data.repositories.FolderItem;
 import com.originb.inkwisenote.data.sidebar.MenuItemData;
@@ -25,7 +27,6 @@ import com.originb.inkwisenote.adapters.NoteGridAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class HomePageActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
@@ -38,16 +39,22 @@ public class HomePageActivity extends AppCompatActivity {
     private RecyclerView navigationRecyclerView;
     private ExpandableMenuListAdapter expandableMenuListAdapter;
 
+    private ConfigReader configReader;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
 
+        configReader = ConfigReader.fromContext(this);
+
         noteRepository = new NoteRepository(getFilesDir());
         fileRepository = new FileRepository(getFilesDir());
         DirectoryContents directoryContents = fileRepository.getFilesInDirectory();
 
-        createSidebar(directoryContents.getFolders());
+        if (configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) {
+            createSidebar(directoryContents.getFolders());
+        }
         createGridLayoutToShowNotes();
         createNewNoteButton();
     }
