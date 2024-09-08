@@ -2,7 +2,7 @@ package com.originb.inkwisenote.data.repositories;
 
 import java.io.File;
 
-public class FolderItem {
+public class FolderItem implements Comparable<FolderItem> {
 
     private int id;
     private int parentId;
@@ -46,5 +46,11 @@ public class FolderItem {
 
     public void setFolderName(String folderName) {
         this.folderName = folderName;
+    }
+
+    @Override
+    public int compareTo(FolderItem folderItem) {
+        return this.folderName.compareTo(folderItem.folderName);
+
     }
 }

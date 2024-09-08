@@ -2,68 +2,85 @@ package com.originb.inkwisenote.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.SubMenu;
 import android.view.View;
 
-import android.widget.Toast;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.navigation.NavigationView;
+import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
+import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.data.repositories.DirectoryContents;
 import com.originb.inkwisenote.data.repositories.FolderItem;
+import com.originb.inkwisenote.data.sidebar.MenuItemData;
 import com.originb.inkwisenote.repositories.FileRepository;
 import com.originb.inkwisenote.repositories.NoteRepository;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HomePageActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
     private RecyclerView recyclerView;
-    private NavigationView navigationView;
     private NoteGridAdapter noteGridAdapter;
-    private DrawerLayout drawerLayout;
 
     private FileRepository fileRepository;
+
+    private DrawerLayout drawerLayout;
+    private RecyclerView navigationRecyclerView;
+    private ExpandableMenuListAdapter expandableMenuListAdapter;
+
+    private ConfigReader configReader;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
 
+        configReader = ConfigReader.fromContext(this);
+
         noteRepository = new NoteRepository(getFilesDir());
         fileRepository = new FileRepository(getFilesDir());
         DirectoryContents directoryContents = fileRepository.getFilesInDirectory();
 
-        createSidebar(directoryContents.getFolders());
+        if (configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) {
+            createSidebar(directoryContents.getFolders());
+        }
         createGridLayoutToShowNotes();
         createNewNoteButton();
     }
 
     public void createSidebar(List<FolderItem> folders) {
         drawerLayout = findViewById(R.id.sidebar_drawer_view);
-        navigationView = findViewById(R.id.home_sidebar_view);
-        Menu menu = navigationView.getMenu();
+        navigationRecyclerView = findViewById(R.id.navigation_sidebar_view);
 
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
-        for (FolderItem folder : folders) {
-            menu.add(folder.getId(), 0, Menu.NONE, folder.getFolderName());
-        }
+        List<MenuItemData> menuItems = new ArrayList<>();
 
-        navigationView.setNavigationItemSelectedListener(item -> {
-            Toast.makeText(HomePageActivity.this, "Menu item clicked: " + item.getItemId(), Toast.LENGTH_SHORT).show();
-            // Todo: instead of folder list, have a menu item map from which we can pick based on menu item id.
-            return true;
+        folders.forEach(folder -> {
+            MenuItemData menuItem = new MenuItemData(folder.getId(), folder.getFolderName());
+            menuItems.add(menuItem);
         });
+
+        expandableMenuListAdapter = new ExpandableMenuListAdapter(menuItems);
+        navigationRecyclerView.setLayoutManager(new GridLayoutManager(this, 1));
+        navigationRecyclerView.setAdapter(expandableMenuListAdapter);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
     }
 
     public void createGridLayoutToShowNotes() {
@@ -89,6 +106,15 @@ public class HomePageActivity extends AppCompatActivity {
         super.onResume();
         // Refresh the note list on resume
         noteGridAdapter.updateNotes(noteRepository.listNoteNamesInDirectory());
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     public View.OnClickListener onNewNoteTapCallback = v -> {

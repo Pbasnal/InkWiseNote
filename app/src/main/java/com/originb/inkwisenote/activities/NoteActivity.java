@@ -8,6 +8,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import com.originb.inkwisenote.DrawingView;
 import com.originb.inkwisenote.data.Note;
 import com.originb.inkwisenote.filemanager.BitmapFileManager;
@@ -22,6 +23,8 @@ public class NoteActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
     private Note note;
     private String noteName;
+
+    private boolean isSaved = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,9 +74,20 @@ public class NoteActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
-        saveNote();
+    protected void onPostResume() {
+        super.onPostResume();
+        if (isSaved) {
+            isSaved = false;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if (!isSaved) {
+            saveNote();
+            isSaved = true;
+        }
     }
 
     private void saveNote() {

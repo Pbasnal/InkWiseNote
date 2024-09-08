@@ -76,7 +76,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             noteTitle = itemView.findViewById(R.id.card_name);
             deleteBtn = itemView.findViewById(R.id.btn_dlt_note);
 
-            noteImage.setOnClickListener(view -> onNoteClick(notes.get(getAdapterPosition())));
+            noteImage.setOnClickListener(view -> onClick(itemView));
             deleteBtn.setOnClickListener(view -> {
                 int position = getAdapterPosition();
                 noteRepository.deleteNoteFromDisk(notes.get(position));
@@ -87,10 +87,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
         @Override
         public void onClick(View v) {
-            onNoteClick(notes.get(getAdapterPosition()));
-        }
-
-        private void onNoteClick(String noteFile) {
+            String noteFile = notes.get(getAdapterPosition());
             // Open NoteActivity with the selected note
             Intent intent = new Intent(parentActivity, NoteActivity.class);
             intent.putExtra("noteFileName", noteFile);
