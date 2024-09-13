@@ -30,6 +30,11 @@ public class BitmapFileManager {
         return Optional.ofNullable(bitmap);
     }
 
+    public static void deleteBitmap(String bitmapPath) {
+        File noteFile = new File(bitmapPath);
+        noteFile.delete();
+    }
+
     private static Optional<Bitmap> getScaledImage(String filePath, float scale) {
         File file = new File(filePath);
         final BitmapFactory.Options options = new BitmapFactory.Options();

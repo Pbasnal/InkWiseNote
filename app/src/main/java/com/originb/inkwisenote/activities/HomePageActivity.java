@@ -20,8 +20,8 @@ import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.repositories.DirectoryContents;
 import com.originb.inkwisenote.data.repositories.FolderItem;
 import com.originb.inkwisenote.data.sidebar.MenuItemData;
-import com.originb.inkwisenote.repositories.FileRepository;
-import com.originb.inkwisenote.repositories.NoteRepository;
+import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.io.FolderHierarchyRepository;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 
@@ -29,11 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HomePageActivity extends AppCompatActivity {
-    private NoteRepository noteRepository;
     private RecyclerView recyclerView;
     private NoteGridAdapter noteGridAdapter;
 
-    private FileRepository fileRepository;
+    private FolderHierarchyRepository folderHierarchyRepository;
 
     private DrawerLayout drawerLayout;
     private RecyclerView navigationRecyclerView;
@@ -45,12 +44,16 @@ public class HomePageActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
+        registerModules();
+
+        Repositories.getInstance().getNotesRepository().loadAll();
+        Repositories.getInstance().getBitmapRepository().loadAllAsThumbnails();
 
         configReader = ConfigReader.fromContext(this);
 
-        noteRepository = new NoteRepository(getFilesDir());
-        fileRepository = new FileRepository(getFilesDir());
-        DirectoryContents directoryContents = fileRepository.getFilesInDirectory();
+//        noteMetaRepository = new NoteMetaRepository(getFilesDir());
+        folderHierarchyRepository = new FolderHierarchyRepository(getFilesDir());
+        DirectoryContents directoryContents = folderHierarchyRepository.getFilesInDirectory();
 
         if (configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) {
             createSidebar(directoryContents.getFolders());
@@ -88,9 +91,7 @@ public class HomePageActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(noteRepository.listNoteNamesInDirectory(),
-                this,
-                noteRepository);
+        noteGridAdapter = new NoteGridAdapter(this);
 
         recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
@@ -104,8 +105,11 @@ public class HomePageActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+
         // Refresh the note list on resume
-        noteGridAdapter.updateNotes(noteRepository.listNoteNamesInDirectory());
+        Repositories.initRepositories();
+
+        noteGridAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -120,7 +124,11 @@ public class HomePageActivity extends AppCompatActivity {
     public View.OnClickListener onNewNoteTapCallback = v -> {
         // Start NoteActivity to create a new note
         Intent intent = new Intent(HomePageActivity.this, NoteActivity.class);
+        NoteActivity.newNoteIntent(intent, getFilesDir().getPath());
         startActivity(intent);
     };
 
+    private void registerModules() {
+        Repositories.registerRepositories(this);
+    }
 }

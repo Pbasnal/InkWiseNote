@@ -16,7 +16,7 @@ public class BasicPageTemplate {
     private PageTemplate pageTemplate;
     private Bitmap pageTemplateBitmap;
     private Canvas templateCanvas;
-    private Paint linePaint;
+
 
     private ConfigReader configReader;
 
@@ -28,10 +28,7 @@ public class BasicPageTemplate {
 
         pageTemplate = loadPageTemplate();
 
-        linePaint = new Paint();
-        int color = Color.parseColor(pageTemplate.getLineColor());
-        linePaint.setColor(color);
-        linePaint.setStrokeWidth(pageTemplate.getLineWidth()); // You can change the thickness of the lines here
+
     }
 
     public void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -45,6 +42,11 @@ public class BasicPageTemplate {
         int canvasWidth = templateCanvas.getWidth();
         int canvasHeight = templateCanvas.getHeight();
         int lineSpacing = pageTemplate.getLineSpacing();  // Space between each line, you can change to your desired value
+
+        int color = Color.parseColor(pageTemplate.getLineColor());
+        Paint linePaint  = new Paint();
+        linePaint.setColor(color);
+        linePaint.setStrokeWidth(pageTemplate.getLineWidth()); // You can change the thickness of the lines here
 
         // Draw horizontal lines
         for (int y = lineSpacing; y < canvasHeight; y += lineSpacing) {

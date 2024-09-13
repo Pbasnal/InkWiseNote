@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.repositories;
+package com.originb.inkwisenote.io;
 
 import com.originb.inkwisenote.data.repositories.DirectoryContents;
 import com.originb.inkwisenote.data.repositories.FileItem;
@@ -7,10 +7,10 @@ import com.originb.inkwisenote.data.repositories.FolderItem;
 import java.io.File;
 import java.util.*;
 
-public class FileRepository {
+public class FolderHierarchyRepository {
     private final File rootDirectory;
 
-    public FileRepository(File directory) {
+    public FolderHierarchyRepository(File directory) {
         this.rootDirectory = directory;
         if (!directory.isDirectory()) {
             throw new IllegalArgumentException("The provided file is not a directory");

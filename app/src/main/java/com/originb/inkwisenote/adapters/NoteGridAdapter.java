@@ -1,7 +1,6 @@
 package com.originb.inkwisenote.adapters;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,24 +10,31 @@ import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.originb.inkwisenote.filemanager.BitmapFileManager;
-import com.originb.inkwisenote.filemanager.FileInfo;
-import com.originb.inkwisenote.repositories.NoteRepository;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.activities.NoteActivity;
+import com.originb.inkwisenote.data.Note;
+import com.originb.inkwisenote.io.BitmapRepository;
+import com.originb.inkwisenote.modules.Repositories;
 import org.jetbrains.annotations.NotNull;
+import com.originb.inkwisenote.io.NoteRepository;
 
-import java.util.List;
+import java.util.Map;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
-    private List<String> notes;
+    //    private Map<Long, String> noteIdToNameMap;
+//    private Long[] noteIds;
     private ComponentActivity parentActivity;
     private NoteRepository noteRepository;
+    private BitmapRepository bitmapRepository;
 
-    public NoteGridAdapter(List<String> files, ComponentActivity parentActivity, NoteRepository noteRepository) {
-        this.notes = files;
+    public NoteGridAdapter(ComponentActivity parentActivity) {
+        this.noteRepository = Repositories.getInstance().getNotesRepository();
+        this.bitmapRepository = Repositories.getInstance().getBitmapRepository();
+
+//        this.noteIdToNameMap = noteRepository.getAllNoteNames();
+//        this.noteIds = noteIdToNameMap.keySet().toArray(new Long[0]);
+
         this.parentActivity = parentActivity;
-        this.noteRepository = noteRepository;
     }
 
     @NonNull
@@ -43,22 +49,16 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
     @Override
     public void onBindViewHolder(@NonNull @NotNull NoteGridAdapter.NoteCardHolder noteCardHolder, int position) {
-        String note = notes.get(position);
-        FileInfo<Bitmap> noteThumbnailInfo = noteRepository.getThumbnailInfo(note);
-        BitmapFileManager.readBitmapFromFile(noteThumbnailInfo.filePath, 0.1f)
+        Note note = noteRepository.getNoteAtIndex(position);
+        bitmapRepository.getThumbnail(note.getNoteId())
                 .ifPresent(noteCardHolder.noteImage::setImageBitmap);
 
-        noteCardHolder.noteTitle.setText(note);
+        noteCardHolder.noteTitle.setText(note.getNoteName());
     }
 
     @Override
     public int getItemCount() {
-        return notes.size();
-    }
-
-    public void updateNotes(List<String> newNotes) {
-        this.notes = newNotes;
-        notifyDataSetChanged();
+        return noteRepository.numberOfNotes();
     }
 
     public class NoteCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -80,18 +80,22 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             noteImage.setOnClickListener(view -> onClick(itemView));
             deleteBtn.setOnClickListener(view -> {
                 int position = getAdapterPosition();
-                noteRepository.deleteNoteFromDisk(notes.get(position));
-                notes.remove(position);
+                Note note = noteRepository.getNoteAtIndex(position);
+                noteRepository.deleteNoteFromDisk(note.getNoteId());
+                bitmapRepository.deleteBitmap(note.getNoteId());
+
                 notifyItemRemoved(position);
             });
         }
 
         @Override
         public void onClick(View v) {
-            String noteFile = notes.get(getAdapterPosition());
-            // Open NoteActivity with the selected note
+            int position = getAdapterPosition();
+            Note note = noteRepository.getNoteAtIndex(position);
             Intent intent = new Intent(parentActivity, NoteActivity.class);
-            intent.putExtra("noteFileName", noteFile);
+            NoteActivity.openNoteIntent(intent, parentActivity.getFilesDir().getPath(),
+                    note.getNoteId(),
+                    note.getNoteName());
             parentActivity.startActivity(intent);
         }
     }

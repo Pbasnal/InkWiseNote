@@ -93,16 +93,6 @@ public class DrawingView extends View {
         this.userDrawingBitmap = bitmap;
     }
 
-    public void setPaths(List<WriteablePath> paths, List<Note.PaintData> paints) {
-        this.paths = paths;
-        for (WriteablePath writeablePath : this.paths) {
-            writeablePath.loadThisPath();
-        }
-        Log.w("inkWise", "Number of paths: " + (long) this.paths.size());
-
-        this.paints = paints.stream().map(Note.PaintData::toPaint).collect(Collectors.toList());
-    }
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
