@@ -51,7 +51,6 @@ public class HomePageActivity extends AppCompatActivity {
 
         configReader = ConfigReader.fromContext(this);
 
-//        noteMetaRepository = new NoteMetaRepository(getFilesDir());
         folderHierarchyRepository = new FolderHierarchyRepository(getFilesDir());
         DirectoryContents directoryContents = folderHierarchyRepository.getFilesInDirectory();
 
