@@ -2,9 +2,9 @@ package com.originb.inkwisenote.modules;
 
 
 import android.content.ContextWrapper;
-import com.originb.inkwisenote.io.BitmapRepository;
-import com.originb.inkwisenote.io.NoteRepository;
-import com.originb.inkwisenote.io.PageTemplateRepository;
+import com.originb.inkwisenote.io.NoteBitmapFiles;
+import com.originb.inkwisenote.io.NoteMetaFiles;
+import com.originb.inkwisenote.io.PageTemplateFiles;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,9 +13,9 @@ import lombok.Setter;
 public class Repositories {
     private static Repositories instance;
 
-    private NoteRepository notesRepository;
-    private BitmapRepository bitmapRepository;
-    private PageTemplateRepository pageTemplateRepository;
+    private NoteMetaFiles notesRepository;
+    private NoteBitmapFiles bitmapRepository;
+    private PageTemplateFiles pageTemplateFiles;
 
     private Repositories() {
     }
@@ -28,15 +28,15 @@ public class Repositories {
     }
 
     public static void registerRepositories(ContextWrapper appContext) {
-        getInstance().notesRepository = new NoteRepository(appContext.getFilesDir());
-        getInstance().bitmapRepository = new BitmapRepository(appContext.getFilesDir());
-        getInstance().pageTemplateRepository = new PageTemplateRepository(appContext.getFilesDir());
+        getInstance().notesRepository = new NoteMetaFiles(appContext.getFilesDir());
+        getInstance().bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());
+        getInstance().pageTemplateFiles = new PageTemplateFiles(appContext.getFilesDir());
     }
 
     public static void initRepositories() {
         Repositories instance = getInstance();
         instance.getNotesRepository().loadAll();
         instance.getBitmapRepository().loadAllAsThumbnails();
-        instance.getPageTemplateRepository().loadAll();
+        instance.getPageTemplateFiles().loadAll();
     }
 }
