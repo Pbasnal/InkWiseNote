@@ -63,6 +63,8 @@ public class NoteMetaFiles {
         NoteMeta noteMeta = new NoteMeta(noteId);
         noteMeta.setNoteFileName(noteName);
         noteMeta.setNoteTitle(noteTitle);
+        noteMeta.setCreatedTimeMillis(noteId);
+        noteMeta.setLastModifiedTimeMillis(noteId);
         return noteMeta;
     }
 
@@ -90,6 +92,8 @@ public class NoteMetaFiles {
         if (!notes.containsKey(noteId)) {
             return Returns.NOTE_DOESNT_EXISTS;
         }
+
+        noteMeta.setLastModifiedTimeMillis(System.currentTimeMillis());
 
         notes.put(noteId, noteMeta);
         String noteFullPath = noteIdToNotePath.get(noteId) + "/" + noteMeta.getNoteFileName() + ".note";

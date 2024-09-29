@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
 
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,6 +18,10 @@ import com.originb.inkwisenote.functionalUtils.Try;
 import com.originb.inkwisenote.views.DrawingView;
 import com.originb.inkwisenote.R;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -36,6 +41,7 @@ public class NoteActivity extends AppCompatActivity {
     private FloatingActionButton newNoteButton;
     private FloatingActionButton prevNoteButton;
     private FloatingActionButton nextNoteButton;
+    private TextView createdTime;
 
     private boolean isSaved = false;
 
@@ -54,6 +60,7 @@ public class NoteActivity extends AppCompatActivity {
         newNoteButton = findViewById(R.id.fab_add_note);
         prevNoteButton = findViewById(R.id.fab_prev_note);
         nextNoteButton = findViewById(R.id.fab_next_note);
+        createdTime = findViewById(R.id.note_created_time);
 
         workingNotePath = getIntent().getStringExtra("workingNotePath");
         Long noteIdToOpen = getIntent().getLongExtra("noteId", 0);
@@ -105,22 +112,11 @@ public class NoteActivity extends AppCompatActivity {
 
         prevNoteButton.setOnClickListener(v -> {
             saveCurrentNote();
-
-//
-//            Optional<NoteMeta> currentNoteMetaOpt = Try.to(() -> noteStack.pop(), debugContext).get();
-//            Optional<NoteMeta> prevNoteMetaOpt = Try.to(() -> noteStack.peek(), debugContext).get();
-//            if (!prevNoteMetaOpt.isPresent() && currentNoteMetaOpt.isPresent()) {
-//                Optional<NoteEntity> prevNoteOpt = noteRepository.getPrevNote(currentNoteMetaOpt.get().getNoteId());
-//                prevNoteOpt.ifPresent(note -> noteStack.setCurrentNote(note.getNoteMeta()));
-//            }
-//            if (noteStack.isEmpty()) return;
-//
-//            NoteMeta prevNote = noteStack.peek();
             Optional<NoteEntity> prevNoteEntityOpt = noteStack.moveToPrevNote();
 
             prevNoteEntityOpt.ifPresent(noteEntity -> {
                 renderNote(noteEntity);
-                setVisibilityOfButtons(noteEntity.getNoteMeta());
+                createdTime.setText(getCreateDateTime(noteEntity));
             });
         });
     }
@@ -130,15 +126,15 @@ public class NoteActivity extends AppCompatActivity {
                     setActivityNoteTitle(noteEntity.getNoteMeta());
                     drawingView.setBitmap(noteEntity.getNoteBitmap());
                     drawingView.setPageTemplate(noteEntity.getPageTemplate());
-                    setVisibilityOfButtons(noteEntity.getNoteMeta());
-
+                    setVisibilityOfButtons();
+                    createdTime.setText(getCreateDateTime(noteEntity));
                     return noteEntity;
                 }, debugContext)
                 .logIfError("Failed to load note " + noteEntity.getNoteId())
                 .get();
     }
 
-    private void setVisibilityOfButtons(NoteMeta noteMeta) {
+    private void setVisibilityOfButtons() {
         newNoteButton.setVisibility(FloatingActionButton.VISIBLE);
 
         prevNoteButton.setVisibility(FloatingActionButton.INVISIBLE);
@@ -197,5 +193,18 @@ public class NoteActivity extends AppCompatActivity {
                         , debugContext)
                 .logIfError("Failed to save note " + noteEntityOpt)
                 .get();
+    }
+
+    private String getCreateDateTime(NoteEntity noteEntity) {
+
+        Long timestamp = noteEntity.getNoteMeta().getCreatedTimeMillis();
+        if (Objects.isNull(timestamp)) return "";
+        LocalDateTime dateTime = Instant.ofEpochMilli(timestamp)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        // Define the date-time formatter
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yy HH:mm");
+
+        return dateTime.format(formatter);
     }
 }

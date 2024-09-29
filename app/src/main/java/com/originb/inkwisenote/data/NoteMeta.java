@@ -15,6 +15,8 @@ public class NoteMeta implements Serializable {
     private Long noteId;
     private String noteFileName;
     private String noteTitle;
+    private Long createdTimeMillis;
+    private Long lastModifiedTimeMillis;
     private Set<Long> prevNoteIds;
     private Set<Long> nextNoteIds;
 

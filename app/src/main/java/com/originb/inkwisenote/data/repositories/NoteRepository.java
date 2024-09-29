@@ -47,10 +47,6 @@ public class NoteRepository {
         return noteMetaFiles.getNoteAtIndex(position);
     }
 
-    public Optional<NoteEntity> getNoteEntity(NoteMeta noteMeta) {
-        return getNoteEntity(noteMeta.getNoteId());
-    }
-
     public Optional<NoteEntity> getNoteEntity(Long noteId) {
         Optional<NoteMeta> noteMeta = noteMetaFiles.getNote(noteId);
         Optional<Bitmap> bitmap = noteBitmapFiles.getFullBitmap(noteId);
