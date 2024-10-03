@@ -1,22 +1,21 @@
 package com.originb.inkwisenote.io;
 
 import com.originb.inkwisenote.constants.Returns;
-import com.originb.inkwisenote.data.Note;
-import com.originb.inkwisenote.filemanager.JsonFileManager;
+import com.originb.inkwisenote.data.NoteMeta;
+import com.originb.inkwisenote.io.utils.BytesFileIoUtils;
 
 import java.io.*;
 import java.util.*;
 
-public class NoteRepository {
+public class NoteMetaFiles {
     private final File directory;
 
-    private Map<Long, Note> notes;
+    private Map<Long, NoteMeta> notes;
     private Long[] noteIds;
-    private Map<Long, String> noteIdToNameMap;
     private Map<Long, String> noteIdToNotePath;
 
     // Constructor to set the directory where notes will be saved
-    public NoteRepository(File directory) {
+    public NoteMetaFiles(File directory) {
         this.directory = directory;
         // Ensure the directory exists
         if (!directory.exists()) {
@@ -32,66 +31,73 @@ public class NoteRepository {
             return;
         }
 
-        String noteName = noteIdToNotePath.get(noteId);
-        File noteFile = new File(noteName);
+        NoteMeta noteMeta = notes.get(noteId);
+        String noteFullPath = noteIdToNotePath.get(noteId) + "/" + noteMeta.getNoteFileName() + ".note";
+        File noteFile = new File(noteFullPath);
         noteFile.delete();
 
         noteIdToNotePath.remove(noteId);
-        noteIdToNameMap.remove(noteId);
         notes.remove(noteId);
+        noteIds = notes.keySet().toArray(new Long[0]);
     }
 
-    public Note getNoteAtIndex(int position) {
+    public NoteMeta getNoteAtIndex(int position) {
         return notes.get(noteIds[position]);
     }
 
-    public Optional<Note> getNote(Long noteId) {
+    public Optional<NoteMeta> getNote(Long noteId) {
         if (Objects.isNull(noteId)) {
             return Optional.empty();
         }
         return Optional.ofNullable(notes.get(noteId));
     }
 
-    public String getPathOfNote(Long noteId) {
+    public String getDirectoryOfNote(Long noteId) {
         return noteIdToNotePath.get(noteId);
     }
 
-    public static Note createNewNote() {
+    public static NoteMeta createNewNote(String noteTitle) {
         Long noteId = System.currentTimeMillis();
         String noteName = "note-" + noteId;
 
-        Note note = new Note(noteId);
-        note.setNoteName(noteName);
-        return note;
+        NoteMeta noteMeta = new NoteMeta(noteId);
+        noteMeta.setNoteFileName(noteName);
+        noteMeta.setNoteTitle(noteTitle);
+        noteMeta.setCreatedTimeMillis(noteId);
+        noteMeta.setLastModifiedTimeMillis(noteId);
+        return noteMeta;
     }
 
-    public Returns saveNote(String noteDirectory, Long noteId, Note note) {
-        if (Objects.isNull(note)) {
+    public Returns saveNote(String noteDirectory, Long noteId, NoteMeta noteMeta) {
+        if (Objects.isNull(noteMeta)) {
             return Returns.INVALID_ARGUMENTS;
         }
-        if (notes.containsKey(noteId) || noteIdToNameMap.containsKey(noteId) || noteIdToNotePath.containsKey(noteId)) {
+        if (notes.containsKey(noteId)
+                || noteIdToNotePath.containsKey(noteId)) {
             return Returns.NOTE_DOESNT_EXISTS;
         }
 
-        String noteFullPath = noteDirectory + "/" + note.getNoteName() + ".note";
-        JsonFileManager.writeDataToDisk(noteFullPath, note);
+        String noteFullPath = noteDirectory + "/" + noteMeta.getNoteFileName() + ".note";
+        BytesFileIoUtils.writeDataToDisk(noteFullPath, noteMeta);
 
-        notes.put(noteId, note);
-        noteIdToNameMap.put(noteId, note.getNoteName());
+        notes.put(noteId, noteMeta);
         noteIdToNotePath.put(noteId, noteDirectory);
         return Returns.SUCCESS;
     }
 
-    public Returns updateNoteMeta(Long noteId, Note note) {
-        if (Objects.isNull(note)) {
+    public Returns updateNoteMeta(Long noteId, NoteMeta noteMeta) {
+        if (Objects.isNull(noteMeta)) {
             return Returns.INVALID_ARGUMENTS;
         }
         if (!notes.containsKey(noteId)) {
             return Returns.NOTE_DOESNT_EXISTS;
         }
-        notes.put(noteId, note);
-        String notePath = noteIdToNotePath.get(noteId);
-        JsonFileManager.writeDataToDisk(notePath, note);
+
+        noteMeta.setLastModifiedTimeMillis(System.currentTimeMillis());
+
+        notes.put(noteId, noteMeta);
+        String noteFullPath = noteIdToNotePath.get(noteId) + "/" + noteMeta.getNoteFileName() + ".note";
+        BytesFileIoUtils.writeDataToDisk(noteFullPath, noteMeta);
         return Returns.SUCCESS;
     }
 
@@ -101,7 +107,6 @@ public class NoteRepository {
         if (Objects.isNull(noteFiles)) return;
 
         notes = new HashMap<>();
-        noteIdToNameMap = new HashMap<>();
         noteIdToNotePath = new HashMap<>();
         for (int i = 0; i < noteFiles.length; i++) {
             File noteFile = noteFiles[i];
@@ -112,20 +117,20 @@ public class NoteRepository {
 
             String notePath = noteFile.getPath().replace("/" + noteFile.getName(), "");
 
-            JsonFileManager.readDataFromDisk(noteFiles[i].getPath(), Note.class)
+            BytesFileIoUtils.readDataFromDisk(noteFiles[i].getPath(), NoteMeta.class)
                     .ifPresent(n -> {
                         n.setNoteId(noteId);
                         notes.put(noteId, n);
-                        noteIdToNameMap.put(noteId, n.getNoteName());
                         noteIdToNotePath.put(noteId, notePath);
                     });
         }
 
-        noteIds = noteIdToNameMap.keySet().toArray(new Long[0]);
+        noteIds = notes.keySet().toArray(new Long[0]);
     }
 
     private boolean noteExists(Long noteId) {
-        return notes.containsKey(noteId) || noteIdToNotePath.containsKey(noteId) || noteIdToNameMap.containsKey(noteId);
+        return notes.containsKey(noteId)
+                || noteIdToNotePath.containsKey(noteId);
     }
 
     private static Long parseNoteIdFromFileName(String noteNameWithoutExtension) {

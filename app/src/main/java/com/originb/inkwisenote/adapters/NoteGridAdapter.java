@@ -12,27 +12,19 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.activities.NoteActivity;
-import com.originb.inkwisenote.data.Note;
-import com.originb.inkwisenote.io.BitmapRepository;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.data.NoteMeta;
+import com.originb.inkwisenote.data.repositories.NoteRepository;
 import org.jetbrains.annotations.NotNull;
-import com.originb.inkwisenote.io.NoteRepository;
 
-import java.util.Map;
+import java.util.Objects;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
-    //    private Map<Long, String> noteIdToNameMap;
-//    private Long[] noteIds;
+
     private ComponentActivity parentActivity;
     private NoteRepository noteRepository;
-    private BitmapRepository bitmapRepository;
 
     public NoteGridAdapter(ComponentActivity parentActivity) {
-        this.noteRepository = Repositories.getInstance().getNotesRepository();
-        this.bitmapRepository = Repositories.getInstance().getBitmapRepository();
-
-//        this.noteIdToNameMap = noteRepository.getAllNoteNames();
-//        this.noteIds = noteIdToNameMap.keySet().toArray(new Long[0]);
+        this.noteRepository = new NoteRepository();
 
         this.parentActivity = parentActivity;
     }
@@ -49,11 +41,11 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
     @Override
     public void onBindViewHolder(@NonNull @NotNull NoteGridAdapter.NoteCardHolder noteCardHolder, int position) {
-        Note note = noteRepository.getNoteAtIndex(position);
-        bitmapRepository.getThumbnail(note.getNoteId())
+        NoteMeta noteMeta = noteRepository.getNoteAtIndex(position);
+        noteRepository.getThumbnail(noteMeta.getNoteId())
                 .ifPresent(noteCardHolder.noteImage::setImageBitmap);
 
-        noteCardHolder.noteTitle.setText(note.getNoteName());
+        noteCardHolder.noteTitle.setText(noteMeta.getNoteTitle());
     }
 
     @Override
@@ -80,10 +72,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             noteImage.setOnClickListener(view -> onClick(itemView));
             deleteBtn.setOnClickListener(view -> {
                 int position = getAdapterPosition();
-                Note note = noteRepository.getNoteAtIndex(position);
-                noteRepository.deleteNoteFromDisk(note.getNoteId());
-                bitmapRepository.deleteBitmap(note.getNoteId());
-
+                 noteRepository.deleteNoteAtIndex(position);
                 notifyItemRemoved(position);
             });
         }
@@ -91,11 +80,11 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         @Override
         public void onClick(View v) {
             int position = getAdapterPosition();
-            Note note = noteRepository.getNoteAtIndex(position);
+            NoteMeta noteMeta = noteRepository.getNoteAtIndex(position);
             Intent intent = new Intent(parentActivity, NoteActivity.class);
             NoteActivity.openNoteIntent(intent, parentActivity.getFilesDir().getPath(),
-                    note.getNoteId(),
-                    note.getNoteName());
+                    noteMeta.getNoteId(),
+                    noteMeta.getNoteFileName());
             parentActivity.startActivity(intent);
         }
     }

@@ -1,10 +1,13 @@
 package com.originb.inkwisenote.io;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 import com.google.android.gms.common.util.Strings;
+import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.constants.Returns;
-import com.originb.inkwisenote.filemanager.BitmapFileManager;
+import com.originb.inkwisenote.functionalUtils.Try;
+import com.originb.inkwisenote.io.utils.BitmapFileIoUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +19,7 @@ import java.util.*;
 // bitmapTimestamp is the id of the note.
 // All related files to one note will have the same
 // timestamp.
-public class BitmapRepository {
+public class NoteBitmapFiles {
     private final File directory;
 
     // bitmapTimestamp -> bitmap
@@ -31,12 +34,13 @@ public class BitmapRepository {
         private Bitmap bitmap;
 
         public BitmapInfo withBitmap(Bitmap bitmap) {
-            return new BitmapInfo(bitmapPath, bitmap);
+            Log.i("NoteBitmapFiles", "Updating bitmap mutable: " + bitmap.isMutable());
+            return new BitmapInfo(bitmapPath, bitmap );
         }
     }
 
     // Constructor to set the directory where notes will be saved
-    public BitmapRepository(File directory) {
+    public NoteBitmapFiles(File directory) {
         this.directory = directory;
         // Ensure the directory exists
         if (!directory.exists()) {
@@ -54,16 +58,16 @@ public class BitmapRepository {
         thumbnails.clear();
         for (int i = 0; i < bitmapFiles.length; i++) {
             String bitmapName = bitmapFiles[i].getName();
-            Bitmap bitmap = BitmapFileManager.readBitmapFromFile(bitmapFiles[i].getAbsolutePath(),
+            Bitmap bitmap = BitmapFileIoUtils.readBitmapFromFile(bitmapFiles[i].getAbsolutePath(),
                             BitmapScale.THUMBNAIL.getResult())
                     .orElse(null);
-
             if (Objects.isNull(bitmap)) continue;
-            String bitmapNameWithoutExtension = bitmapName.replace(".png", "");
-            Long bitmapId = parseBitmapIdFromFileName(bitmapNameWithoutExtension);
-            if (Objects.isNull(bitmapId)) continue;
 
-            thumbnails.put(bitmapId, new BitmapInfo(bitmapFiles[i].getPath(), bitmap));
+            String bitmapNameWithoutExtension = bitmapName.replace(".png", "");
+            Optional<Long> bitmapId = parseBitmapIdFromFileName(bitmapNameWithoutExtension);
+            if(!bitmapId.isPresent()) continue;
+
+            thumbnails.put(bitmapId.get(), new BitmapInfo(bitmapFiles[i].getPath(), bitmap));
         }
     }
 
@@ -74,7 +78,7 @@ public class BitmapRepository {
 
         if (thumbnails.containsKey(bitmapId)) {
             BitmapInfo bitmapInfo = thumbnails.get(bitmapId);
-            BitmapFileManager.deleteBitmap(bitmapInfo.getBitmapPath());
+            BitmapFileIoUtils.deleteBitmap(bitmapInfo.getBitmapPath());
             thumbnails.remove(bitmapId);
         }
         fullImages.remove(bitmapId);
@@ -88,7 +92,7 @@ public class BitmapRepository {
 
         if (thumbnails.containsKey(bitmapId)) {
             BitmapInfo bitmapInfo = thumbnails.get(bitmapId);
-            return BitmapFileManager.readBitmapFromFile(bitmapInfo.getBitmapPath(),
+            return BitmapFileIoUtils.readBitmapFromFile(bitmapInfo.getBitmapPath(),
                     BitmapScale.THUMBNAIL.getResult());
         }
 
@@ -105,7 +109,7 @@ public class BitmapRepository {
                     .map(b -> b.bitmap);
         } else if (thumbnails.containsKey(bitmapId)) {
             BitmapInfo bitmapInfo = thumbnails.get(bitmapId);
-            BitmapFileManager.readBitmapFromFile(bitmapInfo.getBitmapPath(),
+            BitmapFileIoUtils.readBitmapFromFile(bitmapInfo.getBitmapPath(),
                             BitmapScale.FULL_SIZE.getResult())
                     .ifPresent(bitmap -> fullImages.put(bitmapId, bitmapInfo.withBitmap(bitmap)));
 
@@ -130,7 +134,7 @@ public class BitmapRepository {
         BitmapInfo updateBitmap = bitmapInfo.withBitmap(bitmap);
         thumbnails.put(bitmapId, updateBitmap);
         fullImages.put(bitmapId, updateBitmap);
-        BitmapFileManager.writeDataToDisk(bitmapInfo.bitmapPath, bitmap);
+        BitmapFileIoUtils.writeDataToDisk(bitmapInfo.bitmapPath, bitmap);
         return Returns.SUCCESS;
 
     }
@@ -147,19 +151,24 @@ public class BitmapRepository {
         }
 
         path = path + "/" + filename + ".png";
-        BitmapFileManager.writeDataToDisk(path, bitmap);
+        BitmapFileIoUtils.writeDataToDisk(path, bitmap);
         BitmapInfo bitmapInfo = new BitmapInfo(path, bitmap);
         thumbnails.put(bitmapId, bitmapInfo);
         fullImages.put(bitmapId, bitmapInfo);
         return Returns.SUCCESS;
     }
 
-    private static Long parseBitmapIdFromFileName(String noteNameWithoutExtension) {
-        if (noteNameWithoutExtension.contains("-")) {
-            return Long.parseLong(noteNameWithoutExtension.split("-")[1]);
-        } else if (noteNameWithoutExtension.contains("_")) {
-            return Long.parseLong(noteNameWithoutExtension.split("_")[1]);
-        }
-        return null;
+    private static Optional<Long> parseBitmapIdFromFileName(String noteNameWithoutExtension) {
+        return Try.to(() -> {
+                    if (noteNameWithoutExtension.contains("-")) {
+                        return Long.parseLong(noteNameWithoutExtension.split("-")[1]);
+                    } else if (noteNameWithoutExtension.contains("_")) {
+                        return Long.parseLong(noteNameWithoutExtension.split("_")[1]);
+                    }
+                    return null;
+                }, new DebugContext("NoteBitmapFiles"))
+                .logIfError("Failed to parse bitmap id from file name: " + noteNameWithoutExtension)
+                .get();
+
     }
 }

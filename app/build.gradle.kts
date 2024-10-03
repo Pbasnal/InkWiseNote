@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId = "com.originb.inkwisenote"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 3
         versionName = "3"

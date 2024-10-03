@@ -1,15 +1,12 @@
-package com.originb.inkwisenote.filemanager;
+package com.originb.inkwisenote.io.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import com.originb.inkwisenote.data.BitmapFileInfo;
 
 import java.io.*;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
-public class BitmapFileManager {
+public class BitmapFileIoUtils {
     public static void writeDataToDisk(String filePath, Bitmap bitmap) {
         File file = new File(filePath);
         try (FileOutputStream fos = new FileOutputStream(file)) {
@@ -25,8 +22,10 @@ public class BitmapFileManager {
         if (bitmapScale < 1) {
             return getScaledImage(filePath, bitmapScale);
         }
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inMutable = true;
 
-        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+        Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
         return Optional.ofNullable(bitmap);
     }
 

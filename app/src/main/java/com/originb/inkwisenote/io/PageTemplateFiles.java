@@ -3,7 +3,7 @@ package com.originb.inkwisenote.io;
 import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote.constants.Returns;
 import com.originb.inkwisenote.data.config.PageTemplate;
-import com.originb.inkwisenote.filemanager.JsonFileManager;
+import com.originb.inkwisenote.io.utils.BytesFileIoUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class PageTemplateRepository {
+public class PageTemplateFiles {
     private final File directory;
     private Map<Long, PageTemplateInfo> pageTemplates;
 
@@ -26,7 +26,7 @@ public class PageTemplateRepository {
         private PageTemplate pageTemplate;
     }
 
-    public PageTemplateRepository(File directory) {
+    public PageTemplateFiles(File directory) {
         this.directory = directory;
         if (!directory.exists()) {
             directory.mkdirs();
@@ -45,7 +45,7 @@ public class PageTemplateRepository {
             Long templateId = parseTemplateIdFromFileName(nameWithExtension);
             if (Objects.isNull(templateId)) continue;
 
-            JsonFileManager.readDataFromDisk(pageTemplates[i].getPath(), PageTemplate.class)
+            BytesFileIoUtils.readDataFromDisk(pageTemplates[i].getPath(), PageTemplate.class)
                     .ifPresent(template -> {
                         template.setTemplateId(templateId);
                         this.pageTemplates.put(templateId, new PageTemplateInfo(pageTemplate.getPath(), template));
@@ -64,7 +64,7 @@ public class PageTemplateRepository {
         }
 
         String fullPath = path + "/" + name + ".pt";
-        JsonFileManager.writeDataToDisk(fullPath, pageTemplate);
+        BytesFileIoUtils.writeDataToDisk(fullPath, pageTemplate);
 
         if (pageTemplates.containsKey(templateId)) {
             PageTemplateInfo pageTemplateInfo = pageTemplates.get(templateId);
@@ -74,6 +74,21 @@ public class PageTemplateRepository {
         }
 
         return Returns.SUCCESS;
+    }
+
+    public void deletePageTemplate(Long templateId) {
+        if (Objects.isNull(templateId)) {
+            return;
+        }
+
+        if (!pageTemplates.containsKey(templateId)) {
+            return;
+        }
+        PageTemplateInfo pageTemplateInfo = pageTemplates.get(templateId);
+        File noteFile = new File(pageTemplateInfo.getPageTemplatePath());
+        noteFile.delete();
+        pageTemplates.remove(templateId);
+
     }
 
     private static Long parseTemplateIdFromFileName(String noteNameWithoutExtension) {

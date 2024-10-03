@@ -3,18 +3,15 @@ package com.originb.inkwisenote.views;
 import android.content.Context;
 import android.graphics.*;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.data.views.WriteablePath;
-import com.originb.inkwisenote.data.Note;
 import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Getter
 public class DrawingView extends View {
@@ -85,12 +82,20 @@ public class DrawingView extends View {
         }
     }
 
+    public Bitmap getNewBitmap() {
+        return Bitmap.createBitmap(userDrawingBitmap.getWidth(),
+                userDrawingBitmap.getHeight(),
+                Bitmap.Config.ARGB_8888);
+    }
+
     public Bitmap getBitmap() {
         return userDrawingBitmap;
     }
 
     public void setBitmap(Bitmap bitmap) {
         this.userDrawingBitmap = bitmap;
+        userDrwaingCanvas = new Canvas(userDrawingBitmap);
+        invalidate();
     }
 
     @Override
@@ -128,6 +133,10 @@ public class DrawingView extends View {
 
         invalidate();
         return true;
+    }
+
+    public PageTemplate getNewPageTemplate() {
+        return basicPageTemplate.getPageTemplate();
     }
 
     public PageTemplate getPageTemplate() {
