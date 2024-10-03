@@ -1,18 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 
+using InkWiseCore.UiComponents.UiLayouts;
+
 using InkWiseNote.Commons;
 
 namespace InkWiseCore.UiComponents.UiElements;
 
-public interface IHaveImageCardData
-{
-    string Title { get; internal set; }
-    string ImageName { get; }
-    Func<IHaveImageCardData, Task> OnNoteTap { get; }
-}
 
-[Serializable]
-public partial class HandwrittenNoteCard : ObservableObject, IHaveImageCardData
+public partial class ImageCardData : ObservableObject
 {
     [ObservableProperty]
     public string title = string.Empty;
@@ -20,39 +15,42 @@ public partial class HandwrittenNoteCard : ObservableObject, IHaveImageCardData
     public string ParsedNote => $"{Configs.PARSED_NOTES_DIRECTORY}/{Title}.json";
     public string ImageName { get; set; } = "default_note.png";
 
-    public Func<IHaveImageCardData, Task> OnNoteTap { get; set; }
+    public Func<ImageCardData, Task> OnNoteTap { get; set; }
+
+    public IUiElement UiViewForPlaceholder { get; set; }
 
 }
 
-public partial class NewNoteCard : ObservableObject, IHaveImageCardData
-{
-    [ObservableProperty]
-    public string title = "Add New Note";
-    public string Path => $"{Configs.ROOT_DIRECTORY}/{Title}.json";
-    public int Id { get; set; }
-    public string ImageName { get; set; } = "new_note.png";
+//public partial class NewNoteCard : ObservableObject, IHaveImageCardData
+//{
+//    [ObservableProperty]
+//    public string title = "Add New Note";
+//    public string Path => $"{Configs.ROOT_DIRECTORY}/{Title}.json";
+//    public int Id { get; set; }
+//    public string ImageName { get; set; } = "new_note.png";
 
-    public Func<IHaveImageCardData, Task> OnNoteTap { get; set; }
-}
+//    public Func<IHaveImageCardData, Task> OnNoteTap { get; set; }
+//}
 
 
 public class NoteCardFactory
 {
-    public static IHaveImageCardData NewNoteCard(Func<IHaveImageCardData, Task> onTappingNote)
+    public static ImageCardData NewNoteCard(Func<ImageCardData, Task> onTappingNote)
     {
-        return new NewNoteCard
+        return new ImageCardData
         {
-            //Title = "New Note",
-            //ImageName = "new_note.png",
-            OnNoteTap = onTappingNote,
+            Title = "Add New Note",
+            ImageName = "new_note.png",
+            OnNoteTap = onTappingNote
         };
     }
 
-    public static IHaveImageCardData NoteCard(string title, Func<IHaveImageCardData, Task> onTappingNote)
+    public static ImageCardData NoteCard(string title, Func<ImageCardData, Task> onTappingNote)
     {
-        return new HandwrittenNoteCard
+        return new ImageCardData
         {
             Title = title,
+            ImageName = "default_note.png",
             OnNoteTap = onTappingNote,
         };
     }

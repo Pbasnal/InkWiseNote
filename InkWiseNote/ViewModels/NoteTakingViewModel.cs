@@ -29,7 +29,7 @@ namespace InkWiseNote.ViewModels;
 public partial class NoteTakingViewModel : ObservableObject
 {
     [ObservableProperty]
-    private HandwrittenNoteCard handwrittenNote;
+    private ImageCardData handwrittenNote;
 
     [ObservableProperty]
     private DrawingCanvasData drawingCanvasData;
@@ -66,7 +66,7 @@ public partial class NoteTakingViewModel : ObservableObject
         allRelatedNotes = NotesKeywords.RelateNotesByCommonKeywords(groupedOnKeyword);
     }
 
-    public void SetNote(HandwrittenNoteCard note)
+    public void SetNote(ImageCardData note)
     {
         HandwrittenNote = note;
         originalNotePath = note.Path;
@@ -174,7 +174,7 @@ public partial class NoteTakingViewModel : ObservableObject
         Label relatedNoteLabel = sender as Label;
         string relatedNotename = relatedNoteLabel.Text;
 
-        HandwrittenNoteCard noteCard = new HandwrittenNoteCard
+        ImageCardData noteCard = new()
         {
             Title = relatedNotename,
         };

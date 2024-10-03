@@ -12,7 +12,7 @@ public class NoteTakingPage : ContentPage
     NoteTakingViewModel viewModel;
     bool isSaving = false;
 
-    public HandwrittenNoteCard HandwrittenNoteCard
+    public ImageCardData HandwrittenNoteCard
     {
         set { viewModel.SetNote(value); }
     }

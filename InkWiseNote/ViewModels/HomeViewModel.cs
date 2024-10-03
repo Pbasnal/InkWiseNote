@@ -28,33 +28,67 @@ public partial class HomeViewModel : ObservableObject
 
     public HomeViewModel(InMemoryDb inMemoryDb, TermFrequencySystem termFrequencySystem)
     {
-        CardCollectionViewData = new CardCollectionViewData(this,
-            Configs.WIDTH_OF_NOTE,
-            Configs.NUMBER_OF_NOTES_PER_ROW);
+        Action setupViewData = () =>
+        {
+            CardCollectionViewData = new CardCollectionViewData(this,
+                Configs.WIDTH_OF_NOTE,
+                Configs.NUMBER_OF_NOTES_PER_ROW);
 
-        CardCollectionViewData.Items.Add(NoteCardFactory.NewNoteCard(OnTappingNewNote));
+            ImageCardData newNoteCardData = NoteCardFactory.NewNoteCard(OnTappingNewNote);
+            CardCollectionViewData.Items.Add(newNoteCardData);
+        };
 
-        exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
+        Action setupHandlersForExternalChanges = () =>
+        {
+            exisitingCardTitlesTable = inMemoryDb.GetTable<ExisitingCardTitlesTable>(InMemoryDb.EXISTING_CARD_TITLES);
 
-        exisitingCardTitlesTable.OnDataDeleteEvent += DeleteCardWithTitle;
+            exisitingCardTitlesTable.OnDataDeleteEvent += DeleteCardWithTitle;
 
-        this.termFrequencySystem = termFrequencySystem;
+            this.termFrequencySystem = termFrequencySystem;
+        };
+
+        setupViewData();
+        setupHandlersForExternalChanges();
     }
 
-    private void DeleteCardWithTitle(string cardTitle)
-    {
-        var cardToDelete = CardCollectionViewData.Items.FirstOrDefault(card => cardTitle.Equals(card.Title));
-        CardCollectionViewData.Items.Remove(cardToDelete);
-    }
-
+    // View builders
     internal View GetContent()
     {
+        List<string> sortedListOfNoteTitles = ReadAndSortNoteTitlesFromDisk();
+        UpdateCardCollectionData(sortedListOfNoteTitles);
+
         CardCollectionView cardCollectionView = new CardCollectionView();
-        var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(CardCollectionViewData,
-            new CardViewTemplateBuilder(OnDeleteNote));
+        var cardCollectionViewForNotes = cardCollectionView.GetCardCollectionView(
+            CardCollectionViewData,
+            new CardViewBuilder());
+
         CardCollectionViewData.SetBindingContextOf(cardCollectionViewForNotes);
 
         return cardCollectionViewForNotes;
+    }
+
+    internal List<string> ReadAndSortNoteTitlesFromDisk()
+    {
+        List<string> sortedNoteNames = NotesFileSystem.ListAllNotes()
+            .Select(NotesFileSystem.FileNameToNoteTitle)
+            .Where(noteTitle => !exisitingCardTitlesTable.Contains(noteTitle))
+            .Select(noteTitle => { exisitingCardTitlesTable.Add(noteTitle); return noteTitle; })
+            .ToList();
+
+        // shouldn't be needed.
+        sortedNoteNames.Sort();
+        return sortedNoteNames;
+    }
+
+    internal void UpdateCardCollectionData(List<string> sortedListOfNoteTitles)
+    {
+        for (int i = 0; i < sortedListOfNoteTitles.Count; i++)
+        {
+            ImageCardData noteCard = NoteCardFactory.NoteCard(sortedListOfNoteTitles[i], OnTappingNote);
+            noteCard.UiViewForPlaceholder = new HorizontalTabsElement(OnDeleteNote);
+
+            CardCollectionViewData.Items.Add(noteCard);
+        }
     }
 
     public void OnDeleteNote(Object? sender, TappedEventArgs e)
@@ -62,15 +96,13 @@ public partial class HomeViewModel : ObservableObject
         var view = sender as View;
         if (Objects.IsNull(view)) return;
 
-        HandwrittenNoteCard? noteData = view.BindingContext as HandwrittenNoteCard;
+        ImageCardData? noteData = view.BindingContext as ImageCardData;
         if (Objects.IsNull(noteData)) return;
 
         FileSystemUtils.DeleteFile(noteData.Path);
 
         VisionResponse visionResponse = LoadVisionResponse(noteData.Title);
-        termFrequencySystem.LoadVocabulary();
-        if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
-            termFrequencySystem.RemoveDocumentFromVocabulary(new Document(noteData.Title, visionResponse.readResult.content));
+        DeleteVisionData(visionResponse, noteData.Title);
 
         FileSystemUtils.DeleteFile(noteData.ParsedNote);
 
@@ -83,98 +115,54 @@ public partial class HomeViewModel : ObservableObject
         return SaveSystem.ReadFromFile<VisionResponse>(Configs.PARSED_NOTES_DIRECTORY, handwrittenNoteTitle);
     }
 
-    internal void LoadImageCardData()
-    {
-        List<string> sortedNoteNames = NotesFileSystem.ListAllNotes()
-            .Select(NotesFileSystem.FileNameToNoteTitle)
-            .Where(noteTitle => !exisitingCardTitlesTable.Contains(noteTitle))
-            .Select(noteTitle => { exisitingCardTitlesTable.Add(noteTitle); return noteTitle; })
-            .ToList();
-        
-        // shouldn't be needed.
-        sortedNoteNames.Sort();
 
-        sortedNoteNames.Select(noteTitle => NoteCardFactory.NoteCard(noteTitle, OnTappingNote))
-            .ToList()
-            .ForEach(CardCollectionViewData.Items.Add);
-    }
-
-    private static async Task OnTappingNewNote(IHaveImageCardData handwrittenNote)
+    private static async Task OnTappingNewNote(ImageCardData handwrittenNote)
     {
         await NavigatePage.To<NoteTakingPage>()
                     .WithParameter("HandwrittenNoteCard", NoteCardFactory.NoteCard("", OnTappingNote))
                     .Navigate();
     }
 
-    private static async Task OnTappingNote(IHaveImageCardData handwrittenNote)
+    private static async Task OnTappingNote(ImageCardData handwrittenNote)
     {
         await NavigatePage.To<NoteTakingPage>()
                     .WithParameter("HandwrittenNoteCard", (object)handwrittenNote)
                     .Navigate();
     }
+
+
+
+    // external change handler
+    private void DeleteCardWithTitle(string cardTitle)
+    {
+        var cardToDelete = CardCollectionViewData.Items.FirstOrDefault(card => cardTitle.Equals(card.Title));
+        CardCollectionViewData.Items.Remove(cardToDelete);
+    }
+
+    private void DeleteVisionData(VisionResponse visionResponse, string noteTitle)
+    {
+        termFrequencySystem.LoadVocabulary();
+        if (Objects.IsNotNull(visionResponse) && Objects.IsNotNull(visionResponse.readResult) && Objects.IsNotNull(visionResponse.readResult.content))
+            termFrequencySystem.RemoveDocumentFromVocabulary(new Document(noteTitle, visionResponse.readResult.content));
+    }
 }
 
 
-public class CardViewTemplateBuilder : DataTemplateSelector
+public class CardViewBuilder : DataTemplateSelector
 {
-    private EventHandler<TappedEventArgs> onTapAction;
-
-    public DataTemplate AmericanMonkey { get; set; }
-    public DataTemplate OtherMonkey { get; set; }
-
-
-
-    public CardViewTemplateBuilder(EventHandler<TappedEventArgs> onTapAction)
-    {
-        this.onTapAction = onTapAction;
-    }
-
     protected override DataTemplate OnSelectTemplate(object item, BindableObject container)
     {
-        return If.Condition(item is NewNoteCard)
-            .IsTrue(NewNoteDataTemplate())
-            .OrElse(NoteDataTemplate());
-    }
+        ImageCardElement imageCardElement = new ImageCardElement();
 
-    private DataTemplate NewNoteDataTemplate() =>
-        new DataTemplate(() => new ImageCardElement().UiView);
-
-    private DataTemplate NoteDataTemplate()
-    {
-
-        var cardMenuContainer = new VerticalStackLayout();
-        var dividerBetweenMenuAndCard = new BoxView
+        if (item is not null && item is ImageCardData)
         {
-            HeightRequest = 1,
-            Color = Colors.LightGray
-        };
+            ImageCardData imageCardData = (ImageCardData)item;
+            if (imageCardData.UiViewForPlaceholder != null)
+            {
+                imageCardElement.SetPlaceHolder(imageCardData.UiViewForPlaceholder);
+            }
+        }
 
-        var cardMenu = new HorizontalStackLayout
-        {
-            HorizontalOptions = LayoutOptions.Center,
-        };
-        var deleteMenuOption = new Label
-        {
-            Text = "Delete",
-        };
-
-
-        var tapGestureRecognizer = new TapGestureRecognizer();
-        tapGestureRecognizer.Tapped += onTapAction;
-
-        deleteMenuOption.GestureRecognizers.Add(tapGestureRecognizer);
-
-        cardMenu.Children.Add(deleteMenuOption);
-        cardMenuContainer.Children.Add(dividerBetweenMenuAndCard);
-        cardMenuContainer.Children.Add(cardMenu);
-
-        return new DataTemplate(() =>
-        {
-            var cardView = new ImageCardElement();
-
-            cardView.SetPlaceHolder(cardMenuContainer);
-
-            return cardView.UiView;
-        });
+        return new DataTemplate(() => imageCardElement.UiView);
     }
 }

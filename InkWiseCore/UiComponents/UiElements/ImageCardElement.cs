@@ -48,7 +48,7 @@ public class ImageCardElement : IUiElement
     private static View GetCardImage()
     {
         Image image = new();
-        image.SetBinding(Image.SourceProperty, nameof(IHaveImageCardData.ImageName));
+        image.SetBinding(Image.SourceProperty, nameof(ImageCardData.ImageName));
 
         return image;
     }
@@ -64,7 +64,7 @@ public class ImageCardElement : IUiElement
             VerticalTextAlignment = TextAlignment.Center,
             HorizontalOptions = LayoutOptions.Fill
         };
-        titleLabel.SetBinding(Label.TextProperty, nameof(IHaveImageCardData.Title));
+        titleLabel.SetBinding(Label.TextProperty, nameof(ImageCardData.Title));
 
         return titleLabel;
     }
@@ -74,14 +74,14 @@ public class ImageCardElement : IUiElement
         var view = sender as View;
         if (Objects.IsNull(view)) return;
 
-        IHaveImageCardData? imageCardData = view.BindingContext as IHaveImageCardData;
+        ImageCardData? imageCardData = view.BindingContext as ImageCardData;
         if (Objects.IsNull(imageCardData)) return;
 
         await imageCardData.OnNoteTap(imageCardData);
     }
 
-    public void SetPlaceHolder(View element)
+    public void SetPlaceHolder(IUiElement element)
     {
-        gridView.Children.Add(element.Row(2).Column(0));
+        gridView.Children.Add(element.UiView.Row(2).Column(0));
     }
 }
