@@ -16,7 +16,7 @@ public class Configs
     public const int WIDTH_OF_NOTE = 200;
     public const int NUMBER_OF_NOTES_PER_ROW = 2;
 
-    public const string VISION_KEY = "0dd638679aca4772b7f354542fc72578";
-    public const string VISION_END_POINT = "https://notesvision.cognitiveservices.azure.com/";
+    public const string VISION_KEY = "";
+    public const string VISION_END_POINT = "";
     public static float MINIMUM_TF_IDF_SCORE = -1.0f;
 }
