@@ -20,7 +20,7 @@ public class NoteRepository {
     private PageTemplateFiles pageTemplateFiles;
 
     public NoteRepository() {
-        this.noteMetaFiles = Repositories.getInstance().getNotesRepository();
+        this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
         this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
         this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
     }
@@ -29,6 +29,21 @@ public class NoteRepository {
         noteMetaFiles.loadAll();
         noteBitmapFiles.loadAllAsThumbnails();
         pageTemplateFiles.loadAll();
+    }
+
+    public List<NoteEntity> getAllNotes() {
+        Long[] noteIds = noteMetaFiles.getAllNoteIds();
+        List<NoteEntity> noteEntities = new ArrayList<>();
+        if (Objects.isNull(noteIds)) {
+            return noteEntities;
+        }
+
+        Arrays.stream(noteIds).map(this::getNoteEntity)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(noteEntities::add);
+
+        return noteEntities;
     }
 
     public void deleteNoteAtIndex(int position) {

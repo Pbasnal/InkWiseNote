@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+import android.util.Log;
 import com.originb.inkwisenote.data.NoteMeta;
 
 import java.util.ArrayList;
@@ -170,6 +171,23 @@ public final class NoteTextContract {
 
             // Insert the new row, returning the primary key value of the new row
             long newRowId = db.insert(NoteTextContract.NoteTextEntry.TABLE_NAME, null, values);
+        }
+
+        public static void deleteNoteText(Long noteId, NoteTextDbHelper noteTextDbHelper) {
+            // Get writable database
+            SQLiteDatabase db = noteTextDbHelper.getWritableDatabase();
+
+            // Define 'where' part of query
+            String selection = NoteTextContract.NoteTextEntry._ID + " = ?";
+
+            // Specify the arguments in placeholder order
+            String[] selectionArgs = { String.valueOf(noteId) };
+
+            // Issue SQL delete command
+            int deletedRows = db.delete(NoteTextContract.NoteTextEntry.TABLE_NAME, selection, selectionArgs);
+
+            // Log or handle the number of deleted rows if necessary
+            Log.d("Delete", "Number of rows deleted: " + deletedRows);
         }
     }
 

@@ -8,7 +8,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
-import com.originb.inkwisenote.adapters.NoteSearchGridAdapter;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.Repositories;
 
@@ -18,14 +17,12 @@ import java.util.List;
 public class NoteSearchActivity extends AppCompatActivity {
     private EditText searchInput;
     private Button searchButton;
-    private ListView resultsListView;
     private List<Long> resultsList;
-//    private ArrayAdapter<Long> adapter;
 
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
 
     private RecyclerView recyclerView;
-    private NoteSearchGridAdapter noteSearchGridAdapter;
+    private NoteGridAdapter noteGridAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +33,6 @@ public class NoteSearchActivity extends AppCompatActivity {
 
         searchInput = findViewById(R.id.searchInput);
         searchButton = findViewById(R.id.searchButton);
-        resultsListView = findViewById(R.id.resultsListView);
 
         createGridLayoutToShowNotes();
 
@@ -55,9 +51,9 @@ public class NoteSearchActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteSearchGridAdapter = new NoteSearchGridAdapter(this, resultsList);
+        noteGridAdapter = new NoteGridAdapter(this, resultsList);
 
-        recyclerView.setAdapter(noteSearchGridAdapter);
+        recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
     }
 
@@ -72,11 +68,10 @@ public class NoteSearchActivity extends AppCompatActivity {
         List<Long> filteredResults = searchInDb(query);
 
         resultsList.addAll(filteredResults);
-        noteSearchGridAdapter.setNoteIds(resultsList);
+        noteGridAdapter.setNoteIds(resultsList);
     }
 
     private List<Long> searchInDb(String searchTerm) {
         return NoteTextContract.NoteTextQueries.searchTextFromDb(searchTerm, noteTextDbHelper);
-
     }
 }

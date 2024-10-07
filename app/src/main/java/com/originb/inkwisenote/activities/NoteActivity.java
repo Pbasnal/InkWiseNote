@@ -24,7 +24,7 @@ import com.originb.inkwisenote.data.NoteMeta;
 import com.originb.inkwisenote.data.repositories.NoteRepository;
 import com.originb.inkwisenote.functionalUtils.Try;
 import com.originb.inkwisenote.io.ocr.OcrService;
-import com.originb.inkwisenote.io.ocr.TesseractsOcr;
+//import com.originb.inkwisenote.io.ocr.TesseractsOcr;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.Repositories;
 import com.originb.inkwisenote.views.DrawingView;
@@ -46,7 +46,7 @@ public class NoteActivity extends AppCompatActivity {
     private DebugContext debugContext;
 
     private NoteRepository noteRepository;
-    private TesseractsOcr tesseractsOcr;
+    //    private TesseractsOcr tesseractsOcr;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
     private AppSecrets appSecrets;
 
@@ -72,7 +72,7 @@ public class NoteActivity extends AppCompatActivity {
 
         drawingView = findViewById(R.id.drawing_view);
 
-        tesseractsOcr = Repositories.getInstance().getTesseractsOcr();
+//        tesseractsOcr = Repositories.getInstance().getTesseractsOcr();
         noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
         noteRepository = new NoteRepository();
         appSecrets = ConfigReader.fromContext(this).getAppConfig().getAppSecrets();
@@ -156,9 +156,9 @@ public class NoteActivity extends AppCompatActivity {
                     setVisibilityOfButtons();
                     createdTime.setText(getCreateDateTime(noteEntity));
 
-                    Try.to(() -> noteEntity.getNoteMeta().getAzureOcrResult().readResult.content, debugContext)
-//                    Try.to(() -> noteEntity.getNoteMeta().getExtractedText(), debugContext)
-                            .get()
+                    Optional.ofNullable(noteEntity.getNoteMeta().getAzureOcrResult())
+                            .map(azureOcrResult -> azureOcrResult.readResult)
+                            .map(result -> result.content)
                             .ifPresent(ocrResult::setText);
 
                     return noteEntity;
@@ -224,20 +224,20 @@ public class NoteActivity extends AppCompatActivity {
         noteEntityOpt.ifPresent(noteEntity -> applyOcr(noteEntity.getNoteMeta(), this::updateNoteMeta));
     }
 
-    private void applyOcrWithTess(NoteMeta noteMeta, Function<NoteMeta, Void> callback) {
-        Try.to(() -> {
-                    Bitmap bitmap = drawingView.getBitmap();
-                    String imageText = tesseractsOcr.extractText(bitmap);
-                    noteMeta.setExtractedText(imageText);
-//                    OcrService.convertHandwritingToText(imageStream, result -> {
-                    Log.d("NoteActivity", "Ocr result: " + imageText);
-//                        noteMeta.setAzureOcrResult(imageText);
-                    callback.apply(noteMeta);
-//                    });
-                }, debugContext)
-                .logIfError("Failed to convert handwriting to text")
-                .get();
-    }
+//    private void applyOcrWithTess(NoteMeta noteMeta, Function<NoteMeta, Void> callback) {
+//        Try.to(() -> {
+//                    Bitmap bitmap = drawingView.getBitmap();
+//                    String imageText = tesseractsOcr.extractText(bitmap);
+//                    noteMeta.setExtractedText(imageText);
+////                    OcrService.convertHandwritingToText(imageStream, result -> {
+//                    Log.d("NoteActivity", "Ocr result: " + imageText);
+////                        noteMeta.setAzureOcrResult(imageText);
+//                    callback.apply(noteMeta);
+////                    });
+//                }, debugContext)
+//                .logIfError("Failed to convert handwriting to text")
+//                .get();
+//    }
 
     private void applyOcr(NoteMeta noteMeta, Consumer<NoteMeta> callback) {
         Try.to(() -> {
