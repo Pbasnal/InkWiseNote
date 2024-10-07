@@ -62,7 +62,19 @@
                         android:id="@+id/toolbar"
                         android:layout_height="?attr/actionBarSize"
                         android:layout_width="match_parent"
-                        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
+                        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+                    <ImageButton
+                            android:id="@+id/btn_search_note"
+                            android:layout_width="50dp"
+                            android:layout_height="wrap_content"
+
+                            android:layout_margin="5dp"
+                            android:layout_gravity="right"
+                            android:src="@drawable/ic_search"
+                            android:background="@android:color/transparent"
+                            app:tint="@color/white"
+                            android:scaleType="fitCenter"/>
+                </androidx.appcompat.widget.Toolbar>
 
                 <!-- RecyclerView for the main content -->
                 <androidx.recyclerview.widget.RecyclerView

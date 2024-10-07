@@ -1,5 +1,6 @@
 package com.originb.inkwisenote.data;
 
+import com.originb.inkwisenote.io.ocr.AzureOcrResult;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,6 +20,9 @@ public class NoteMeta implements Serializable {
     private Long lastModifiedTimeMillis;
     private Set<Long> prevNoteIds;
     private Set<Long> nextNoteIds;
+
+    private AzureOcrResult azureOcrResult;
+    private String extractedText;
 
     public NoteMeta(Long noteId) {
         this.noteId = noteId;

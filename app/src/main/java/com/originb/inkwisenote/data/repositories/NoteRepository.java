@@ -14,7 +14,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class NoteRepository {
-//    private Long[] noteIds;
 
     private NoteMetaFiles noteMetaFiles;
     private NoteBitmapFiles noteBitmapFiles;
@@ -90,6 +89,10 @@ public class NoteRepository {
                 noteMetaFiles.getDirectoryOfNote(noteMeta.getNoteId()),
                 noteMeta.getNoteFileName(),
                 pageTemplate);
+    }
+
+    public void updateNoteMeta(NoteMeta noteMeta) {
+        noteMetaFiles.updateNoteMeta(noteMeta.getNoteId(), noteMeta);
     }
 
     public List<NoteEntity> getNextNote(Long noteId) {
