@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import android.widget.ImageButton;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
+import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.repositories.DirectoryContents;
@@ -23,10 +25,11 @@ import com.originb.inkwisenote.data.sidebar.MenuItemData;
 import com.originb.inkwisenote.modules.Repositories;
 import com.originb.inkwisenote.io.FolderHierarchyRepository;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.adapters.NoteGridAdapter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HomePageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -38,6 +41,8 @@ public class HomePageActivity extends AppCompatActivity {
     private RecyclerView navigationRecyclerView;
     private ExpandableMenuListAdapter expandableMenuListAdapter;
 
+    private ImageButton noteSearchButton;
+
     private ConfigReader configReader;
 
     @Override
@@ -46,7 +51,7 @@ public class HomePageActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home_page);
         registerModules();
 
-        Repositories.getInstance().getNotesRepository().loadAll();
+        Repositories.getInstance().getNoteMetaRepository().loadAll();
         Repositories.getInstance().getBitmapRepository().loadAllAsThumbnails();
 
         configReader = ConfigReader.fromContext(this);
@@ -59,6 +64,13 @@ public class HomePageActivity extends AppCompatActivity {
         }
         createGridLayoutToShowNotes();
         createNewNoteButton();
+
+        noteSearchButton = findViewById(R.id.btn_search_note);
+        noteSearchButton.setOnClickListener(v -> {
+            Intent intent = new Intent(HomePageActivity.this, NoteSearchActivity.class);
+            startActivity(intent);
+        });
+
     }
 
     public void createSidebar(List<FolderItem> folders) {
@@ -90,7 +102,7 @@ public class HomePageActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(this);
+        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
 
         recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
@@ -107,6 +119,10 @@ public class HomePageActivity extends AppCompatActivity {
 
         // Refresh the note list on resume
         Repositories.initRepositories();
+        List<Long> noteIds = Arrays.stream(Repositories.getInstance().getNoteMetaRepository().getAllNoteIds())
+                .collect(Collectors.toList());
+
+        noteGridAdapter.setNoteIds(noteIds);
 
         noteGridAdapter.notifyDataSetChanged();
     }

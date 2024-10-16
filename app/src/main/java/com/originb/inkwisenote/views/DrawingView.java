@@ -5,6 +5,7 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.data.views.WriteablePath;
 import lombok.Getter;
@@ -52,7 +53,8 @@ public class DrawingView extends View {
         userDrawingBitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
 
         userDrwaingCanvas = new Canvas(userDrawingBitmap);
-        basicPageTemplate = new BasicPageTemplate(1000, 1000);
+        basicPageTemplate = new BasicPageTemplate(ConfigReader.fromContext(context),
+                1000, 1000);
 
         pageTemplateBitmap = basicPageTemplate.drawTemplate();
     }

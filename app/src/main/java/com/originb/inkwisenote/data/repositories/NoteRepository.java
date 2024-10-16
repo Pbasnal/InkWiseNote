@@ -14,14 +14,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class NoteRepository {
-//    private Long[] noteIds;
 
     private NoteMetaFiles noteMetaFiles;
     private NoteBitmapFiles noteBitmapFiles;
     private PageTemplateFiles pageTemplateFiles;
 
     public NoteRepository() {
-        this.noteMetaFiles = Repositories.getInstance().getNotesRepository();
+        this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
         this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
         this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
     }
@@ -30,6 +29,21 @@ public class NoteRepository {
         noteMetaFiles.loadAll();
         noteBitmapFiles.loadAllAsThumbnails();
         pageTemplateFiles.loadAll();
+    }
+
+    public List<NoteEntity> getAllNotes() {
+        Long[] noteIds = noteMetaFiles.getAllNoteIds();
+        List<NoteEntity> noteEntities = new ArrayList<>();
+        if (Objects.isNull(noteIds)) {
+            return noteEntities;
+        }
+
+        Arrays.stream(noteIds).map(this::getNoteEntity)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(noteEntities::add);
+
+        return noteEntities;
     }
 
     public void deleteNoteAtIndex(int position) {
@@ -90,6 +104,10 @@ public class NoteRepository {
                 noteMetaFiles.getDirectoryOfNote(noteMeta.getNoteId()),
                 noteMeta.getNoteFileName(),
                 pageTemplate);
+    }
+
+    public void updateNoteMeta(NoteMeta noteMeta) {
+        noteMetaFiles.updateNoteMeta(noteMeta.getNoteId(), noteMeta);
     }
 
     public List<NoteEntity> getNextNote(Long noteId) {

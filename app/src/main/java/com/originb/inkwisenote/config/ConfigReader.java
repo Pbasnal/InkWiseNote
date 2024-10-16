@@ -1,20 +1,19 @@
 package com.originb.inkwisenote.config;
 
 import android.content.Context;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.originb.inkwisenote.R;
 import lombok.Getter;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Type;
 
-@Getter
 public class ConfigReader {
+    @Getter
     private AppConfig appConfig;
 
-    @Getter
+    private ObjectMapper om = new ObjectMapper();
+
     private static ConfigReader instance;
 
     public static ConfigReader fromContext(Context context) {
@@ -28,11 +27,13 @@ public class ConfigReader {
         try {
             InputStream is = context.getResources().openRawResource(R.raw.config);
             InputStreamReader reader = new InputStreamReader(is, "UTF-8");
-            Gson gson = new Gson();
+            appConfig = om.readValue(reader, AppConfig.class);
+            reader.close();
+            is.close();
 
-            Type type = new TypeToken<AppConfig>() {
-            }.getType();
-            appConfig = gson.fromJson(reader, type);
+            is = context.getResources().openRawResource(R.raw.app);
+            reader = new InputStreamReader(is, "UTF-8");
+            appConfig.setAppSecrets(om.readValue(reader, AppSecrets.class));
             reader.close();
             is.close();
         } catch (Exception e) {

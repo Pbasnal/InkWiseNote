@@ -33,14 +33,18 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
     implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.compose.ui:ui-graphics-android:1.6.8")
+    implementation("androidx.compose.ui:ui-graphics-android:1.7.2")
+    implementation("androidx.cardview:cardview:1.0.0")
     implementation("org.projectlombok:lombok:1.18.30")
+    implementation("com.rmtheis:tess-two:9.1.0")
+    implementation("com.google.code.gson:gson:2.10")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
-    testImplementation("junit:junit:4.13.2")
+
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 
-    implementation("androidx.cardview:cardview:1.0.0")
-    implementation("com.google.code.gson:gson:2.10")
-
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
 }
