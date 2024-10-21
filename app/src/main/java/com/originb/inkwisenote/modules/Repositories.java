@@ -2,6 +2,7 @@ package com.originb.inkwisenote.modules;
 
 
 import android.content.ContextWrapper;
+import com.originb.inkwisenote.data.config.PageSettings;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;
@@ -17,6 +18,8 @@ public class Repositories {
     private NoteBitmapFiles bitmapRepository;
     private PageTemplateFiles pageTemplateFiles;
 
+    private PageSettings pageSettings;
+
     private Repositories() {
     }
 
@@ -28,9 +31,15 @@ public class Repositories {
     }
 
     public static void registerRepositories(ContextWrapper appContext) {
-        getInstance().notesRepository = new NoteMetaFiles(appContext.getFilesDir());
-        getInstance().bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());
-        getInstance().pageTemplateFiles = new PageTemplateFiles(appContext.getFilesDir());
+        getInstance().registerRepositoriesInternal(appContext);
+    }
+
+    private void registerRepositoriesInternal(ContextWrapper appContext) {
+        notesRepository = new NoteMetaFiles(appContext.getFilesDir());
+        bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());
+        pageTemplateFiles = new PageTemplateFiles(appContext.getFilesDir());
+
+        pageSettings = new PageSettings();
     }
 
     public static void initRepositories() {

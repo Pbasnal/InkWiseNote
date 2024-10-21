@@ -10,6 +10,7 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.InkWiseNote">
 
+        <activity android:name=".activities.MainSettingsActivity" />
         <activity android:name=".activities.NoteActivity" />
         <activity android:name=".activities.HomePageActivity"
                   android:exported="true">
