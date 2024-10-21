@@ -2,6 +2,7 @@ package com.originb.inkwisenote.modules;
 
 
 import android.content.ContextWrapper;
+import com.originb.inkwisenote.data.config.PageSettings;
 import com.originb.inkwisenote.data.repositories.NoteRepository;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
@@ -21,9 +22,11 @@ public class Repositories {
     private PageTemplateFiles pageTemplateFiles;
     private NoteRepository noteRepository;
 
-//    private TesseractsOcr tesseractsOcr;
+    // private TesseractsOcr TesseractsOcr;
 
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+
+    private PageSettings pageSettings;
 
     private Repositories() {
     }
@@ -36,10 +39,15 @@ public class Repositories {
     }
 
     public static void registerRepositories(ContextWrapper appContext) {
-        getInstance().noteMetaRepository = new NoteMetaFiles(appContext.getFilesDir());
-        getInstance().bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());
-        getInstance().pageTemplateFiles = new PageTemplateFiles(appContext.getFilesDir());
-//        getInstance().tesseractsOcr = new TesseractsOcr(appContext);
+        getInstance().registerRepositoriesInternal(appContext);
+    }
+
+    private void registerRepositoriesInternal(ContextWrapper appContext) {
+        noteMetaRepository = new NoteMetaFiles(appContext.getFilesDir());
+        bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());
+        pageTemplateFiles = new PageTemplateFiles(appContext.getFilesDir());
+//      tesseractsOcr = new TesseractsOcr(appContext);
+        pageSettings = new PageSettings();
 
         getInstance().noteTextDbHelper = new NoteTextContract.NoteTextDbHelper(appContext);
         getInstance().noteRepository = new NoteRepository();

@@ -45,6 +45,8 @@ public class HomePageActivity extends AppCompatActivity {
 
     private ConfigReader configReader;
 
+    private ImageButton settingsMenuBtn;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,13 +66,18 @@ public class HomePageActivity extends AppCompatActivity {
         }
         createGridLayoutToShowNotes();
         createNewNoteButton();
+        createSettingsBtn();
 
         noteSearchButton = findViewById(R.id.btn_search_note);
         noteSearchButton.setOnClickListener(v -> {
             Intent intent = new Intent(HomePageActivity.this, NoteSearchActivity.class);
             startActivity(intent);
         });
+    }
 
+    private void createSettingsBtn() {
+        settingsMenuBtn = findViewById(R.id.main_settings_menu_btn);
+        settingsMenuBtn.setOnClickListener(v -> MainSettingsActivity.getIntent(this));
     }
 
     public void createSidebar(List<FolderItem> folders) {
