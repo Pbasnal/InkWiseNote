@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
         >
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
             android:allowBackup="true"
             android:icon="@mipmap/app_icon"
@@ -12,6 +13,7 @@
 
         <activity android:name=".activities.MainSettingsActivity" />
         <activity android:name=".activities.NoteActivity" />
+        <activity android:name=".activities.NoteSearchActivity" />
         <activity android:name=".activities.HomePageActivity"
                   android:exported="true">
             <intent-filter>

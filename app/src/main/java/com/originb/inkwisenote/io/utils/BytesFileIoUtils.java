@@ -40,11 +40,9 @@ public class BytesFileIoUtils {
     public static String readJsonFromFile(String filePath) {
         String content = "";
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                List<String> allLines = Files.readAllLines(Paths.get(filePath));
-                for (String line : allLines) {
-                    content = content.concat(line);
-                }
+            List<String> allLines = Files.readAllLines(Paths.get(filePath));
+            for (String line : allLines) {
+                content = content.concat(line);
             }
         } catch (IOException e) {
             Log.e("JsonFileManager", "Failed to read byte array from file", e);

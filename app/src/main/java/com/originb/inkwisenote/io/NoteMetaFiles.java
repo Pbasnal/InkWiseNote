@@ -101,6 +101,10 @@ public class NoteMetaFiles {
         return Returns.SUCCESS;
     }
 
+    public Long[] getAllNoteIds() {
+        return noteIds;
+    }
+
     public void loadAll() {
         File[] noteFiles = directory.listFiles((dir, name) -> name.endsWith(".note"));
 

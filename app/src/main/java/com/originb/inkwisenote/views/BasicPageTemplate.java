@@ -20,8 +20,8 @@ public class BasicPageTemplate {
 
     private ConfigReader configReader;
 
-    public BasicPageTemplate(int width, int height) {
-        configReader = ConfigReader.getInstance();
+    public BasicPageTemplate(ConfigReader configReader, int width, int height) {
+        this.configReader = configReader;
 
         pageTemplateBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         templateCanvas = new Canvas(pageTemplateBitmap);
