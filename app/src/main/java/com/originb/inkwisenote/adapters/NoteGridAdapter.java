@@ -13,32 +13,24 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.activities.NoteActivity;
 import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.NoteMeta;
 import com.originb.inkwisenote.data.repositories.NoteRepository;
-import com.originb.inkwisenote.io.NoteMetaFiles;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.Repositories;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
 
     private ComponentActivity parentActivity;
     private NoteRepository noteRepository;
-    private NoteMetaFiles noteMetaRepository;
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
 
     private List<Long> noteIds;
 
 
     public NoteGridAdapter(ComponentActivity parentActivity, List<Long> noteIds) {
         this.noteRepository = Repositories.getInstance().getNoteRepository();
-        this.noteMetaRepository = Repositories.getInstance().getNoteMetaRepository();
-        this.noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+
 
         this.parentActivity = parentActivity;
         this.noteIds = noteIds;
@@ -98,12 +90,8 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
                 // delete note files
                 noteRepository.deleteNote(noteId);
 
-                // delete note search text
-                NoteTextContract.NoteTextQueries.deleteNoteText(noteId, noteTextDbHelper);
-
                 // delete note from list
                 noteIds.remove(position);
-//                noteIds = Arrays.stream(noteMetaRepository.getAllNoteIds()).collect(Collectors.toList());
                 notifyItemRemoved(position);
             });
         }
@@ -123,6 +111,8 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             });
 
             if(!noteEntityOpt.isPresent()) {
+                // Because of some data error, a note which doesn't
+                // exists can show up on the grid.
                 // delete note from list
                 noteIds.remove(position);
                 notifyItemRemoved(position);
