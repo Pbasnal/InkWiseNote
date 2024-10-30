@@ -23,6 +23,13 @@ public class ConfigReader {
         return instance;
     }
 
+    public static ConfigReader getInstance() {
+        if (instance == null) {
+            throw new RuntimeException("Configs were not initialized");
+        }
+        return instance;
+    }
+
     private ConfigReader(Context context) {
         try {
             InputStream is = context.getResources().openRawResource(R.raw.config);

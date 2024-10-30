@@ -14,7 +14,8 @@
         <activity android:name=".activities.MainSettingsActivity" />
         <activity android:name=".activities.NoteActivity" />
         <activity android:name=".activities.NoteSearchActivity" />
-        <activity android:name=".activities.HomePageActivity"
+        <activity android:name=".activities.HomePageActivity" />
+        <activity android:name=".activities.AppMainActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

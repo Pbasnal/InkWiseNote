@@ -51,28 +51,30 @@ public class HomePageActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
-        registerModules();
 
-        Repositories.getInstance().getNoteMetaRepository().loadAll();
-        Repositories.getInstance().getBitmapRepository().loadAllAsThumbnails();
+        configReader = ConfigReader.getInstance();
 
-        configReader = ConfigReader.fromContext(this);
-
-        folderHierarchyRepository = new FolderHierarchyRepository(getFilesDir());
-        DirectoryContents directoryContents = folderHierarchyRepository.getFilesInDirectory();
-
-        if (configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) {
-            createSidebar(directoryContents.getFolders());
-        }
+        createSidebarIfEnabled();
         createGridLayoutToShowNotes();
         createNewNoteButton();
         createSettingsBtn();
+        createSearchBtn();
+    }
 
+    private void createSearchBtn() {
         noteSearchButton = findViewById(R.id.btn_search_note);
         noteSearchButton.setOnClickListener(v -> {
             Intent intent = new Intent(HomePageActivity.this, NoteSearchActivity.class);
             startActivity(intent);
         });
+    }
+
+    private void createSidebarIfEnabled() {
+        if (!configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) return;
+
+        folderHierarchyRepository = new FolderHierarchyRepository(getFilesDir());
+        DirectoryContents directoryContents = folderHierarchyRepository.getFilesInDirectory();
+        createSidebar(directoryContents.getFolders());
     }
 
     private void createSettingsBtn() {
@@ -149,8 +151,4 @@ public class HomePageActivity extends AppCompatActivity {
         NoteActivity.newNoteIntent(intent, getFilesDir().getPath());
         startActivity(intent);
     };
-
-    private void registerModules() {
-        Repositories.registerRepositories(this);
-    }
 }
