@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
-import com.originb.inkwisenote.data.NoteMeta;
+import com.originb.inkwisenote.data.NoteOcrText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,7 @@ public final class NoteTextContract {
     }
 
     public static class NoteTextQueries {
-        public static List<Long> readTextFromDb(NoteMeta noteMeta, NoteTextDbHelper noteTextDbHelper) {
+        public static List<NoteOcrText> readTextFromDb(Long noteId, NoteTextDbHelper noteTextDbHelper) {
             SQLiteDatabase db = noteTextDbHelper.getReadableDatabase();
 
             // Define a projection that specifies which columns from the database
@@ -71,7 +71,7 @@ public final class NoteTextContract {
 
             // Filter results WHERE "title" = 'My Title'
             String selection = NoteTextContract.NoteTextEntry._ID + " = ?";
-            String[] selectionArgs = {String.valueOf(noteMeta.getNoteId())};
+            String[] selectionArgs = {String.valueOf(noteId)};
 
             // How you want the results sorted in the resulting Cursor
             String sortOrder =
@@ -87,19 +87,15 @@ public final class NoteTextContract {
                     sortOrder               // The sort order
             );
 
-            List<Long> itemIds = new ArrayList<>();
-            List<String> noteTexts = new ArrayList<>();
+            List<NoteOcrText> noteOcrTexts = new ArrayList<>();
             while (cursor.moveToNext()) {
-                long itemId = cursor.getLong(
-                        cursor.getColumnIndexOrThrow(NoteTextContract.NoteTextEntry._ID));
-                itemIds.add(itemId);
-
-//                noteTexts.add(cursor.getString(
-//                        cursor.getColumnIndexOrThrow(NoteTextContract.NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT)));
+                noteOcrTexts.add(new NoteOcrText(cursor.getLong(
+                        cursor.getColumnIndexOrThrow(NoteTextContract.NoteTextEntry._ID)),
+                        cursor.getString(
+                                cursor.getColumnIndexOrThrow(NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT))));
             }
             cursor.close();
-            return itemIds;
-
+            return noteOcrTexts;
         }
 
         public static List<Long> searchTextFromDb(String searchTerm, NoteTextDbHelper noteTextDbHelper) {
@@ -140,17 +136,17 @@ public final class NoteTextContract {
             return itemIds;
         }
 
-        public static void updateTextToDb(NoteMeta noteMeta, NoteTextDbHelper noteTextDbHelper) {
+        public static void updateTextToDb(NoteOcrText noteOcrText, NoteTextDbHelper noteTextDbHelper) {
             SQLiteDatabase db = noteTextDbHelper.getWritableDatabase();
 
             // New value for one column
-            String noteText = noteMeta.getExtractedText();
+//            String noteText = noteText.getExtractedText();
             ContentValues values = new ContentValues();
-            values.put(NoteTextContract.NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT, noteText);
+            values.put(NoteTextContract.NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT, noteOcrText.getExtractedText());
 
             // Which row to update, based on the title
             String selection = NoteTextContract.NoteTextEntry._ID + " = ?";
-            String[] selectionArgs = {noteMeta.getNoteId().toString()};
+            String[] selectionArgs = {noteOcrText.getNoteId().toString()};
 
             int count = db.update(
                     NoteTextContract.NoteTextEntry.TABLE_NAME,
@@ -159,14 +155,14 @@ public final class NoteTextContract {
                     selectionArgs);
         }
 
-        public static void insertTextToDb(NoteMeta noteMeta, NoteTextDbHelper noteTextDbHelper) {
+        public static void insertTextToDb(NoteOcrText noteOcrText, NoteTextDbHelper noteTextDbHelper) {
             // Gets the data repository in write mode
             SQLiteDatabase db = noteTextDbHelper.getWritableDatabase();
 
             // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
-            values.put(NoteTextContract.NoteTextEntry._ID, String.valueOf(noteMeta.getNoteId()));
-            values.put(NoteTextContract.NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT, noteMeta.getExtractedText());
+            values.put(NoteTextContract.NoteTextEntry._ID, String.valueOf(noteOcrText.getNoteId()));
+            values.put(NoteTextContract.NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT, noteOcrText.getExtractedText());
 
 
             // Insert the new row, returning the primary key value of the new row
@@ -181,7 +177,7 @@ public final class NoteTextContract {
             String selection = NoteTextContract.NoteTextEntry._ID + " = ?";
 
             // Specify the arguments in placeholder order
-            String[] selectionArgs = { String.valueOf(noteId) };
+            String[] selectionArgs = {String.valueOf(noteId)};
 
             // Issue SQL delete command
             int deletedRows = db.delete(NoteTextContract.NoteTextEntry.TABLE_NAME, selection, selectionArgs);

@@ -29,7 +29,7 @@ public class AppMainActivity extends AppCompatActivity {
     }
 
     private void registerModules() {
-        Repositories.registerRepositories(this);
         ConfigReader.fromContext(this);
+        Repositories.registerRepositories(this);
     }
 }
