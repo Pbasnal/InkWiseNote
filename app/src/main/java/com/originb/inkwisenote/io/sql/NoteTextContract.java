@@ -4,10 +4,9 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
-import com.originb.inkwisenote.data.NoteOcrText;
+import com.originb.inkwisenote.data.notedata.NoteOcrText;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,32 +23,26 @@ public final class NoteTextContract {
         public static final String COLUMN_NAME_EXTRACTED_TEXT = "extracted_text";
     }
 
-    private static final String SQL_CREATE_ENTRIES =
-            "CREATE TABLE " + NoteTextEntry.TABLE_NAME + "(" +
-                    NoteTextEntry._ID + "," +
-                    NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT + ")";
-
-    private static final String SQL_DELETE_ENTRIES =
-            "DROP TABLE IF EXISTS " + NoteTextEntry.TABLE_NAME;
-
-
-    public static class NoteTextDbHelper extends SQLiteOpenHelper {
-        // If you change the database schema, you must increment the database version.
-        public static final int DATABASE_VERSION = 1;
-        public static final String DATABASE_NAME = "NoteText.db";
+    public static class NoteTextDbHelper extends InkwiseNoteDbHelper {
 
         public NoteTextDbHelper(Context context) {
-            super(context, DATABASE_NAME, null, DATABASE_VERSION);
+            super(context, DATABASE_NAME, DATABASE_VERSION);
         }
 
-        public void onCreate(SQLiteDatabase db) {
-            db.execSQL(SQL_CREATE_ENTRIES);
+        protected String getSqlCreateQuery() {
+            return "CREATE TABLE " + NoteTextEntry.TABLE_NAME + "(" +
+                    NoteTextEntry._ID + "," +
+                    NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT + ")";
+        }
+
+        protected String getSqlDropQuery() {
+            return "DROP TABLE IF EXISTS " + NoteTextEntry.TABLE_NAME;
         }
 
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             // This database is only a cache for online data, so its upgrade policy is
             // to simply to discard the data and start over
-            db.execSQL(SQL_DELETE_ENTRIES);
+            db.execSQL(getSqlDropQuery());
             onCreate(db);
         }
 

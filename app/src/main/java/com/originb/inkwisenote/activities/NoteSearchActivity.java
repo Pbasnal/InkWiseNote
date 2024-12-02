@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.ArrayList;
 import java.util.List;

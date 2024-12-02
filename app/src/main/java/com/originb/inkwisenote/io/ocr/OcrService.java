@@ -1,11 +1,10 @@
 package com.originb.inkwisenote.io.ocr;
 
 import android.os.AsyncTask;
-import android.util.Log;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
-import com.originb.inkwisenote.functionalUtils.Try;
+import com.originb.inkwisenote.modules.functionalUtils.Try;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;

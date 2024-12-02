@@ -1,0 +1,148 @@
+package com.originb.inkwisenote.modules.tfidf;
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract.NoteTermFrequencyDbQueries;
+import com.originb.inkwisenote.modules.repositories.Repositories;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
+
+import java.io.File;
+import java.util.*;
+
+import static org.junit.Assert.*;
+
+@RunWith(RobolectricTestRunner.class)
+public class BiRelationalGraphTest {
+    private BiRelationalGraph biRelationalGraph;
+    private NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
+    private File dbFile;
+
+    @Before
+    public void setUp() {
+        Context context = RuntimeEnvironment.application;
+        File directory = new File(System.getProperty("user.dir"));
+        String testDbPath = directory + "/src/test/resources/test_database.db";
+        dbFile = new File(testDbPath);
+        // Delete the database file if it exists
+        if (dbFile.exists()) {
+            dbFile.delete();
+        }
+
+        Repositories.registerRepositories(context);
+        Repositories repositories = Repositories.getInstance();
+
+        noteTermFrequencyDbQueries = new NoteTermFrequencyDbQueries(context, testDbPath);
+        SQLiteDatabase db = noteTermFrequencyDbQueries.getWritableDatabase();
+        repositories.setNoteTermFrequencyDbQueries(noteTermFrequencyDbQueries);
+
+        biRelationalGraph = new BiRelationalGraph(repositories);
+    }
+
+    @After
+    public void tearDown() {
+        noteTermFrequencyDbQueries.dropTable();
+        noteTermFrequencyDbQueries.close();
+        if (dbFile.exists()) {
+            dbFile.delete();
+        }
+    }
+
+    @Test
+    public void testAddNewNote() {
+        // Add a new note
+        Long noteId = 1L;
+        List<String> terms = Arrays.asList("apple", "banana", "apple", "orange");
+        biRelationalGraph.addOrUpdateNote(noteId, terms);
+
+        // Verify term frequencies
+        Map<String, Integer> termFrequencies = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+        assertEquals(2, (int) termFrequencies.get("apple"));
+        assertEquals(1, (int) termFrequencies.get("banana"));
+        assertEquals(1, (int) termFrequencies.get("orange"));
+
+        // Verify IDF scores (with only one document, IDF = ln(1/1) = 0)
+        Map<String, Double> tfIdfScores = biRelationalGraph.getTfIdf(noteId);
+        assertEquals(0.0, tfIdfScores.get("apple"), 0.001);
+        assertEquals(0.0, tfIdfScores.get("banana"), 0.001);
+        assertEquals(0.0, tfIdfScores.get("orange"), 0.001);
+    }
+
+    @Test
+    public void testUpdateExistingNote() {
+        // Add initial note
+        Long noteId = 1L;
+        List<String> initialTerms = Arrays.asList("apple", "banana");
+        biRelationalGraph.addOrUpdateNote(noteId, initialTerms);
+
+        // Update the note
+        List<String> updatedTerms = Arrays.asList("apple", "orange");
+        biRelationalGraph.addOrUpdateNote(noteId, updatedTerms);
+
+        // Verify updated term frequencies
+        Map<String, Integer> termFrequencies = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+        assertEquals(1, (int) termFrequencies.get("apple"));
+        assertNull(termFrequencies.get("banana")); // Should be removed
+        assertEquals(1, (int) termFrequencies.get("orange")); // Should be added
+    }
+
+    @Test
+    public void testDeleteNote() {
+        // Add a note
+        Long noteId = 1L;
+        List<String> terms = Arrays.asList("apple", "banana");
+        biRelationalGraph.addOrUpdateNote(noteId, terms);
+
+        // Delete the note
+        biRelationalGraph.deleteDocument(noteId);
+
+        // Verify note is deleted
+        Map<String, Integer> termFrequencies = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+        assertTrue(termFrequencies.isEmpty());
+    }
+
+    @Test
+    public void testGetRelatedDocuments() {
+        // Add two notes with some overlapping terms
+        Long noteId1 = 1L;
+        List<String> terms1 = Arrays.asList("apple", "banana");
+        biRelationalGraph.addOrUpdateNote(noteId1, terms1);
+
+        Long noteId2 = 2L;
+        List<String> terms2 = Arrays.asList("apple", "orange");
+        biRelationalGraph.addOrUpdateNote(noteId2, terms2);
+
+        // Query for related documents
+        Set<String> queryTerms = new HashSet<>(Arrays.asList("apple", "banana"));
+        Map<String, Set<Long>> relatedDocs = biRelationalGraph.getRelatedDocuments(queryTerms);
+
+        // Verify results
+        assertTrue(relatedDocs.get("apple").contains(noteId1));
+        assertTrue(relatedDocs.get("apple").contains(noteId2));
+        assertTrue(relatedDocs.get("banana").contains(noteId1));
+        assertFalse(relatedDocs.containsKey("orange"));
+    }
+
+    @Test
+    public void testTfIdfCalculation() {
+        // Add multiple documents to test TF-IDF calculation
+        Long noteId1 = 1L;
+        List<String> terms1 = Arrays.asList("apple", "banana", "apple"); // apple appears twice
+        biRelationalGraph.addOrUpdateNote(noteId1, terms1);
+
+        Long noteId2 = 2L;
+        List<String> terms2 = Arrays.asList("apple", "orange");
+        biRelationalGraph.addOrUpdateNote(noteId2, terms2);
+
+        // Calculate expected TF-IDF values
+        // For noteId1:
+        // TF(apple) = 2/3, IDF(apple) = ln(2/2) = 0
+        // TF(banana) = 1/3, IDF(banana) = ln(2/1) = 0.693
+
+        Map<String, Double> tfIdfScores1 = biRelationalGraph.getTfIdf(noteId1);
+        assertEquals(0.0, tfIdfScores1.get("apple"), 0.001); // TF * IDF = 2/3 * 0 = 0
+        assertEquals(0.231, tfIdfScores1.get("banana"), 0.001); // TF * IDF = 1/3 * 0.693 = 0.231
+    }
+} 

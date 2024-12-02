@@ -6,7 +6,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.config.ConfigReader;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.modules.backgroundjobs.BackgroundJobs;
+import com.originb.inkwisenote.modules.repositories.Repositories;
 
 public class AppMainActivity extends AppCompatActivity {
 
@@ -23,13 +24,15 @@ public class AppMainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private void initializeModules() {
-        Repositories.getInstance().getNoteMetaRepository().loadAll();
-        Repositories.getInstance().getBitmapRepository().loadAllAsThumbnails();
-    }
-
     private void registerModules() {
         ConfigReader.fromContext(this);
         Repositories.registerRepositories(this);
+        BackgroundJobs.registerJobs(this);
+    }
+
+    private void initializeModules() {
+        Repositories.getInstance().getNoteMetaRepository().loadAll();
+        Repositories.getInstance().getBitmapRepository().loadAllAsThumbnails();
+        BackgroundJobs.scheduleJobs(this);
     }
 }

@@ -1,15 +1,14 @@
-package com.originb.inkwisenote.data.repositories;
+package com.originb.inkwisenote.modules.repositories;
 
 import android.graphics.Bitmap;
 import android.util.Log;
-import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.NoteMeta;
+import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
-import com.originb.inkwisenote.modules.Repositories;
 
 import java.util.*;
 import java.util.stream.Collectors;

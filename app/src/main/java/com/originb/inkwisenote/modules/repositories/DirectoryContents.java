@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.repositories;
+package com.originb.inkwisenote.modules.repositories;
 
 import java.util.List;
 

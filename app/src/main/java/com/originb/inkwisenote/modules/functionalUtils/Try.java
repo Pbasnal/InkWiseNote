@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.functionalUtils;
+package com.originb.inkwisenote.modules.functionalUtils;
 
 import android.util.Log;
 import com.originb.inkwisenote.DebugContext;

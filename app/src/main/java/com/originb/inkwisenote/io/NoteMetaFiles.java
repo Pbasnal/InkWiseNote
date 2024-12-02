@@ -1,7 +1,7 @@
 package com.originb.inkwisenote.io;
 
 import com.originb.inkwisenote.constants.Returns;
-import com.originb.inkwisenote.data.NoteMeta;
+import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.io.utils.BytesFileIoUtils;
 
 import java.io.*;

@@ -12,12 +12,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.activities.NoteActivity;
-import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.repositories.NoteRepository;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.modules.repositories.NoteRepository;
+import com.originb.inkwisenote.modules.repositories.Repositories;
 import org.jetbrains.annotations.NotNull;
 
-import java.security.cert.PKIXRevocationChecker;
 import java.util.List;
 import java.util.Optional;
 

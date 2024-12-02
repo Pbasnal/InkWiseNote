@@ -19,10 +19,10 @@ import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.config.ConfigReader;
-import com.originb.inkwisenote.data.repositories.DirectoryContents;
-import com.originb.inkwisenote.data.repositories.FolderItem;
+import com.originb.inkwisenote.modules.repositories.DirectoryContents;
+import com.originb.inkwisenote.modules.repositories.FolderItem;
 import com.originb.inkwisenote.data.sidebar.MenuItemData;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.io.FolderHierarchyRepository;
 import com.originb.inkwisenote.R;
 

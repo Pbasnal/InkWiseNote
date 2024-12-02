@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data;
+package com.originb.inkwisenote.data.notedata;
 
 import android.graphics.Bitmap;
 import com.originb.inkwisenote.data.config.PageTemplate;

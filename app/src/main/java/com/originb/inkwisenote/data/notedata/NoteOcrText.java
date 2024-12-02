@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data;
+package com.originb.inkwisenote.data.notedata;
 
 import lombok.Getter;
 import lombok.Setter;
