@@ -1,11 +1,13 @@
 package com.originb.inkwisenote.io.sql;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
 import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingJobStatus;
+import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
 
 public class TextProcessingJobContract {
     // To prevent someone from accidentally instantiating the contract class,
@@ -20,18 +22,18 @@ public class TextProcessingJobContract {
         public static final String COLUMN_NAME_STAGE = "stage";
     }
 
-    public static class TextProcessingJobDbHelper extends InkwiseNoteDbHelper {
+    public static class TextProcessingDbQueries extends InkwiseNoteDbHelper {
 
-        public TextProcessingJobDbHelper(Context context) {
+        public TextProcessingDbQueries(Context context) {
             super(context, DATABASE_NAME, DATABASE_VERSION);
         }
 
         protected String getSqlCreateQuery() {
             return "CREATE TABLE " + TextProcessingJobEntry.TABLE_NAME + "(" +
-                    TextProcessingJobEntry._ID + "," +
-                    TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + "," +
-                    TextProcessingJobEntry.COLUMN_NAME_STAGE
-                    + ")";
+                    TextProcessingJobEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " INTEGER NOT NULL," +
+                    TextProcessingJobEntry.COLUMN_NAME_STAGE + " TEXT NOT NULL" +
+                    ")";
         }
 
         protected String getSqlDropQuery() {
@@ -48,11 +50,10 @@ public class TextProcessingJobContract {
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             onUpgrade(db, oldVersion, newVersion);
         }
-    }
 
-    public static class TextProcessingDbQueries {
-        public static TextProcessingJobStatus readFirstNoteJobStatus(TextProcessingJobDbHelper textProcessingJobDbHelper) {
-            SQLiteDatabase db = textProcessingJobDbHelper.getReadableDatabase();
+
+        public TextProcessingJobStatus readFirstNoteJobStatus() {
+            SQLiteDatabase db = getReadableDatabase();
 
             // Define a projection that specifies which columns from the database
             // you will actually use after this query.
@@ -75,7 +76,7 @@ public class TextProcessingJobContract {
                     null,                                // Don't filter by row groups
                     sortOrder                            // The sort order with LIMIT
             );
-
+            
             TextProcessingJobStatus textProcessingJobStatus = null;
             while (cursor.moveToNext()) {
                 textProcessingJobStatus = new TextProcessingJobStatus(cursor.getLong(
@@ -86,6 +87,66 @@ public class TextProcessingJobContract {
             cursor.close();
             Log.d("TextProcessingJob", "Loaded text jobs");
             return textProcessingJobStatus;
+        }
+
+        public void insertJob(Long noteId) {
+            SQLiteDatabase db = getWritableDatabase();
+
+            try {
+                // Start a transaction
+                db.beginTransaction();
+
+                ContentValues values = new ContentValues();
+                values.put(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID, noteId);
+                values.put(TextProcessingJobEntry.COLUMN_NAME_STAGE, TextProcessingStage.Tokenization);
+
+                // Insert the new row
+                long newRowId = db.insert(TextProcessingJobEntry.TABLE_NAME, null, values);
+
+                if (newRowId == -1) {
+                    Log.e("TextProcessingJob", "Failed to insert job for noteId: " + noteId);
+                } else {
+                    Log.d("TextProcessingJob", "Successfully inserted job for noteId: " + noteId);
+                }
+
+                // Mark the transaction as successful
+                db.setTransactionSuccessful();
+            } catch (Exception ex) {
+                Log.e("TextProcessingJob", "Error inserting job", ex);
+            } finally {
+                // End the transaction
+                db.endTransaction();
+            }
+        }
+
+        public void deleteJob(Long noteId) {
+            SQLiteDatabase db = getWritableDatabase();
+
+            try {
+                // Start a transaction
+                db.beginTransaction();
+
+                String selection = TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " = ?";
+                // Specify the arguments in placeholder order
+                String[] selectionArgs = {String.valueOf(noteId)};
+
+                // Insert the new row
+                long newRowId = db.delete(TextProcessingJobEntry.TABLE_NAME, selection, selectionArgs);
+
+                if (newRowId == -1) {
+                    Log.e("TextProcessingJob", "Failed to delete job for noteId: " + noteId);
+                } else {
+                    Log.d("TextProcessingJob", "Successfully deleted job for noteId: " + noteId);
+                }
+
+                // Mark the transaction as successful
+                db.setTransactionSuccessful();
+            } catch (Exception ex) {
+                Log.e("TextProcessingJob", "Error deleting job", ex);
+            } finally {
+                // End the transaction
+                db.endTransaction();
+            }
         }
     }
 }

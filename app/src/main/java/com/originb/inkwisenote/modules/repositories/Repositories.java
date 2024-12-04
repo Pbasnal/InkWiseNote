@@ -26,7 +26,7 @@ public class Repositories {
     // private TesseractsOcr TesseractsOcr;
 
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
-    private TextProcessingJobContract.TextProcessingJobDbHelper textProcessingJobDbHelper;
+    private TextProcessingJobContract.TextProcessingDbQueries textProcessingJobDbHelper;
     private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
 
     private PageSettings pageSettings;
@@ -54,7 +54,7 @@ public class Repositories {
 
         noteRepository = new NoteRepository();
         noteTextDbHelper = new NoteTextContract.NoteTextDbHelper(appContext);
-        textProcessingJobDbHelper = new TextProcessingJobContract.TextProcessingJobDbHelper(appContext);
+        textProcessingJobDbHelper = new TextProcessingJobContract.TextProcessingDbQueries(appContext);
         noteTermFrequencyDbQueries = new NoteTermFrequencyContract.NoteTermFrequencyDbQueries(appContext);
     }
 

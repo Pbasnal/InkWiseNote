@@ -18,6 +18,7 @@ import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
+import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.io.ocr.AzureOcrResult;
@@ -44,6 +45,7 @@ public class NoteActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
     //    private TesseractsOcr tesseractsOcr;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+    private TextProcessingJobContract.TextProcessingDbQueries textProcessingDbQueries;
     private AppSecrets appSecrets;
 
     private DrawingView drawingView;
@@ -74,6 +76,7 @@ public class NoteActivity extends AppCompatActivity {
 
 //        tesseractsOcr = Repositories.getInstance().getTesseractsOcr();
         noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        textProcessingDbQueries = Repositories.getInstance().getTextProcessingJobDbHelper();
         noteRepository = new NoteRepository();
         appSecrets = ConfigReader.fromContext(this).getAppConfig().getAppSecrets();
         noteStack = new NoteStack(noteRepository);
@@ -254,7 +257,7 @@ public class NoteActivity extends AppCompatActivity {
 //    }
 
     private Optional<NoteOcrText> applyOcr(NoteMeta noteMeta) {
-       Optional<NoteOcrText> noteTextOpt = Try.to(() -> {
+        Optional<NoteOcrText> noteTextOpt = Try.to(() -> {
                     AzureOcrResult azureOcrResult = runOcrOnImage();
                     Log.d("NoteActivity", "Ocr result: " + azureOcrResult);
                     NoteOcrText noteOcrText = new NoteOcrText(noteMeta.getNoteId(), azureOcrResult.readResult.content);
@@ -265,13 +268,15 @@ public class NoteActivity extends AppCompatActivity {
                     } else {
                         NoteTextContract.NoteTextQueries.updateTextToDb(noteOcrText, noteTextDbHelper);
                     }
+
+                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
                     Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
 
                     return noteOcrText;
                 }, debugContext)
                 .logIfError("Failed to convert handwriting to text")
                 .get();
-       return noteTextOpt;
+        return noteTextOpt;
     }
 
     @SneakyThrows
