@@ -28,7 +28,7 @@ public class BackgroundJobScheduler {
         JobInfo jobInfo = new JobInfo.Builder(atomicInteger.getAndIncrement(), componentName)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPersisted(false) // Persist across reboots
-                .setBackoffCriteria(0, 10 * 1000)
+                .setBackoffCriteria(0, 1 * 1000)
                 .build();
 
         jobScheduler.schedule(jobInfo);

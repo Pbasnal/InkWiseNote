@@ -28,6 +28,10 @@ public class TextProcessingJobContract {
             super(context, DATABASE_NAME, DATABASE_VERSION);
         }
 
+        public TextProcessingDbQueries(Context context, String dbPath) {
+            super(context, dbPath, DATABASE_VERSION);
+        }
+
         protected String getSqlCreateQuery() {
             return "CREATE TABLE " + TextProcessingJobEntry.TABLE_NAME + "(" +
                     TextProcessingJobEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -63,10 +67,6 @@ public class TextProcessingJobContract {
                     TextProcessingJobEntry.COLUMN_NAME_STAGE
             };
 
-            // How you want the results sorted in the resulting Cursor
-            String sortOrder =
-                    TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " DESC";
-
             Cursor cursor = db.query(
                     TextProcessingJobEntry.TABLE_NAME,   // The table to query
                     projection,                          // The array of columns to return (pass null to get all)
@@ -74,9 +74,9 @@ public class TextProcessingJobContract {
                     null,                                // No where clause arguments
                     null,                                // Don't group the rows
                     null,                                // Don't filter by row groups
-                    sortOrder                            // The sort order with LIMIT
+                    null                                 // The sort order with LIMIT
             );
-            
+
             TextProcessingJobStatus textProcessingJobStatus = null;
             while (cursor.moveToNext()) {
                 textProcessingJobStatus = new TextProcessingJobStatus(cursor.getLong(
@@ -119,34 +119,22 @@ public class TextProcessingJobContract {
             }
         }
 
-        public void deleteJob(Long noteId) {
+        public Boolean deleteJob(Long noteId) {
             SQLiteDatabase db = getWritableDatabase();
-
+            String deleteQuery = "Delete from " + TextProcessingJobEntry.TABLE_NAME +
+                    " where " + TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " = " + noteId;
             try {
-                // Start a transaction
                 db.beginTransaction();
-
-                String selection = TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " = ?";
-                // Specify the arguments in placeholder order
-                String[] selectionArgs = {String.valueOf(noteId)};
-
-                // Insert the new row
-                long newRowId = db.delete(TextProcessingJobEntry.TABLE_NAME, selection, selectionArgs);
-
-                if (newRowId == -1) {
-                    Log.e("TextProcessingJob", "Failed to delete job for noteId: " + noteId);
-                } else {
-                    Log.d("TextProcessingJob", "Successfully deleted job for noteId: " + noteId);
-                }
-
-                // Mark the transaction as successful
+                db.execSQL(deleteQuery);
                 db.setTransactionSuccessful();
             } catch (Exception ex) {
                 Log.e("TextProcessingJob", "Error deleting job", ex);
+                return false;
             } finally {
                 // End the transaction
                 db.endTransaction();
             }
+            return true;
         }
     }
 }

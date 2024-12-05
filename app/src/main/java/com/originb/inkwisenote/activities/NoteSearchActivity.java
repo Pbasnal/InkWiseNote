@@ -72,6 +72,6 @@ public class NoteSearchActivity extends AppCompatActivity {
     }
 
     private List<Long> searchInDb(String searchTerm) {
-        return NoteTextContract.NoteTextQueries.searchTextFromDb(searchTerm, noteTextDbHelper);
+        return noteTextDbHelper.searchTextFromDb(searchTerm);
     }
 }

@@ -59,7 +59,7 @@ public class NoteRepository {
         pageTemplateFiles.deletePageTemplate(noteId);
 
         // delete note search text
-        NoteTextContract.NoteTextQueries.deleteNoteText(noteId, noteTextDbHelper);
+        noteTextDbHelper.deleteNoteText(noteId);
     }
 
     public NoteMeta getNoteAtIndex(int position) {

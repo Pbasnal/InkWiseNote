@@ -29,6 +29,10 @@ public final class NoteTextContract {
             super(context, DATABASE_NAME, DATABASE_VERSION);
         }
 
+        public NoteTextDbHelper(Context context, String dbPath) {
+            super(context, dbPath != null ? dbPath : DATABASE_NAME, DATABASE_VERSION);
+        }
+
         protected String getSqlCreateQuery() {
             return "CREATE TABLE " + NoteTextEntry.TABLE_NAME + "(" +
                     NoteTextEntry._ID + "," +
@@ -49,11 +53,9 @@ public final class NoteTextContract {
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             onUpgrade(db, oldVersion, newVersion);
         }
-    }
 
-    public static class NoteTextQueries {
-        public static List<NoteOcrText> readTextFromDb(Long noteId, NoteTextDbHelper noteTextDbHelper) {
-            SQLiteDatabase db = noteTextDbHelper.getReadableDatabase();
+        public List<NoteOcrText> readTextFromDb(Long noteId) {
+            SQLiteDatabase db = getReadableDatabase();
 
             // Define a projection that specifies which columns from the database
             // you will actually use after this query.
@@ -91,8 +93,8 @@ public final class NoteTextContract {
             return noteOcrTexts;
         }
 
-        public static List<Long> searchTextFromDb(String searchTerm, NoteTextDbHelper noteTextDbHelper) {
-            SQLiteDatabase db = noteTextDbHelper.getReadableDatabase();
+        public List<Long> searchTextFromDb(String searchTerm) {
+            SQLiteDatabase db = getReadableDatabase();
 
             // Define a projection that specifies which columns from the database
             // you will actually use after this query.
@@ -129,8 +131,8 @@ public final class NoteTextContract {
             return itemIds;
         }
 
-        public static void updateTextToDb(NoteOcrText noteOcrText, NoteTextDbHelper noteTextDbHelper) {
-            SQLiteDatabase db = noteTextDbHelper.getWritableDatabase();
+        public void updateTextToDb(NoteOcrText noteOcrText) {
+            SQLiteDatabase db = getWritableDatabase();
 
             // New value for one column
 //            String noteText = noteText.getExtractedText();
@@ -148,9 +150,9 @@ public final class NoteTextContract {
                     selectionArgs);
         }
 
-        public static void insertTextToDb(NoteOcrText noteOcrText, NoteTextDbHelper noteTextDbHelper) {
+        public void insertTextToDb(NoteOcrText noteOcrText) {
             // Gets the data repository in write mode
-            SQLiteDatabase db = noteTextDbHelper.getWritableDatabase();
+            SQLiteDatabase db = getWritableDatabase();
 
             // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
@@ -162,9 +164,9 @@ public final class NoteTextContract {
             long newRowId = db.insert(NoteTextContract.NoteTextEntry.TABLE_NAME, null, values);
         }
 
-        public static void deleteNoteText(Long noteId, NoteTextDbHelper noteTextDbHelper) {
+        public void deleteNoteText(Long noteId) {
             // Get writable database
-            SQLiteDatabase db = noteTextDbHelper.getWritableDatabase();
+            SQLiteDatabase db = getWritableDatabase();
 
             // Define 'where' part of query
             String selection = NoteTextContract.NoteTextEntry._ID + " = ?";

@@ -11,6 +11,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.common.util.CollectionUtils;
+import com.google.android.gms.common.util.Strings;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
@@ -235,10 +236,25 @@ public class NoteActivity extends AppCompatActivity {
 
         noteEntityOpt.ifPresent(this::saveNoteFiles);
         Toast.makeText(this, "Analyzing notes", Toast.LENGTH_SHORT).show();
-        noteEntityOpt.ifPresent(noteEntity -> {
-            applyOcr(noteEntity.getNoteMeta());
-            updateNoteMeta(noteEntity.getNoteMeta());
-        });
+
+        Optional<AzureOcrResult> azureOcrResult = noteEntityOpt.flatMap(n -> applyAzureOcr(drawingView.getBitmap()));
+
+        // if the code is here, then this should have a valid value;
+        NoteMeta noteMeta = noteEntityOpt.get().getNoteMeta();
+        azureOcrResult.filter(res -> !Strings.isEmptyOrWhitespace(res.readResult.content))
+                .map(res -> new NoteOcrText(noteMeta.getNoteId(), res.readResult.content))
+                .ifPresent(noteOcrText -> {
+                    List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(noteOcrText.getNoteId());
+                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
+                        noteTextDbHelper.insertTextToDb(noteOcrText);
+                    } else {
+                        noteTextDbHelper.updateTextToDb(noteOcrText);
+                    }
+
+                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
+                    Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
+                });
+        updateNoteMeta(noteMeta);
     }
 
 //    private void applyOcrWithTess(NoteMeta noteMeta, Function<NoteMeta, Void> callback) {
@@ -256,41 +272,25 @@ public class NoteActivity extends AppCompatActivity {
 //                .get();
 //    }
 
-    private Optional<NoteOcrText> applyOcr(NoteMeta noteMeta) {
-        Optional<NoteOcrText> noteTextOpt = Try.to(() -> {
-                    AzureOcrResult azureOcrResult = runOcrOnImage();
+    private Optional<AzureOcrResult> applyAzureOcr(Bitmap bitmap) {
+        Optional<AzureOcrResult> ocrResult = Try.to(() -> {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+                    // Compress the bitmap into the ByteArrayOutputStream
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+
+                    // Convert the ByteArrayOutputStream to an InputStream
+                    byte[] byteArray = byteArrayOutputStream.toByteArray();
+                    InputStream imageStream = new ByteArrayInputStream(byteArray);
+                    AzureOcrResult azureOcrResult = OcrService.convertHandwritingToText(imageStream, appSecrets).get();
+
                     Log.d("NoteActivity", "Ocr result: " + azureOcrResult);
-                    NoteOcrText noteOcrText = new NoteOcrText(noteMeta.getNoteId(), azureOcrResult.readResult.content);
 
-                    List<NoteOcrText> noteOcrTexts = NoteTextContract.NoteTextQueries.readTextFromDb(noteOcrText.getNoteId(), noteTextDbHelper);
-                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
-                        NoteTextContract.NoteTextQueries.insertTextToDb(noteOcrText, noteTextDbHelper);
-                    } else {
-                        NoteTextContract.NoteTextQueries.updateTextToDb(noteOcrText, noteTextDbHelper);
-                    }
-
-                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
-                    Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
-
-                    return noteOcrText;
+                    return azureOcrResult;
                 }, debugContext)
                 .logIfError("Failed to convert handwriting to text")
                 .get();
-        return noteTextOpt;
-    }
-
-    @SneakyThrows
-    private AzureOcrResult runOcrOnImage() {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-        // Compress the bitmap into the ByteArrayOutputStream
-        drawingView.getBitmap()
-                .compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-
-        // Convert the ByteArrayOutputStream to an InputStream
-        byte[] byteArray = byteArrayOutputStream.toByteArray();
-        InputStream imageStream = new ByteArrayInputStream(byteArray);
-        return OcrService.convertHandwritingToText(imageStream, appSecrets).get();
+        return ocrResult;
     }
 
     private void saveNoteFiles(NoteEntity noteEntity) {

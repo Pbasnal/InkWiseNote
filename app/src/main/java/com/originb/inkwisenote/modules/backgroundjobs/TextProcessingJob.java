@@ -4,6 +4,7 @@ import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.os.AsyncTask;
 import android.util.Log;
+import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
 import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingJobStatus;
 import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
@@ -31,8 +32,6 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
     private TextProcessingJobContract.TextProcessingDbQueries textProcessingJobDbHelper;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
 
-    private String nullDocumentError = "null document";
-
     TextProcessingJob(JobService jobService, JobParameters jobParams) {
         this.jobService = jobService;
         this.jobParams = jobParams;
@@ -54,7 +53,7 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
             return null;
         }
 
-        List<NoteOcrText> noteOcrTexts = NoteTextContract.NoteTextQueries.readTextFromDb(jobStatus.getNoteId(), noteTextDbHelper);
+        List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(jobStatus.getNoteId());
         noteOcrTexts.stream()
                 .map(note -> handleException(this::extractTermsFromNote, note))
                 .map(eitherTerms -> handleException(this::createBiRelationalGraph, eitherTerms.result))
@@ -77,9 +76,12 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
     }
 
     private DocumentTerms extractTermsFromNote(NoteOcrText noteOcrText) {
+        DocumentTerms documentTerms = new DocumentTerms();
+        documentTerms.documentId = noteOcrText.getNoteId();
+
         String text = noteOcrText.getExtractedText();
         if (text == null || text.isEmpty()) {
-            return null; // Return an empty list for null or empty text
+            return documentTerms; // Return an empty list for null or empty text
         }
 
         // Step 1: Normalize the text to lowercase
@@ -90,11 +92,6 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
 
         // Step 3: Split the text into terms by whitespace
         String[] terms = text.split("\\s+");
-
-        // Step 4: Filter out empty strings (in case of extra spaces)
-        DocumentTerms documentTerms = new DocumentTerms();
-        documentTerms.documentId = noteOcrText.getNoteId();
-
         documentTerms.terms = new ArrayList<>();
         for (String term : terms) {
             if (!term.isEmpty()) {
@@ -107,6 +104,8 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
 
     private Long createBiRelationalGraph(DocumentTerms documentTerms) {
         if (Objects.isNull(documentTerms)) return null;
+        if (CollectionUtils.isEmpty(documentTerms.terms)) return documentTerms.documentId;
+
         biRelationalGraph.addOrUpdateNote(documentTerms.documentId,
                 documentTerms.terms);
 
