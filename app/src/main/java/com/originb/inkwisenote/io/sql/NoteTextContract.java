@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
+import com.originb.inkwisenote.data.admin.NoteExtractedTextEntry;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
 
 import java.util.ArrayList;
@@ -179,6 +180,36 @@ public final class NoteTextContract {
 
             // Log or handle the number of deleted rows if necessary
             Log.d("Delete", "Number of rows deleted: " + deletedRows);
+        }
+
+        public List<NoteExtractedTextEntry> getAllNoteText() {
+            SQLiteDatabase db = getReadableDatabase();
+            List<NoteExtractedTextEntry> entries = new ArrayList<>();
+
+            String[] projection = {
+                NoteTextEntry._ID,
+                NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT
+            };
+
+            Cursor cursor = db.query(
+                NoteTextEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                NoteTextEntry._ID + " ASC"
+            );
+
+            while (cursor.moveToNext()) {
+                entries.add(new NoteExtractedTextEntry(
+                    cursor.getLong(cursor.getColumnIndexOrThrow(NoteTextEntry._ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(NoteTextEntry.COLUMN_NAME_EXTRACTED_TEXT))
+                ));
+            }
+            cursor.close();
+
+            return entries;
         }
     }
 

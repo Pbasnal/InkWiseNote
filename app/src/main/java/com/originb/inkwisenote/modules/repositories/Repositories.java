@@ -46,6 +46,11 @@ public class Repositories {
     }
 
     private void registerRepositoriesInternal(Context appContext) {
+        noteTextDbHelper = new NoteTextContract.NoteTextDbHelper(appContext);
+        textProcessingJobDbHelper = new TextProcessingJobContract.TextProcessingDbQueries(appContext);
+        noteTermFrequencyDbQueries = new NoteTermFrequencyContract.NoteTermFrequencyDbQueries(appContext);
+
+
         noteMetaRepository = new NoteMetaFiles(appContext.getFilesDir());
         bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());
         pageTemplateFiles = new PageTemplateFiles(appContext.getFilesDir());
@@ -53,9 +58,6 @@ public class Repositories {
         pageSettings = new PageSettings();
 
         noteRepository = new NoteRepository();
-        noteTextDbHelper = new NoteTextContract.NoteTextDbHelper(appContext);
-        textProcessingJobDbHelper = new TextProcessingJobContract.TextProcessingDbQueries(appContext);
-        noteTermFrequencyDbQueries = new NoteTermFrequencyContract.NoteTermFrequencyDbQueries(appContext);
     }
 
     public static void initRepositories() {

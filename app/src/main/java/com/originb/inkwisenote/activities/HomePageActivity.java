@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.view.View;
 
 import android.widget.ImageButton;
+import android.widget.Button;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -88,6 +89,15 @@ public class HomePageActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        Button adminButton = findViewById(R.id.admin_button);
+        if (adminButton != null) {
+            adminButton.setOnClickListener(v -> {
+                Intent intent = new Intent(HomePageActivity.this, AdminActivity.class);
+                startActivity(intent);
+                drawerLayout.closeDrawer(GravityCompat.START);
+            });
+        }
 
         List<MenuItemData> menuItems = new ArrayList<>();
 

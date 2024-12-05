@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
+import com.originb.inkwisenote.data.admin.TermFrequencyEntry;
 
 import java.util.*;
 
@@ -230,6 +231,38 @@ public class NoteTermFrequencyContract {
             }
             // Log or handle the number of deleted rows if necessary
             Log.d("Delete", "Number of rows deleted: ");
+        }
+
+        public List<TermFrequencyEntry> getAllTermFrequencies() {
+            SQLiteDatabase db = getReadableDatabase();
+            List<TermFrequencyEntry> entries = new ArrayList<>();
+
+            String[] projection = {
+                NoteTermFrequencyEntry.COLUMN_NAME_NOTE_ID,
+                NoteTermFrequencyEntry.COLUMN_NAME_TERM,
+                NoteTermFrequencyEntry.COLUMN_NAME_FQ_IN_DOC
+            };
+
+            Cursor cursor = db.query(
+                NoteTermFrequencyEntry.TABLE_NAME,
+                projection,
+                null,
+                null,
+                null,
+                null,
+                NoteTermFrequencyEntry.COLUMN_NAME_NOTE_ID + " ASC"
+            );
+
+            while (cursor.moveToNext()) {
+                entries.add(new TermFrequencyEntry(
+                    cursor.getLong(cursor.getColumnIndexOrThrow(NoteTermFrequencyEntry.COLUMN_NAME_NOTE_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(NoteTermFrequencyEntry.COLUMN_NAME_TERM)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(NoteTermFrequencyEntry.COLUMN_NAME_FQ_IN_DOC))
+                ));
+            }
+            cursor.close();
+
+            return entries;
         }
     }
 }

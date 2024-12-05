@@ -136,6 +136,14 @@
                 android:src="@drawable/dotted_line"
                 android:layerType="software"/>
 
+        <Button
+                android:id="@+id/admin_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Admin Panel"
+                android:layout_margin="8dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
         <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/navigation_sidebar_view"
                 android:padding="10dp"

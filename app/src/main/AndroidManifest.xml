@@ -34,6 +34,10 @@
 <!--            </intent-filter>-->
         </activity>
 
+        <activity android:name=".activities.AdminActivity"
+                  android:exported="false">
+        </activity>
+
         <service
                 android:name=".modules.backgroundjobs.AsyncJobController"
                 android:permission="android.permission.BIND_JOB_SERVICE"
