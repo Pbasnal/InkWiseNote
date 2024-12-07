@@ -3,9 +3,11 @@ package com.originb.inkwisenote.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-
+import android.view.animation.AnticipateInterpolator;
+import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -48,18 +50,24 @@ public class HomePageActivity extends AppCompatActivity {
 
     private ImageButton settingsMenuBtn;
 
+    private LinearLayout fabMenuContainer;
+    private FloatingActionButton mainFab;
+    private boolean isFabMenuOpen = false;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
 
-        configReader = ConfigReader.getInstance();
+        configReader = ConfigReader.fromContext(this);
 
         createSidebarIfEnabled();
         createGridLayoutToShowNotes();
         createNewNoteButton();
         createSettingsBtn();
         createSearchBtn();
+
+        setupFabMenu();
     }
 
     private void createSearchBtn() {
@@ -148,7 +156,9 @@ public class HomePageActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+        if (isFabMenuOpen) {
+            closeFabMenu();
+        } else if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
@@ -159,4 +169,65 @@ public class HomePageActivity extends AppCompatActivity {
         // Start NoteActivity to create a new note
         Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
     };
+
+    private void setupFabMenu() {
+        fabMenuContainer = findViewById(R.id.fab_menu_container);
+        mainFab = findViewById(R.id.fab_add_note);
+        
+        // Setup main FAB click
+        mainFab.setOnClickListener(v -> toggleFabMenu());
+        
+        // Setup individual FABs
+        FloatingActionButton fabCamera = findViewById(R.id.fab_camera);
+        FloatingActionButton fabHandwritten = findViewById(R.id.fab_handwritten);
+        FloatingActionButton fabText = findViewById(R.id.fab_text);
+        
+        fabCamera.setOnClickListener(v -> {
+            toggleFabMenu();
+            // Handle camera note creation
+//            Routing.NoteActivity.newCameraNoteIntent(this, getFilesDir().getPath());
+        });
+        
+        fabHandwritten.setOnClickListener(v -> {
+            toggleFabMenu();
+            // Handle handwritten note creation
+            Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
+        });
+        
+        fabText.setOnClickListener(v -> {
+            toggleFabMenu();
+            // Handle text note creation
+//            Routing.NoteActivity.newTextNoteIntent(this, getFilesDir().getPath());
+        });
+    }
+
+    private void toggleFabMenu() {
+        if (!isFabMenuOpen) {
+            showFabMenu();
+        } else {
+            closeFabMenu();
+        }
+    }
+
+    private void showFabMenu() {
+        isFabMenuOpen = true;
+        fabMenuContainer.setVisibility(View.VISIBLE);
+        mainFab.animate().rotation(45f);
+        fabMenuContainer.animate()
+            .alpha(1f)
+            .translationY(0)
+            .setInterpolator(new OvershootInterpolator(1.0f))
+            .start();
+    }
+
+    private void closeFabMenu() {
+        isFabMenuOpen = false;
+        mainFab.animate().rotation(0f);
+        fabMenuContainer.animate()
+            .alpha(0f)
+            .translationY(fabMenuContainer.getHeight())
+            .setInterpolator(new AnticipateInterpolator(1.0f))
+            .withEndAction(() -> fabMenuContainer.setVisibility(View.GONE))
+            .start();
+    }
 }

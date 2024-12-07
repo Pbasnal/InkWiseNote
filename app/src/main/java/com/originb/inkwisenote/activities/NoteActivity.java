@@ -3,6 +3,7 @@ package com.originb.inkwisenote.activities;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.EditText;
 
 import android.widget.TextView;
@@ -62,6 +63,10 @@ public class NoteActivity extends AppCompatActivity {
     private TextView ocrResult;
 
     private boolean isSaved = false;
+
+    private boolean isPalmRejectionEnabled = true;  // Add toggle if needed
+    private static final float PALM_PRESSURE_THRESHOLD = 0.3f;  // Adjust based on testing
+    private static final int TOUCH_SLOP = 8;  // Minimum movement to consider it a deliberate touch
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -313,5 +318,54 @@ public class NoteActivity extends AppCompatActivity {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yy HH:mm");
 
         return dateTime.format(formatter);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!isPalmRejectionEnabled) {
+            return super.onTouchEvent(event);
+        }
+
+        // Get tool type for this touch event
+        int toolType = event.getToolType(event.getActionIndex());
+        
+        // Always accept stylus input
+        if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
+            return super.onTouchEvent(event);
+        }
+
+        // For finger touches, apply palm rejection logic
+        if (toolType == MotionEvent.TOOL_TYPE_FINGER) {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    // Check pressure for finger touches
+                    float pressure = event.getPressure();
+                    if (pressure > PALM_PRESSURE_THRESHOLD) {
+                        // Likely a palm touch, ignore
+                        return false;
+                    }
+                    
+                    // Check touch area size
+                    float touchSize = event.getSize();
+                    if (touchSize > 0.15f) {  // Adjust threshold based on testing
+                        // Large touch area usually means palm
+                        return false;
+                    }
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    // Check for erratic movement
+                    float deltaX = Math.abs(event.getX() - event.getHistoricalX(0));
+                    float deltaY = Math.abs(event.getY() - event.getHistoricalY(0));
+                    
+                    if (deltaX > TOUCH_SLOP * 3 || deltaY > TOUCH_SLOP * 3) {
+                        // Erratic movement usually indicates unintentional touch
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        return super.onTouchEvent(event);
     }
 }
