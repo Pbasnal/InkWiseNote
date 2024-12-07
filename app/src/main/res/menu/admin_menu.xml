@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android:item
+        android:id="@+id/action_graph_view"
+        android:icon="@drawable/ic_graph_view"
+        android:title="Graph View"
+        app:showAsAction="ifRoom"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"/>

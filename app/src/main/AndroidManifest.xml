@@ -38,6 +38,11 @@
                   android:exported="false">
         </activity>
 
+        <activity android:name=".activities.RelatedNotesActivity"
+                  android:label="Related Notes"
+                  android:exported="true">
+        </activity>
+
         <service
                 android:name=".modules.backgroundjobs.AsyncJobController"
                 android:permission="android.permission.BIND_JOB_SERVICE"

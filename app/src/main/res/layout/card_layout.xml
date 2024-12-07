@@ -18,7 +18,7 @@
         <ImageView
                 android:id="@+id/card_image"
                 android:layout_width="match_parent"
-                android:layout_height="100dp"
+                android:layout_height="150dp"
                 android:scaleType="centerCrop"
                 android:padding="5dp"/>
 
@@ -44,22 +44,25 @@
                 android:orientation="horizontal">
 
             <ImageButton
-                    android:id="@+id/btn_dlt_note"
-                    android:layout_width="match_parent"
+                    android:id="@+id/btn_graph_view"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_gravity="left"
                     android:layout_height="wrap_content"
-                    android:drawableStart="@drawable/ic_delete"
-                    android:textAlignment="center"
-                    android:padding="5dp"
-                    android:src="@drawable/ic_delete"
-                    android:textColor="@color/white"
-                    android:background="@color/red"
+                    android:src="@drawable/ic_graph_view"
+                    android:background="@color/blue"
+                    android:padding="8dp"
+                    android:contentDescription="View related notes"/>
 
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintHorizontal_bias="0"
-                    android:contentDescription="Delete the noteMeta"/>
+            <ImageButton
+                    android:id="@+id/btn_dlt_note"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_delete"
+                    android:padding="8dp"
+                    android:background="@color/red"
+                    android:contentDescription="Delete note"/>
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
