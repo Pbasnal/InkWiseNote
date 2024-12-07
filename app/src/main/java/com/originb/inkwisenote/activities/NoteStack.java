@@ -1,7 +1,7 @@
 package com.originb.inkwisenote.activities;
 
-import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.repositories.NoteRepository;
+import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.modules.repositories.NoteRepository;
 
 import java.util.*;
 

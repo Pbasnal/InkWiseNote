@@ -1,19 +1,18 @@
-package com.originb.inkwisenote.data.repositories;
+package com.originb.inkwisenote.modules.repositories;
 
 import java.io.File;
 
-public class FolderItem implements Comparable<FolderItem> {
-
+public class FileItem {
     private int id;
     private int parentId;
     private File file;
-    private String folderName;
+    private String fileName;
 
-    public FolderItem(int id, int parentId, File file) {
+    public FileItem(int id, int parentId, File file) {
         this.id = id;
         this.parentId = parentId;
         this.file = file;
-        this.folderName = file.getName();
+        this.fileName = file.getName();
     }
 
     public int getId() {
@@ -38,19 +37,5 @@ public class FolderItem implements Comparable<FolderItem> {
 
     public void setFile(File file) {
         this.file = file;
-    }
-
-    public String getFolderName() {
-        return folderName;
-    }
-
-    public void setFolderName(String folderName) {
-        this.folderName = folderName;
-    }
-
-    @Override
-    public int compareTo(FolderItem folderItem) {
-        return this.folderName.compareTo(folderItem.folderName);
-
     }
 }

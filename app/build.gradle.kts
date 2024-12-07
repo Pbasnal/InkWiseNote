@@ -47,4 +47,5 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
+    testImplementation("org.robolectric:robolectric:4.9")
 }

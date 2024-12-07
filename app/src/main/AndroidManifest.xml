@@ -3,6 +3,9 @@
           xmlns:tools="http://schemas.android.com/tools"
         >
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
             android:allowBackup="true"
             android:icon="@mipmap/app_icon"
@@ -14,7 +17,8 @@
         <activity android:name=".activities.MainSettingsActivity" />
         <activity android:name=".activities.NoteActivity" />
         <activity android:name=".activities.NoteSearchActivity" />
-        <activity android:name=".activities.HomePageActivity"
+        <activity android:name=".activities.HomePageActivity" />
+        <activity android:name=".activities.AppMainActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,6 +33,20 @@
 <!--                <category android:name="android.intent.category.LAUNCHER" />-->
 <!--            </intent-filter>-->
         </activity>
+
+        <activity android:name=".activities.AdminActivity"
+                  android:exported="false">
+        </activity>
+
+        <activity android:name=".activities.RelatedNotesActivity"
+                  android:label="Related Notes"
+                  android:exported="true">
+        </activity>
+
+        <service
+                android:name=".modules.backgroundjobs.AsyncJobController"
+                android:permission="android.permission.BIND_JOB_SERVICE"
+                android:exported="true"/>
 
 
     </application>

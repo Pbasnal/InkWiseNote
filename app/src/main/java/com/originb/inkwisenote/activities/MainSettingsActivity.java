@@ -4,16 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.data.config.PageSettings;
 import com.originb.inkwisenote.modules.LayoutEngine;
-import com.originb.inkwisenote.modules.Repositories;
 
 public class MainSettingsActivity extends AppCompatActivity {
 

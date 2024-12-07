@@ -1,13 +1,9 @@
 package com.originb.inkwisenote.activities;
 
-import android.content.ContentValues;
-import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.EditText;
 
 import android.widget.TextView;
@@ -15,20 +11,24 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.common.util.CollectionUtils;
+import com.google.android.gms.common.util.Strings;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
-import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.NoteMeta;
-import com.originb.inkwisenote.data.repositories.NoteRepository;
-import com.originb.inkwisenote.functionalUtils.Try;
+import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.data.notedata.NoteMeta;
+import com.originb.inkwisenote.data.notedata.NoteOcrText;
+import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
+import com.originb.inkwisenote.modules.repositories.NoteRepository;
+import com.originb.inkwisenote.modules.functionalUtils.Try;
+import com.originb.inkwisenote.io.ocr.AzureOcrResult;
 import com.originb.inkwisenote.io.ocr.OcrService;
-//import com.originb.inkwisenote.io.ocr.TesseractsOcr;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.views.DrawingView;
 import com.originb.inkwisenote.R;
+import lombok.SneakyThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,8 +38,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class NoteActivity extends AppCompatActivity {
 
@@ -48,6 +46,7 @@ public class NoteActivity extends AppCompatActivity {
     private NoteRepository noteRepository;
     //    private TesseractsOcr tesseractsOcr;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+    private TextProcessingJobContract.TextProcessingDbQueries textProcessingDbQueries;
     private AppSecrets appSecrets;
 
     private DrawingView drawingView;
@@ -65,47 +64,87 @@ public class NoteActivity extends AppCompatActivity {
 
     private boolean isSaved = false;
 
+    private boolean isPalmRejectionEnabled = true;  // Add toggle if needed
+    private static final float PALM_PRESSURE_THRESHOLD = 0.3f;  // Adjust based on testing
+    private static final int TOUCH_SLOP = 8;  // Minimum movement to consider it a deliberate touch
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
 
+        // Activity Arguments
+        workingNotePath = getIntent().getStringExtra("workingNotePath"); // TODO: validation?
+        Long noteIdToOpen = getIntent().getLongExtra("noteId", 0);
+
         drawingView = findViewById(R.id.drawing_view);
 
 //        tesseractsOcr = Repositories.getInstance().getTesseractsOcr();
         noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        textProcessingDbQueries = Repositories.getInstance().getTextProcessingJobDbHelper();
         noteRepository = new NoteRepository();
         appSecrets = ConfigReader.fromContext(this).getAppConfig().getAppSecrets();
         noteStack = new NoteStack(noteRepository);
         debugContext = new DebugContext("NoteActivity");
 
         noteTitleField = findViewById(R.id.note_title);
-        newNoteButton = findViewById(R.id.fab_add_note);
-        prevNoteButton = findViewById(R.id.fab_prev_note);
-        nextNoteButton = findViewById(R.id.fab_next_note);
         createdTime = findViewById(R.id.note_created_time);
         ocrResult = findViewById(R.id.ocr_result);
 
+        setNewNoteButton();
+        setPrevNoteButton();
+        setNextNoteButton();
 
-        workingNotePath = getIntent().getStringExtra("workingNotePath");
-        Long noteIdToOpen = getIntent().getLongExtra("noteId", 0);
-        Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(noteIdToOpen);
+        Optional<NoteEntity> noteEntityOpt = initializeNewNoteIfEmpty(noteRepository.getNoteEntity(noteIdToOpen));
+
+        noteEntityOpt.ifPresent(noteEntity -> {
+            noteStack.setCurrentNote(noteEntity);
+            renderNote(noteEntity);
+        });
+
         if (!noteEntityOpt.isPresent()) {
-            noteEntityOpt = noteRepository.saveNote(workingNotePath,
+            Log.e(debugContext.getDebugInfo(), "Failed to load/initialize note");
+            Toast.makeText(this, "Failed to load note or initialize note", Toast.LENGTH_SHORT).show();
+            finish();
+        }
+    }
+
+    private Optional<NoteEntity> initializeNewNoteIfEmpty(Optional<NoteEntity> noteEntityOpt) {
+        if (!noteEntityOpt.isPresent()) {
+            return noteRepository.saveNote(workingNotePath,
                     "",
                     drawingView.getNewBitmap(),
                     drawingView.getNewPageTemplate());
         }
+        return noteEntityOpt;
+    }
 
-        noteEntityOpt.ifPresent(noteStack::setCurrentNote);
-        noteEntityOpt = noteEntityOpt.flatMap(this::renderNote);
-        if (!noteEntityOpt.isPresent()) {
-            Log.e(debugContext.getDebugInfo(), "Failed to load note");
-            Toast.makeText(this, "Failed to load note", Toast.LENGTH_SHORT).show();
-            finish();
-        }
+    private void setNextNoteButton() {
+        nextNoteButton = findViewById(R.id.fab_next_note);
+        nextNoteButton.setOnClickListener(v -> {
+            saveCurrentNote();
 
+            Optional<NoteEntity> nextNoteEntityOpt = noteStack.moveToNextNote();
 
+            nextNoteEntityOpt.ifPresent(this::renderNote);
+        });
+    }
+
+    private void setPrevNoteButton() {
+        prevNoteButton = findViewById(R.id.fab_prev_note);
+        prevNoteButton.setOnClickListener(v -> {
+            saveCurrentNote();
+            Optional<NoteEntity> prevNoteEntityOpt = noteStack.moveToPrevNote();
+
+            prevNoteEntityOpt.ifPresent(noteEntity -> {
+                renderNote(noteEntity);
+                createdTime.setText(getCreateDateTime(noteEntity));
+            });
+        });
+    }
+
+    private void setNewNoteButton() {
+        newNoteButton = findViewById(R.id.fab_add_note);
         newNoteButton.setOnClickListener(v -> {
             saveCurrentNote();
 
@@ -126,24 +165,28 @@ public class NoteActivity extends AppCompatActivity {
                 renderNote(newNoteEntityOpt.get());
             }
         });
+    }
 
-        nextNoteButton.setOnClickListener(v -> {
-            saveCurrentNote();
+    private void setActivityNoteTitle(NoteMeta noteMeta) {
+        if (Objects.nonNull(noteMeta.getNoteTitle())) {
+            noteTitleField.setText(noteMeta.getNoteTitle());
+        } else {
+            noteTitleField.setText("");
+        }
+    }
 
-            Optional<NoteEntity> nextNoteEntityOpt = noteStack.moveToNextNote();
+    private void setVisibilityOfButtons() {
+        newNoteButton.setVisibility(FloatingActionButton.VISIBLE);
 
-            nextNoteEntityOpt.ifPresent(this::renderNote);
-        });
+        prevNoteButton.setVisibility(FloatingActionButton.INVISIBLE);
+        if (noteStack.hasPreviousNote()) {
+            prevNoteButton.setVisibility(FloatingActionButton.VISIBLE);
+        }
 
-        prevNoteButton.setOnClickListener(v -> {
-            saveCurrentNote();
-            Optional<NoteEntity> prevNoteEntityOpt = noteStack.moveToPrevNote();
-
-            prevNoteEntityOpt.ifPresent(noteEntity -> {
-                renderNote(noteEntity);
-                createdTime.setText(getCreateDateTime(noteEntity));
-            });
-        });
+        nextNoteButton.setVisibility(FloatingActionButton.INVISIBLE);
+        if (noteStack.hasNextNote()) {
+            nextNoteButton.setVisibility(FloatingActionButton.VISIBLE);
+        }
     }
 
     private Optional<NoteEntity> renderNote(NoteEntity noteEntity) {
@@ -167,28 +210,6 @@ public class NoteActivity extends AppCompatActivity {
                 .get();
     }
 
-    private void setVisibilityOfButtons() {
-        newNoteButton.setVisibility(FloatingActionButton.VISIBLE);
-
-        prevNoteButton.setVisibility(FloatingActionButton.INVISIBLE);
-        if (noteStack.hasPreviousNote()) {
-            prevNoteButton.setVisibility(FloatingActionButton.VISIBLE);
-        }
-
-        nextNoteButton.setVisibility(FloatingActionButton.INVISIBLE);
-        if (noteStack.hasNextNote()) {
-            nextNoteButton.setVisibility(FloatingActionButton.VISIBLE);
-        }
-    }
-
-    private void setActivityNoteTitle(NoteMeta noteMeta) {
-        if (Objects.nonNull(noteMeta.getNoteTitle())) {
-            noteTitleField.setText(noteMeta.getNoteTitle());
-        } else {
-            noteTitleField.setText("");
-        }
-    }
-
     @Override
     protected void onPostResume() {
         super.onPostResume();
@@ -206,22 +227,32 @@ public class NoteActivity extends AppCompatActivity {
         }
     }
 
-    public static void newNoteIntent(Intent intent, String currentDirectoryPath) {
-        intent.putExtra("workingNotePath", currentDirectoryPath);
-    }
-
-    public static void openNoteIntent(Intent intent, String currentDirectoryPath, Long noteId, String noteFileName) {
-        intent.putExtra("workingNotePath", currentDirectoryPath);
-        intent.putExtra("noteId", noteId);
-    }
-
     private void saveCurrentNote() {
         String noteTitle = noteTitleField.getText().toString();
         Optional<NoteEntity> noteEntityOpt = noteStack.getCurrentNoteEntity();
         noteEntityOpt.ifPresent(noteEntity -> noteEntity.getNoteMeta().setNoteTitle(noteTitle));
 
         noteEntityOpt.ifPresent(this::saveNoteFiles);
-        noteEntityOpt.ifPresent(noteEntity -> applyOcr(noteEntity.getNoteMeta(), this::updateNoteMeta));
+        Toast.makeText(this, "Analyzing notes", Toast.LENGTH_SHORT).show();
+
+        Optional<AzureOcrResult> azureOcrResult = noteEntityOpt.flatMap(n -> applyAzureOcr(drawingView.getBitmap()));
+
+        // if the code is here, then this should have a valid value;
+        NoteMeta noteMeta = noteEntityOpt.get().getNoteMeta();
+        azureOcrResult.filter(res -> !Strings.isEmptyOrWhitespace(res.readResult.content))
+                .map(res -> new NoteOcrText(noteMeta.getNoteId(), res.readResult.content))
+                .ifPresent(noteOcrText -> {
+                    List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(noteOcrText.getNoteId());
+                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
+                        noteTextDbHelper.insertTextToDb(noteOcrText);
+                    } else {
+                        noteTextDbHelper.updateTextToDb(noteOcrText);
+                    }
+
+                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
+                    Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
+                });
+        updateNoteMeta(noteMeta);
     }
 
 //    private void applyOcrWithTess(NoteMeta noteMeta, Function<NoteMeta, Void> callback) {
@@ -239,34 +270,25 @@ public class NoteActivity extends AppCompatActivity {
 //                .get();
 //    }
 
-    private void applyOcr(NoteMeta noteMeta, Consumer<NoteMeta> callback) {
-        Try.to(() -> {
+    private Optional<AzureOcrResult> applyAzureOcr(Bitmap bitmap) {
+        Optional<AzureOcrResult> ocrResult = Try.to(() -> {
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
                     // Compress the bitmap into the ByteArrayOutputStream
-                    drawingView.getBitmap()
-                            .compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
 
                     // Convert the ByteArrayOutputStream to an InputStream
                     byte[] byteArray = byteArrayOutputStream.toByteArray();
                     InputStream imageStream = new ByteArrayInputStream(byteArray);
-                    OcrService.convertHandwritingToText(imageStream, appSecrets, result -> {
-                        Log.d("NoteActivity", "Ocr result: " + result);
-                        noteMeta.setAzureOcrResult(result);
-                        noteMeta.setExtractedText(result.readResult.content);
+                    AzureOcrResult azureOcrResult = OcrService.convertHandwritingToText(imageStream, appSecrets).get();
 
-                        List<Long> noteIds = NoteTextContract.NoteTextQueries.readTextFromDb(noteMeta, noteTextDbHelper);
-                        if (CollectionUtils.isEmpty(noteIds)) {
-                            NoteTextContract.NoteTextQueries.insertTextToDb(noteMeta, noteTextDbHelper);
-                        } else {
-                            NoteTextContract.NoteTextQueries.updateTextToDb(noteMeta, noteTextDbHelper);
-                        }
-                        Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
-                        callback.accept(noteMeta);
-                    });
+                    Log.d("NoteActivity", "Ocr result: " + azureOcrResult);
+
+                    return azureOcrResult;
                 }, debugContext)
                 .logIfError("Failed to convert handwriting to text")
                 .get();
+        return ocrResult;
     }
 
     private void saveNoteFiles(NoteEntity noteEntity) {
@@ -296,5 +318,54 @@ public class NoteActivity extends AppCompatActivity {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yy HH:mm");
 
         return dateTime.format(formatter);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!isPalmRejectionEnabled) {
+            return super.onTouchEvent(event);
+        }
+
+        // Get tool type for this touch event
+        int toolType = event.getToolType(event.getActionIndex());
+        
+        // Always accept stylus input
+        if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
+            return super.onTouchEvent(event);
+        }
+
+        // For finger touches, apply palm rejection logic
+        if (toolType == MotionEvent.TOOL_TYPE_FINGER) {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    // Check pressure for finger touches
+                    float pressure = event.getPressure();
+                    if (pressure > PALM_PRESSURE_THRESHOLD) {
+                        // Likely a palm touch, ignore
+                        return false;
+                    }
+                    
+                    // Check touch area size
+                    float touchSize = event.getSize();
+                    if (touchSize > 0.15f) {  // Adjust threshold based on testing
+                        // Large touch area usually means palm
+                        return false;
+                    }
+                    break;
+
+                case MotionEvent.ACTION_MOVE:
+                    // Check for erratic movement
+                    float deltaX = Math.abs(event.getX() - event.getHistoricalX(0));
+                    float deltaY = Math.abs(event.getY() - event.getHistoricalY(0));
+                    
+                    if (deltaX > TOUCH_SLOP * 3 || deltaY > TOUCH_SLOP * 3) {
+                        // Erratic movement usually indicates unintentional touch
+                        return false;
+                    }
+                    break;
+            }
+        }
+
+        return super.onTouchEvent(event);
     }
 }

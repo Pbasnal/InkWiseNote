@@ -1,8 +1,8 @@
 package com.originb.inkwisenote.io;
 
-import com.originb.inkwisenote.data.repositories.DirectoryContents;
-import com.originb.inkwisenote.data.repositories.FileItem;
-import com.originb.inkwisenote.data.repositories.FolderItem;
+import com.originb.inkwisenote.modules.repositories.DirectoryContents;
+import com.originb.inkwisenote.modules.repositories.FileItem;
+import com.originb.inkwisenote.modules.repositories.FolderItem;
 
 import java.io.File;
 import java.util.*;

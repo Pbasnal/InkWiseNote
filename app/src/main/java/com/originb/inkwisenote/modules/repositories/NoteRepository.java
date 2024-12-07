@@ -1,14 +1,15 @@
-package com.originb.inkwisenote.data.repositories;
+package com.originb.inkwisenote.modules.repositories;
 
 import android.graphics.Bitmap;
 import android.util.Log;
-import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.NoteMeta;
+import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
+import com.originb.inkwisenote.io.sql.NoteTextContract;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,11 +19,15 @@ public class NoteRepository {
     private NoteMetaFiles noteMetaFiles;
     private NoteBitmapFiles noteBitmapFiles;
     private PageTemplateFiles pageTemplateFiles;
+    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
 
     public NoteRepository() {
         this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
         this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
         this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
+        this.noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        this.noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
     }
 
     public void loadAllNotes() {
@@ -55,6 +60,10 @@ public class NoteRepository {
         noteMetaFiles.deleteNoteFromDisk(noteId);
         noteBitmapFiles.deleteBitmap(noteId);
         pageTemplateFiles.deletePageTemplate(noteId);
+
+        // delete note search text
+        noteTextDbHelper.deleteNoteText(noteId);
+        noteTermFrequencyDbQueries.deleteTermFrequencies(noteId);
     }
 
     public NoteMeta getNoteAtIndex(int position) {

@@ -11,34 +11,28 @@ import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.activities.HomePageActivity;
 import com.originb.inkwisenote.activities.NoteActivity;
-import com.originb.inkwisenote.data.NoteEntity;
-import com.originb.inkwisenote.data.NoteMeta;
-import com.originb.inkwisenote.data.repositories.NoteRepository;
-import com.originb.inkwisenote.io.NoteMetaFiles;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
-import com.originb.inkwisenote.modules.Repositories;
+import com.originb.inkwisenote.activities.RelatedNotesActivity;
+import com.originb.inkwisenote.activities.Routing;
+import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.modules.repositories.NoteRepository;
+import com.originb.inkwisenote.modules.repositories.Repositories;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
 
     private ComponentActivity parentActivity;
     private NoteRepository noteRepository;
-    private NoteMetaFiles noteMetaRepository;
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
 
     private List<Long> noteIds;
 
 
     public NoteGridAdapter(ComponentActivity parentActivity, List<Long> noteIds) {
         this.noteRepository = Repositories.getInstance().getNoteRepository();
-        this.noteMetaRepository = Repositories.getInstance().getNoteMetaRepository();
-        this.noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
 
         this.parentActivity = parentActivity;
         this.noteIds = noteIds;
@@ -63,11 +57,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
     public void onBindViewHolder(@NonNull @NotNull NoteGridAdapter.NoteCardHolder noteCardHolder, int position) {
         Long noteId = noteIds.get(position);
         Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(noteId);
-        noteEntityOpt.ifPresent(noteEntity -> {
-                    noteRepository.getThumbnail(noteEntity.getNoteId())
-                            .ifPresent(noteCardHolder.noteImage::setImageBitmap);
-                    noteCardHolder.noteTitle.setText(noteEntity.getNoteMeta().getNoteTitle());
-                });
+        noteEntityOpt.ifPresent(noteCardHolder::setNote);
     }
 
     @Override
@@ -81,31 +71,47 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
         private final ImageView noteImage;
         private final TextView noteTitle;
-        private ImageButton deleteBtn;
+        private final ImageButton deleteBtn;
+        private final ImageButton graphButton;
 
-        public NoteCardHolder(@NonNull @NotNull View itemView, ComponentActivity parentActivity) {
+        public NoteCardHolder(@NonNull @NotNull View itemView,
+                              ComponentActivity parentActivity) {
             super(itemView);
             this.parentActivity = parentActivity;
 
             noteImage = itemView.findViewById(R.id.card_image);
             noteTitle = itemView.findViewById(R.id.card_name);
             deleteBtn = itemView.findViewById(R.id.btn_dlt_note);
+            graphButton = itemView.findViewById(R.id.btn_graph_view);
 
             noteImage.setOnClickListener(view -> onClick(itemView));
-            deleteBtn.setOnClickListener(view -> {
+            deleteBtn.setOnClickListener(view -> onClickDelete());
+            graphButton.setOnClickListener(view -> {
                 int position = getAdapterPosition();
                 Long noteId = noteIds.get(position);
-                // delete note files
-                noteRepository.deleteNote(noteId);
-
-                // delete note search text
-                NoteTextContract.NoteTextQueries.deleteNoteText(noteId, noteTextDbHelper);
-
-                // delete note from list
-                noteIds.remove(position);
-//                noteIds = Arrays.stream(noteMetaRepository.getAllNoteIds()).collect(Collectors.toList());
-                notifyItemRemoved(position);
+                Routing.RelatedNotesActivity.openRelatedNotesIntent(parentActivity, noteId);
             });
+        }
+
+        public void setNote(NoteEntity noteEntity) {
+            noteRepository.getThumbnail(noteEntity.getNoteId())
+                    .ifPresent(noteImage::setImageBitmap);
+
+            String noteTitle = Optional.ofNullable(noteEntity.getNoteMeta().getNoteTitle())
+                    .filter(title -> !title.trim().isEmpty())
+                    .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
+            this.noteTitle.setText(noteTitle);
+        }
+
+        private void onClickDelete() {
+            int position = getAdapterPosition();
+            Long noteId = noteIds.get(position);
+            // delete note files
+            noteRepository.deleteNote(noteId);
+
+            // delete note from list
+            noteIds.remove(position);
+            notifyItemRemoved(position);
         }
 
         @Override
@@ -115,14 +121,14 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
             Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(noteId);
             noteEntityOpt.ifPresent(noteEntity -> {
-                Intent intent = new Intent(parentActivity, NoteActivity.class);
-                NoteActivity.openNoteIntent(intent, parentActivity.getFilesDir().getPath(),
-                        noteEntity.getNoteId(),
-                        noteEntity.getNoteMeta().getNoteFileName());
-                parentActivity.startActivity(intent);
+                Routing.NoteActivity.openNoteIntent(parentActivity,
+                        parentActivity.getFilesDir().getPath(),
+                        noteEntity.getNoteId());
             });
 
-            if(!noteEntityOpt.isPresent()) {
+            if (!noteEntityOpt.isPresent()) {
+                // Because of some data error, a note which doesn't
+                // exist can show up on the grid.
                 // delete note from list
                 noteIds.remove(position);
                 notifyItemRemoved(position);
