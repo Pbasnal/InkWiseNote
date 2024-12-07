@@ -8,6 +8,7 @@ import com.originb.inkwisenote.data.config.PageTemplate;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;
+import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 
 import java.util.*;
@@ -19,12 +20,14 @@ public class NoteRepository {
     private NoteBitmapFiles noteBitmapFiles;
     private PageTemplateFiles pageTemplateFiles;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
 
     public NoteRepository() {
         this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
         this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
         this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
         this.noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        this.noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
     }
 
     public void loadAllNotes() {
@@ -60,6 +63,7 @@ public class NoteRepository {
 
         // delete note search text
         noteTextDbHelper.deleteNoteText(noteId);
+        noteTermFrequencyDbQueries.deleteTermFrequencies(noteId);
     }
 
     public NoteMeta getNoteAtIndex(int position) {

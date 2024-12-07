@@ -11,8 +11,10 @@ import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.activities.HomePageActivity;
 import com.originb.inkwisenote.activities.NoteActivity;
 import com.originb.inkwisenote.activities.RelatedNotesActivity;
+import com.originb.inkwisenote.activities.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -55,31 +57,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
     public void onBindViewHolder(@NonNull @NotNull NoteGridAdapter.NoteCardHolder noteCardHolder, int position) {
         Long noteId = noteIds.get(position);
         Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(noteId);
-        noteEntityOpt.ifPresent(noteEntity -> {
-            noteRepository.getThumbnail(noteEntity.getNoteId())
-                    .ifPresent(noteCardHolder.noteImage::setImageBitmap);
-
-            String noteTitle = Optional.ofNullable(noteEntity.getNoteMeta().getNoteTitle())
-                    .filter(title -> !title.trim().isEmpty())
-                    .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
-            noteCardHolder.noteTitle.setText(noteTitle);
-        });
-
-        noteCardHolder.graphButton.setOnClickListener(v -> {
-            Intent intent = new Intent(parentActivity, RelatedNotesActivity.class);
-            intent.putExtra("noteId", noteId);
-            parentActivity.startActivity(intent);
-        });
-
-        noteCardHolder.deleteBtn.setOnClickListener(v -> {
-            Long noteIdAtPosition = noteIds.get(position);
-            // delete note files
-            noteRepository.deleteNote(noteIdAtPosition);
-
-            // delete note from list
-            noteIds.remove(position);
-            notifyItemRemoved(position);
-        });
+        noteEntityOpt.ifPresent(noteCardHolder::setNote);
     }
 
     @Override
@@ -93,10 +71,11 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
         private final ImageView noteImage;
         private final TextView noteTitle;
-        private ImageButton deleteBtn;
-        private ImageButton graphButton;
+        private final ImageButton deleteBtn;
+        private final ImageButton graphButton;
 
-        public NoteCardHolder(@NonNull @NotNull View itemView, ComponentActivity parentActivity) {
+        public NoteCardHolder(@NonNull @NotNull View itemView,
+                              ComponentActivity parentActivity) {
             super(itemView);
             this.parentActivity = parentActivity;
 
@@ -106,16 +85,33 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             graphButton = itemView.findViewById(R.id.btn_graph_view);
 
             noteImage.setOnClickListener(view -> onClick(itemView));
-            deleteBtn.setOnClickListener(view -> {
+            deleteBtn.setOnClickListener(view -> onClickDelete());
+            graphButton.setOnClickListener(view -> {
                 int position = getAdapterPosition();
                 Long noteId = noteIds.get(position);
-                // delete note files
-                noteRepository.deleteNote(noteId);
-
-                // delete note from list
-                noteIds.remove(position);
-                notifyItemRemoved(position);
+                Routing.RelatedNotesActivity.openRelatedNotesIntent(parentActivity, noteId);
             });
+        }
+
+        public void setNote(NoteEntity noteEntity) {
+            noteRepository.getThumbnail(noteEntity.getNoteId())
+                    .ifPresent(noteImage::setImageBitmap);
+
+            String noteTitle = Optional.ofNullable(noteEntity.getNoteMeta().getNoteTitle())
+                    .filter(title -> !title.trim().isEmpty())
+                    .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
+            this.noteTitle.setText(noteTitle);
+        }
+
+        private void onClickDelete() {
+            int position = getAdapterPosition();
+            Long noteId = noteIds.get(position);
+            // delete note files
+            noteRepository.deleteNote(noteId);
+
+            // delete note from list
+            noteIds.remove(position);
+            notifyItemRemoved(position);
         }
 
         @Override
@@ -125,11 +121,9 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
             Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(noteId);
             noteEntityOpt.ifPresent(noteEntity -> {
-                Intent intent = new Intent(parentActivity, NoteActivity.class);
-                NoteActivity.openNoteIntent(intent, parentActivity.getFilesDir().getPath(),
-                        noteEntity.getNoteId(),
-                        noteEntity.getNoteMeta().getNoteFileName());
-                parentActivity.startActivity(intent);
+                Routing.NoteActivity.openNoteIntent(parentActivity,
+                        parentActivity.getFilesDir().getPath(),
+                        noteEntity.getNoteId());
             });
 
             if (!noteEntityOpt.isPresent()) {

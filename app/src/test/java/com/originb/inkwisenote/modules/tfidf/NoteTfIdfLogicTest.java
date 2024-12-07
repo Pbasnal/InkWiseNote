@@ -15,8 +15,8 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
-public class BiRelationalGraphTest {
-    private BiRelationalGraph biRelationalGraph;
+public class NoteTfIdfLogicTest {
+    private NoteTfIdfLogic noteTfIdfLogic;
     private NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
     private File dbFile;
 
@@ -38,7 +38,7 @@ public class BiRelationalGraphTest {
         SQLiteDatabase db = noteTermFrequencyDbQueries.getWritableDatabase();
         repositories.setNoteTermFrequencyDbQueries(noteTermFrequencyDbQueries);
 
-        biRelationalGraph = new BiRelationalGraph(repositories);
+        noteTfIdfLogic = new NoteTfIdfLogic(repositories);
     }
 
     @After
@@ -55,7 +55,7 @@ public class BiRelationalGraphTest {
         // Add a new note
         Long noteId = 1L;
         List<String> terms = Arrays.asList("apple", "banana", "apple", "orange");
-        biRelationalGraph.addOrUpdateNote(noteId, terms);
+        noteTfIdfLogic.addOrUpdateNote(noteId, terms);
 
         // Verify term frequencies
         Map<String, Integer> termFrequencies = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
@@ -64,7 +64,7 @@ public class BiRelationalGraphTest {
         assertEquals(1, (int) termFrequencies.get("orange"));
 
         // Verify IDF scores (with only one document, IDF = ln(1/1) = 0)
-        Map<String, Double> tfIdfScores = biRelationalGraph.getTfIdf(noteId);
+        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(noteId);
         assertEquals(0.0, tfIdfScores.get("apple"), 0.001);
         assertEquals(0.0, tfIdfScores.get("banana"), 0.001);
         assertEquals(0.0, tfIdfScores.get("orange"), 0.001);
@@ -75,11 +75,11 @@ public class BiRelationalGraphTest {
         // Add initial note
         Long noteId = 1L;
         List<String> initialTerms = Arrays.asList("apple", "banana");
-        biRelationalGraph.addOrUpdateNote(noteId, initialTerms);
+        noteTfIdfLogic.addOrUpdateNote(noteId, initialTerms);
 
         // Update the note
         List<String> updatedTerms = Arrays.asList("apple", "orange");
-        biRelationalGraph.addOrUpdateNote(noteId, updatedTerms);
+        noteTfIdfLogic.addOrUpdateNote(noteId, updatedTerms);
 
         // Verify updated term frequencies
         Map<String, Integer> termFrequencies = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
@@ -93,10 +93,10 @@ public class BiRelationalGraphTest {
         // Add a note
         Long noteId = 1L;
         List<String> terms = Arrays.asList("apple", "banana");
-        biRelationalGraph.addOrUpdateNote(noteId, terms);
+        noteTfIdfLogic.addOrUpdateNote(noteId, terms);
 
         // Delete the note
-        biRelationalGraph.deleteDocument(noteId);
+        noteTfIdfLogic.deleteDocument(noteId);
 
         // Verify note is deleted
         Map<String, Integer> termFrequencies = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
@@ -108,15 +108,15 @@ public class BiRelationalGraphTest {
         // Add two notes with some overlapping terms
         Long noteId1 = 1L;
         List<String> terms1 = Arrays.asList("apple", "banana");
-        biRelationalGraph.addOrUpdateNote(noteId1, terms1);
+        noteTfIdfLogic.addOrUpdateNote(noteId1, terms1);
 
         Long noteId2 = 2L;
         List<String> terms2 = Arrays.asList("apple", "orange");
-        biRelationalGraph.addOrUpdateNote(noteId2, terms2);
+        noteTfIdfLogic.addOrUpdateNote(noteId2, terms2);
 
         // Query for related documents
         Set<String> queryTerms = new HashSet<>(Arrays.asList("apple", "banana"));
-        Map<String, Set<Long>> relatedDocs = biRelationalGraph.getRelatedDocuments(queryTerms);
+        Map<String, Set<Long>> relatedDocs = noteTfIdfLogic.getRelatedDocuments(queryTerms);
 
         // Verify results
         assertTrue(relatedDocs.get("apple").contains(noteId1));
@@ -130,18 +130,18 @@ public class BiRelationalGraphTest {
         // Add multiple documents to test TF-IDF calculation
         Long noteId1 = 1L;
         List<String> terms1 = Arrays.asList("apple", "banana", "apple"); // apple appears twice
-        biRelationalGraph.addOrUpdateNote(noteId1, terms1);
+        noteTfIdfLogic.addOrUpdateNote(noteId1, terms1);
 
         Long noteId2 = 2L;
         List<String> terms2 = Arrays.asList("apple", "orange");
-        biRelationalGraph.addOrUpdateNote(noteId2, terms2);
+        noteTfIdfLogic.addOrUpdateNote(noteId2, terms2);
 
         // Calculate expected TF-IDF values
         // For noteId1:
         // TF(apple) = 2/3, IDF(apple) = ln(2/2) = 0
         // TF(banana) = 1/3, IDF(banana) = ln(2/1) = 0.693
 
-        Map<String, Double> tfIdfScores1 = biRelationalGraph.getTfIdf(noteId1);
+        Map<String, Double> tfIdfScores1 = noteTfIdfLogic.getTfIdf(noteId1);
         assertEquals(0.0, tfIdfScores1.get("apple"), 0.001); // TF * IDF = 2/3 * 0 = 0
         assertEquals(0.231, tfIdfScores1.get("banana"), 0.001); // TF * IDF = 1/3 * 0.693 = 0.231
     }

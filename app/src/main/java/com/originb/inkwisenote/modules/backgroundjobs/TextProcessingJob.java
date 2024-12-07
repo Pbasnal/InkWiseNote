@@ -11,15 +11,15 @@ import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
 import com.originb.inkwisenote.modules.commonutils.Either;
+import com.originb.inkwisenote.modules.commonutils.Strings;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.modules.tfidf.BiRelationalGraph;
+import com.originb.inkwisenote.modules.tfidf.NoteTfIdfLogic;
 import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
     @Setter
@@ -27,7 +27,7 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
 
     private JobService jobService;
     private JobParameters jobParams;
-    private BiRelationalGraph biRelationalGraph;
+    private NoteTfIdfLogic noteTfIdfLogic;
 
     private TextProcessingJobContract.TextProcessingDbQueries textProcessingJobDbHelper;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
@@ -35,7 +35,7 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
     TextProcessingJob(JobService jobService, JobParameters jobParams) {
         this.jobService = jobService;
         this.jobParams = jobParams;
-        this.biRelationalGraph = new BiRelationalGraph(Repositories.getInstance());
+        this.noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
 
         textProcessingJobDbHelper = Repositories.getInstance().getTextProcessingJobDbHelper();
         noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
@@ -94,9 +94,10 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
         String[] terms = text.split("\\s+");
         documentTerms.terms = new ArrayList<>();
         for (String term : terms) {
-            if (!term.isEmpty()) {
-                documentTerms.terms.add(term);
-            }
+            if (term.isEmpty()) continue;
+            if (Strings.isNumber(term)) continue;
+
+            documentTerms.terms.add(term);
         }
 
         return documentTerms;
@@ -106,7 +107,7 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
         if (Objects.isNull(documentTerms)) return null;
         if (CollectionUtils.isEmpty(documentTerms.terms)) return documentTerms.documentId;
 
-        biRelationalGraph.addOrUpdateNote(documentTerms.documentId,
+        noteTfIdfLogic.addOrUpdateNote(documentTerms.documentId,
                 documentTerms.terms);
 
         return documentTerms.documentId;

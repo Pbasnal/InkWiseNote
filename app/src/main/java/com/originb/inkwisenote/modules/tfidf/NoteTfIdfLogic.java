@@ -7,14 +7,22 @@ import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract.*;
 
 import java.util.*;
 
-public class BiRelationalGraph {
+public class NoteTfIdfLogic {
 
     private NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
 
-    private TermNode empty = new TermNode("");
-
-    public BiRelationalGraph(Repositories repositories) {
+    public NoteTfIdfLogic(Repositories repositories) {
         noteTermFrequencyDbQueries = repositories.getNoteTermFrequencyDbQueries();
+    }
+
+    public void addOrUpdateNote(Long noteId, List<String> termsList) {
+        Map<String, Integer> termFrequenciesOfNote = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+
+        if (termFrequenciesOfNote.isEmpty()) {
+            insertDocument(noteId, termsList);
+        } else {
+            updateDocument(noteId, termFrequenciesOfNote, termsList);
+        }
     }
 
     // IDF is calculated by dividing the total number of documents
@@ -29,16 +37,6 @@ public class BiRelationalGraph {
             termIdfScore.putIfAbsent(term, idf);
         }
         return termIdfScore;
-    }
-
-    public void addOrUpdateNote(Long noteId, List<String> termsList) {
-        Map<String, Integer> termFrequenciesOfNote = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
-
-        if (termFrequenciesOfNote.isEmpty()) {
-            insertDocument(noteId, termsList);
-        } else {
-            updateDocument(noteId, termFrequenciesOfNote, termsList);
-        }
     }
 
     private void insertDocument(Long noteId, List<String> termsList) {

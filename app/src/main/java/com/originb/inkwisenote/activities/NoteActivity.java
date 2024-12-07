@@ -1,6 +1,5 @@
 package com.originb.inkwisenote.activities;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
@@ -92,14 +91,17 @@ public class NoteActivity extends AppCompatActivity {
         setNextNoteButton();
 
         Optional<NoteEntity> noteEntityOpt = initializeNewNoteIfEmpty(noteRepository.getNoteEntity(noteIdToOpen));
+
+        noteEntityOpt.ifPresent(noteEntity -> {
+            noteStack.setCurrentNote(noteEntity);
+            renderNote(noteEntity);
+        });
+
         if (!noteEntityOpt.isPresent()) {
             Log.e(debugContext.getDebugInfo(), "Failed to load/initialize note");
             Toast.makeText(this, "Failed to load note or initialize note", Toast.LENGTH_SHORT).show();
             finish();
         }
-
-        noteEntityOpt.ifPresent(noteStack::setCurrentNote);
-        noteEntityOpt.flatMap(this::renderNote);
     }
 
     private Optional<NoteEntity> initializeNewNoteIfEmpty(Optional<NoteEntity> noteEntityOpt) {
@@ -218,15 +220,6 @@ public class NoteActivity extends AppCompatActivity {
             saveCurrentNote();
             isSaved = true;
         }
-    }
-
-    public static void newNoteIntent(Intent intent, String currentDirectoryPath) {
-        intent.putExtra("workingNotePath", currentDirectoryPath);
-    }
-
-    public static void openNoteIntent(Intent intent, String currentDirectoryPath, Long noteId, String noteFileName) {
-        intent.putExtra("workingNotePath", currentDirectoryPath);
-        intent.putExtra("noteId", noteId);
     }
 
     private void saveCurrentNote() {

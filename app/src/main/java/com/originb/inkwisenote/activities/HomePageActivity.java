@@ -157,8 +157,6 @@ public class HomePageActivity extends AppCompatActivity {
 
     public View.OnClickListener onNewNoteTapCallback = v -> {
         // Start NoteActivity to create a new note
-        Intent intent = new Intent(HomePageActivity.this, NoteActivity.class);
-        NoteActivity.newNoteIntent(intent, getFilesDir().getPath());
-        startActivity(intent);
+        Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
     };
 }
