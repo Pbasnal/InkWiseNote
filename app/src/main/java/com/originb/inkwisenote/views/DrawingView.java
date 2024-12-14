@@ -115,6 +115,15 @@ public class DrawingView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        int toolType = event.getToolType(0);
+
+        if (toolType != MotionEvent.TOOL_TYPE_STYLUS
+//                && toolType != MotionEvent.TOOL_TYPE_FINGER
+        ) {
+            // Process only stylus input
+            return false;
+        }
+
         float y = event.getY();
         float x = event.getX();
 
