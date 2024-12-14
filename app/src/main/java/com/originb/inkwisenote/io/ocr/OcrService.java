@@ -2,6 +2,7 @@ package com.originb.inkwisenote.io.ocr;
 
 import android.os.AsyncTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
@@ -45,6 +46,10 @@ public class OcrService {
 
         @Override
         protected AzureOcrResult doInBackground(InputStream... params) {
+            if (Strings.isEmptyOrWhitespace(VISION_KEY) || Strings.isEmptyOrWhitespace(VISION_ENDPOINT)) {
+                return null;
+            }
+
             return Try.to(() -> runOcr(params[0])
                             , new DebugContext("Azure Ocr Service"))
                     .logIfError("Error running OCR")
