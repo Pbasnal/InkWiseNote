@@ -66,10 +66,10 @@ jobs:
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ app.secrets.json.SIGNING_KEY }}
-          alias: ${{ app.secrets.json.ALIAS }}
-          keyStorePassword: ${{ app.secrets.json.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ app.secrets.json.KEY_PASSWORD }}
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create service_account.json
         id: createServiceAccount
