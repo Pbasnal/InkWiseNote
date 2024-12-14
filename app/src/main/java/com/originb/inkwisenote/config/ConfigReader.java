@@ -2,11 +2,15 @@ package com.originb.inkwisenote.config;
 
 import android.content.Context;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.modules.functionalUtils.Try;
 import lombok.Getter;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 
 public class ConfigReader {
     @Getter
@@ -54,5 +58,18 @@ public class ConfigReader {
             return appConfig.getEnabledFeatures().contains(featureName);
         }
         return false;
+    }
+
+    public <T> Optional<T> runIfFeatureEnabled(Feature feature, Callable<T> callable) {
+        if (isFeatureEnabled(feature)) {
+            Try.to(callable, new DebugContext(feature.getFeatureName())).get();
+        }
+        return Optional.empty();
+    }
+
+    public void runIfFeatureEnabled(Feature feature, Runnable runnable) {
+        if (isFeatureEnabled(feature)) {
+            Try.to(runnable, new DebugContext(feature.getFeatureName())).get();
+        }
     }
 }

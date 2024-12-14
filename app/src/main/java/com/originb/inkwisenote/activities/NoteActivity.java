@@ -60,7 +60,7 @@ public class NoteActivity extends AppCompatActivity {
     private FloatingActionButton prevNoteButton;
     private FloatingActionButton nextNoteButton;
     private TextView createdTime;
-    private TextView ocrResult;
+//    private TextView ocrResult;
 
     private boolean isSaved = false;
 
@@ -89,7 +89,7 @@ public class NoteActivity extends AppCompatActivity {
 
         noteTitleField = findViewById(R.id.note_title);
         createdTime = findViewById(R.id.note_created_time);
-        ocrResult = findViewById(R.id.ocr_result);
+//        ocrResult = findViewById(R.id.ocr_result);
 
         setNewNoteButton();
         setPrevNoteButton();
@@ -201,8 +201,8 @@ public class NoteActivity extends AppCompatActivity {
 
                     Optional.ofNullable(noteEntity.getNoteMeta().getAzureOcrResult())
                             .map(azureOcrResult -> azureOcrResult.readResult)
-                            .map(result -> result.content)
-                            .ifPresent(ocrResult::setText);
+                            .map(result -> result.content);
+//                            .ifPresent(ocrResult::setText);
 
                     return noteEntity;
                 }, debugContext)
@@ -318,54 +318,5 @@ public class NoteActivity extends AppCompatActivity {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MMM-yy HH:mm");
 
         return dateTime.format(formatter);
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (!isPalmRejectionEnabled) {
-            return super.onTouchEvent(event);
-        }
-
-        // Get tool type for this touch event
-        int toolType = event.getToolType(event.getActionIndex());
-        
-        // Always accept stylus input
-        if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
-            return super.onTouchEvent(event);
-        }
-
-        // For finger touches, apply palm rejection logic
-        if (toolType == MotionEvent.TOOL_TYPE_FINGER) {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    // Check pressure for finger touches
-                    float pressure = event.getPressure();
-                    if (pressure > PALM_PRESSURE_THRESHOLD) {
-                        // Likely a palm touch, ignore
-                        return false;
-                    }
-                    
-                    // Check touch area size
-                    float touchSize = event.getSize();
-                    if (touchSize > 0.15f) {  // Adjust threshold based on testing
-                        // Large touch area usually means palm
-                        return false;
-                    }
-                    break;
-
-                case MotionEvent.ACTION_MOVE:
-                    // Check for erratic movement
-                    float deltaX = Math.abs(event.getX() - event.getHistoricalX(0));
-                    float deltaY = Math.abs(event.getY() - event.getHistoricalY(0));
-                    
-                    if (deltaX > TOUCH_SLOP * 3 || deltaY > TOUCH_SLOP * 3) {
-                        // Erratic movement usually indicates unintentional touch
-                        return false;
-                    }
-                    break;
-            }
-        }
-
-        return super.onTouchEvent(event);
     }
 }
