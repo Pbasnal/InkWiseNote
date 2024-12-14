@@ -73,7 +73,7 @@ jobs:
 
       - name: Create service_account.json
         id: createServiceAccount
-        run: echo '${{ app.secrets.json.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' >    service_account.json
+        run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' >    service_account.json
 
       - name: Publish to Play Store BETA
         id: publish
