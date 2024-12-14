@@ -60,7 +60,7 @@ public class NoteActivity extends AppCompatActivity {
     private FloatingActionButton prevNoteButton;
     private FloatingActionButton nextNoteButton;
     private TextView createdTime;
-    private TextView ocrResult;
+//    private TextView ocrResult;
 
     private boolean isSaved = false;
 
@@ -89,7 +89,7 @@ public class NoteActivity extends AppCompatActivity {
 
         noteTitleField = findViewById(R.id.note_title);
         createdTime = findViewById(R.id.note_created_time);
-        ocrResult = findViewById(R.id.ocr_result);
+//        ocrResult = findViewById(R.id.ocr_result);
 
         setNewNoteButton();
         setPrevNoteButton();
@@ -201,8 +201,8 @@ public class NoteActivity extends AppCompatActivity {
 
                     Optional.ofNullable(noteEntity.getNoteMeta().getAzureOcrResult())
                             .map(azureOcrResult -> azureOcrResult.readResult)
-                            .map(result -> result.content)
-                            .ifPresent(ocrResult::setText);
+                            .map(result -> result.content);
+//                            .ifPresent(ocrResult::setText);
 
                     return noteEntity;
                 }, debugContext)
