@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.activities;
+package com.originb.inkwisenote.ux.utils;
 
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;

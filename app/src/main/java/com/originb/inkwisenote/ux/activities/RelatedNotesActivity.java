@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.activities;
+package com.originb.inkwisenote.ux.activities;
 
 import android.os.Bundle;
 import android.view.View;
@@ -15,6 +15,7 @@ import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.tfidf.NoteTfIdfLogic;
+import com.originb.inkwisenote.ux.utils.Routing;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -80,6 +81,9 @@ public class RelatedNotesActivity extends AppCompatActivity {
                     .filter(title -> !title.trim().isEmpty())
                     .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
             cardTitle.setText(noteTitle);
+
+            cardImage.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
+            cardTitle.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
 
             deleteButton.setOnClickListener(v -> {
                 noteRepository.deleteNote(rootNoteId);

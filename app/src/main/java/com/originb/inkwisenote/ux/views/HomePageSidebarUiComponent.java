@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.activities.uicomponents;
+package com.originb.inkwisenote.ux.views;
 
 import android.content.Intent;
 import android.view.View;
@@ -11,7 +11,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.activities.AdminActivity;
+import com.originb.inkwisenote.ux.activities.AdminActivity;
 import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.config.Feature;

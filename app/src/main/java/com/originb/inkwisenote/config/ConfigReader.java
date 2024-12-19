@@ -72,4 +72,11 @@ public class ConfigReader {
             Try.to(runnable, new DebugContext(feature.getFeatureName())).get();
         }
     }
+
+    public static void setRuntimeSetting(ConfigKeys configKey, String value) {
+        getInstance().getAppConfig().getRuntimeSettings().put(configKey, value);
+    }
+    public static String getRuntimeSetting(ConfigKeys configKey, String defaultValue) {
+       return getInstance().getAppConfig().getRuntimeSettings().getOrDefault(configKey, defaultValue);
+    }
 }

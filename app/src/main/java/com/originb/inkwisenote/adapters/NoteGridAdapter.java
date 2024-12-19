@@ -1,6 +1,5 @@
 package com.originb.inkwisenote.adapters;
 
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,10 +10,7 @@ import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.activities.HomePageActivity;
-import com.originb.inkwisenote.activities.NoteActivity;
-import com.originb.inkwisenote.activities.RelatedNotesActivity;
-import com.originb.inkwisenote.activities.Routing;
+import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;

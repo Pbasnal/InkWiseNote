@@ -1,9 +1,8 @@
-package com.originb.inkwisenote.activities;
+package com.originb.inkwisenote.ux.activities;
 
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.widget.EditText;
 
 import android.widget.TextView;
@@ -20,15 +19,15 @@ import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
+import com.originb.inkwisenote.ux.utils.NoteStack;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.io.ocr.AzureOcrResult;
 import com.originb.inkwisenote.io.ocr.OcrService;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.views.DrawingView;
+import com.originb.inkwisenote.ux.views.DrawingView;
 import com.originb.inkwisenote.R;
-import lombok.SneakyThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
