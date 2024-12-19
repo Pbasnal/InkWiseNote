@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.activities;
+package com.originb.inkwisenote.ux.activities;
 
 import android.graphics.Typeface;
 import android.os.Bundle;

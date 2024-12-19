@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.views;
+package com.originb.inkwisenote.ux.views;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -9,7 +9,7 @@ import com.originb.inkwisenote.data.config.PageTemplate;
 import lombok.Getter;
 import lombok.Setter;
 
-public class BasicPageTemplate {
+public class RuledPageBackground {
 
     @Getter
     @Setter
@@ -20,7 +20,7 @@ public class BasicPageTemplate {
 
     private ConfigReader configReader;
 
-    public BasicPageTemplate(ConfigReader configReader, int width, int height) {
+    public RuledPageBackground(ConfigReader configReader, int width, int height) {
         this.configReader = configReader;
 
         pageTemplateBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -57,6 +57,6 @@ public class BasicPageTemplate {
     }
 
     private PageTemplate loadPageTemplate() {
-        return configReader.getAppConfig().getPageTemplates().get(PageTemplateType.BASIC_RULED_PAGE_TEMPLATE.name());
+        return configReader.getAppConfig().getPageTemplates().get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name());
     }
 }

@@ -14,11 +14,11 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.InkWiseNote">
 
-        <activity android:name=".activities.MainSettingsActivity" />
-        <activity android:name=".activities.NoteActivity" />
-        <activity android:name=".activities.NoteSearchActivity" />
-        <activity android:name=".activities.HomePageActivity" />
-        <activity android:name=".activities.AppMainActivity"
+        <activity android:name=".ux.activities.MainSettingsActivity" />
+        <activity android:name=".ux.activities.NoteActivity" />
+        <activity android:name=".ux.activities.NoteSearchActivity" />
+        <activity android:name=".ux.activities.HomePageActivity" />
+        <activity android:name=".ux.activities.AppMainActivity"
                   android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -26,11 +26,11 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".activities.AdminActivity"
+        <activity android:name=".ux.activities.AdminActivity"
                   android:exported="false">
         </activity>
 
-        <activity android:name=".activities.RelatedNotesActivity"
+        <activity android:name=".ux.activities.RelatedNotesActivity"
                   android:label="Related Notes"
                   android:exported="true">
         </activity>

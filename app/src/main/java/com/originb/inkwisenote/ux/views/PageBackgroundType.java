@@ -1,11 +1,11 @@
-package com.originb.inkwisenote.views;
+package com.originb.inkwisenote.ux.views;
 
-public enum PageTemplateType {
+public enum PageBackgroundType {
     BASIC_RULED_PAGE_TEMPLATE("BASIC_RULED_PAGE_TEMPLATE");
 
     private final String pageTemplateName;
 
-    PageTemplateType(String pageTemplateName) {
+    PageBackgroundType(String pageTemplateName) {
         this.pageTemplateName = pageTemplateName;
     }
 

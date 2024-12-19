@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.activities;
+package com.originb.inkwisenote.ux.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -14,7 +14,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.originb.inkwisenote.activities.uicomponents.HomePageSidebarUiComponent;
+import com.originb.inkwisenote.ux.utils.Routing;
+import com.originb.inkwisenote.ux.views.HomePageSidebarUiComponent;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.config.ConfigReader;

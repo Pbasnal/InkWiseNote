@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.views;
+package com.originb.inkwisenote.ux.views;
 
 import android.content.Context;
 import android.graphics.*;
@@ -14,10 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import android.util.SparseArray;
-
 @Getter
-public class PalmRejectionDrawingView extends View {
+public class DrawingView extends View {
     /*
      * The bitmap is used to cache the drawing so that it doesn't have to be redrawn every time onDraw is called.
      * The bitmapCanvas is used to draw the paths onto the bitmap.
@@ -30,22 +28,14 @@ public class PalmRejectionDrawingView extends View {
     private Bitmap pageTemplateBitmap;
     private Canvas userDrwaingCanvas;
 
-    private BasicPageTemplate basicPageTemplate;
+    private RuledPageBackground ruledPageBackground;
 
     private Paint paint;
     private WriteablePath path;
     private List<WriteablePath> paths;
     private List<Paint> paints;
 
-    private static final int MAX_SIMULTANEOUS_TOUCHES = 2;
-    private static final float PALM_PRESSURE_THRESHOLD = 0.3f;
-    private static final float TOUCH_SIZE_THRESHOLD = 0.15f;
-    private static final int TOUCH_SLOP = 8;
-
-    private SparseArray<TouchPoint> activePointers;
-    private boolean isPalmRejectionEnabled = true;
-
-    public PalmRejectionDrawingView(Context context, AttributeSet attrs) {
+    public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         // Initialize paint
@@ -59,15 +49,14 @@ public class PalmRejectionDrawingView extends View {
         path = new WriteablePath();
         paths = new ArrayList<>();
         paints = new ArrayList<>();
-        activePointers = new SparseArray<>();
 
         userDrawingBitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
 
         userDrwaingCanvas = new Canvas(userDrawingBitmap);
-        basicPageTemplate = new BasicPageTemplate(ConfigReader.fromContext(context),
+        ruledPageBackground = new RuledPageBackground(ConfigReader.fromContext(context),
                 1000, 1000);
 
-        pageTemplateBitmap = basicPageTemplate.drawTemplate();
+        pageTemplateBitmap = ruledPageBackground.drawTemplate();
     }
 
     @Override
@@ -85,8 +74,8 @@ public class PalmRejectionDrawingView extends View {
             userDrwaingCanvas = newCanvas;
         }
 
-        basicPageTemplate.onSizeChanged(w, h, oldw, oldh);
-        pageTemplateBitmap = basicPageTemplate.drawTemplate();
+        ruledPageBackground.onSizeChanged(w, h, oldw, oldh);
+        pageTemplateBitmap = ruledPageBackground.drawTemplate();
     }
 
     private void sizeChangeUserDrawingBitmap(int w, int h, int oldw, int oldh) {
@@ -126,75 +115,15 @@ public class PalmRejectionDrawingView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!isPalmRejectionEnabled) {
-            return handleDrawing(event);
+        int toolType = event.getToolType(0);
+
+        if (toolType != MotionEvent.TOOL_TYPE_STYLUS
+//                && toolType != MotionEvent.TOOL_TYPE_FINGER
+        ) {
+            // Process only stylus input
+            return false;
         }
 
-        int pointerIndex = event.getActionIndex();
-        int pointerId = event.getPointerId(pointerIndex);
-        int toolType = event.getToolType(pointerIndex);
-
-        // Always accept stylus input
-        if (toolType == MotionEvent.TOOL_TYPE_STYLUS) {
-            return handleDrawing(event);
-        }
-
-        // For finger touches, apply palm rejection logic
-        if (toolType == MotionEvent.TOOL_TYPE_FINGER) {
-            TouchPoint touch = new TouchPoint();
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                case MotionEvent.ACTION_POINTER_DOWN:
-                    if (activePointers.size() >= MAX_SIMULTANEOUS_TOUCHES) {
-                        return false;
-                    }
-
-                    // Check pressure and touch size
-                    float pressure = event.getPressure(pointerIndex);
-                    float touchSize = event.getSize(pointerIndex);
-
-                    if (pressure > PALM_PRESSURE_THRESHOLD || touchSize > TOUCH_SIZE_THRESHOLD) {
-                        return false;
-                    }
-
-                    touch.x = event.getX(pointerIndex);
-                    touch.y = event.getY(pointerIndex);
-                    activePointers.put(pointerId, touch);
-                    return handleDrawing(event);
-
-                case MotionEvent.ACTION_MOVE:
-                    touch = activePointers.get(pointerId);
-                    if (touch != null) {
-                        float deltaX = Math.abs(event.getX(pointerIndex) - touch.x);
-                        float deltaY = Math.abs(event.getY(pointerIndex) - touch.y);
-
-                        if (deltaX > TOUCH_SLOP * 3 || deltaY > TOUCH_SLOP * 3) {
-                            // Erratic movement, likely palm
-                            activePointers.remove(pointerId);
-                            return false;
-                        }
-
-                        touch.x = event.getX(pointerIndex);
-                        touch.y = event.getY(pointerIndex);
-                        return handleDrawing(event);
-                    }
-                    break;
-
-                case MotionEvent.ACTION_UP:
-                case MotionEvent.ACTION_POINTER_UP:
-                    activePointers.remove(pointerId);
-                    return handleDrawing(event);
-
-                case MotionEvent.ACTION_CANCEL:
-                    activePointers.clear();
-                    break;
-            }
-        }
-
-        return false;
-    }
-
-    private boolean handleDrawing(MotionEvent event) {
         float y = event.getY();
         float x = event.getX();
 
@@ -206,8 +135,8 @@ public class PalmRejectionDrawingView extends View {
                 path.lineTo(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                userDrwaingCanvas.drawPath(path, paint);
-                path = new WriteablePath();
+                userDrwaingCanvas.drawPath(path, paint); // Draw the current path onto the bitmap
+                path = new WriteablePath(); // Create a new path for the next touch event
                 break;
             default:
                 return false;
@@ -217,22 +146,18 @@ public class PalmRejectionDrawingView extends View {
         return true;
     }
 
-    private static class TouchPoint {
-        float x, y;
-    }
-
     public PageTemplate getNewPageTemplate() {
-        return basicPageTemplate.getPageTemplate();
+        return ruledPageBackground.getPageTemplate();
     }
 
     public PageTemplate getPageTemplate() {
-        return basicPageTemplate.getPageTemplate();
+        return ruledPageBackground.getPageTemplate();
     }
 
     public void setPageTemplate(PageTemplate data) {
         if (Objects.isNull(data)) {
             return;
         }
-        basicPageTemplate.setPageTemplate(data);
+        ruledPageBackground.setPageTemplate(data);
     }
 }

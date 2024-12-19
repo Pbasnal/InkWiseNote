@@ -16,12 +16,18 @@ public class AppConfig {
     private Map<String, PageTemplate> pageTemplates;
     private AppSecrets appSecrets;
 
+    private Map<ConfigKeys, String> runtimeSettings;
+
+    public AppConfig() {
+        enabledFeatures = new ArrayList<>();
+        pageTemplates = new HashMap<>();
+        appSecrets = new AppSecrets();
+        runtimeSettings = new HashMap<>();
+    }
+
     public static AppConfig createDefault() {
-        AppConfig appConfig = new AppConfig();
-        appConfig.enabledFeatures = new ArrayList<>();
-        appConfig.pageTemplates = new HashMap<>();
-        appConfig.appSecrets = new AppSecrets();
-        return appConfig;
+        return new AppConfig();
     }
 
 }
+
