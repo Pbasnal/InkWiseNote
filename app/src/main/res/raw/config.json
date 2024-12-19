@@ -1,5 +1,8 @@
 {
   "enabledFeatures": [
+    "HOME_PAGE_NAVIGATION_SIDEBAR",
+    "CAMERA_NOTE",
+    "ADMIN_VIEW"
   ],
   "pageTemplates": {
     "BASIC_RULED_PAGE_TEMPLATE": {

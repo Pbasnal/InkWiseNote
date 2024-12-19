@@ -2,6 +2,7 @@ package com.originb.inkwisenote.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
@@ -50,11 +51,14 @@ public class HomePageActivity extends AppCompatActivity {
 
         createSidebarIfEnabled();
         createGridLayoutToShowNotes();
-        createNewNoteButton();
+        if (configReader.isFeatureEnabled(Feature.MARKDOWN_EDITOR) || configReader.isFeatureEnabled(Feature.CAMERA_NOTE)) {
+            setupFabMenu();
+        } else {
+            createNewNoteButton();
+        }
         createSettingsBtn();
         createSearchBtn();
 
-//        setupFabMenu();
     }
 
     private void createSearchBtn() {
@@ -121,34 +125,49 @@ public class HomePageActivity extends AppCompatActivity {
     };
 
     private void setupFabMenu() {
-//        fabMenuContainer = findViewById(R.id.fab_menu_container);
-//        mainFab = findViewById(R.id.fab_add_note);
-//
-//        // Setup main FAB click
-//        mainFab.setOnClickListener(v -> toggleFabMenu());
-//
-//        // Setup individual FABs
-//        FloatingActionButton fabCamera = findViewById(R.id.fab_camera);
-//        FloatingActionButton fabHandwritten = findViewById(R.id.fab_handwritten);
-//        FloatingActionButton fabText = findViewById(R.id.fab_text);
-//
-//        fabCamera.setOnClickListener(v -> {
-//            toggleFabMenu();
-//            // Handle camera note creation
-////            Routing.NoteActivity.newCameraNoteIntent(this, getFilesDir().getPath());
-//        });
-//
-//        fabHandwritten.setOnClickListener(v -> {
-//            toggleFabMenu();
-//            // Handle handwritten note creation
-//            Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
-//        });
-//
-//        fabText.setOnClickListener(v -> {
-//            toggleFabMenu();
-//            // Handle text note creation
-////            Routing.NoteActivity.newTextNoteIntent(this, getFilesDir().getPath());
-//        });
+        fabMenuContainer = findViewById(R.id.fab_menu_container);
+        mainFab = findViewById(R.id.new_note_opt);
+        FloatingActionButton newNoteFab = findViewById(R.id.fab_add_note);
+        newNoteFab.setVisibility(View.GONE);
+
+        mainFab.setVisibility(View.VISIBLE);
+
+        // Setup main FAB click
+        mainFab.setOnClickListener(v -> toggleFabMenu());
+
+        // Setup individual FABs
+        FloatingActionButton fabCamera = findViewById(R.id.fab_camera);
+        FloatingActionButton fabHandwritten = findViewById(R.id.fab_handwritten);
+        FloatingActionButton fabText = findViewById(R.id.fab_text);
+
+        fabHandwritten.setOnClickListener(v -> {
+            toggleFabMenu();
+            // Handle handwritten note creation
+            Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
+        });
+
+        if (configReader.isFeatureEnabled(Feature.CAMERA_NOTE)) {
+            findViewById(R.id.fab_camera_menu_item).setVisibility(View.VISIBLE);
+            fabCamera.setOnClickListener(v -> {
+                toggleFabMenu();
+                // Handle camera note creation
+//            Routing.NoteActivity.newCameraNoteIntent(this, getFilesDir().getPath());
+            });
+        } else {
+            findViewById(R.id.fab_camera_menu_item).setVisibility(View.GONE);
+        }
+
+
+        if (configReader.isFeatureEnabled(Feature.MARKDOWN_EDITOR)) {
+            findViewById(R.id.fab_text_menu_item).setVisibility(View.VISIBLE);
+            fabText.setOnClickListener(v -> {
+                toggleFabMenu();
+                // Handle text note creation
+//            Routing.NoteActivity.newTextNoteIntent(this, getFilesDir().getPath());
+            });
+        } else {
+            findViewById(R.id.fab_text_menu_item).setVisibility(View.INVISIBLE);
+        }
     }
 
     private void toggleFabMenu() {

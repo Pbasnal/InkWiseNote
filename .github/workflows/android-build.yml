@@ -75,11 +75,11 @@ jobs:
         id: createServiceAccount
         run: echo '${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}' >    service_account.json
 
-      - name: Publish to Play Store BETA
-        id: publish
-        uses: r0adkll/upload-google-play@v1
-        with:
-          serviceAccountJson: service_account.json
-          packageName: com.originb.inkwisenote
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          track: beta
+#      - name: Publish to Play Store BETA
+#        id: publish
+#        uses: r0adkll/upload-google-play@v1
+#        with:
+#          serviceAccountJson: service_account.json
+#          packageName: com.originb.inkwisenote
+#          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+#          track: beta
