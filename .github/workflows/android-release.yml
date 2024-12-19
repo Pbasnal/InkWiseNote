@@ -1,9 +1,10 @@
 name: Android Build Release APK
 
 on:
-  push:
-    branches:
-      - master-android
+  workflow_run:
+    workflows: [ "Android Build" ]
+    types:
+      - completed
 
 jobs:
   build:
