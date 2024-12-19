@@ -63,6 +63,7 @@
                         android:layout_height="?attr/actionBarSize"
                         android:layout_width="match_parent"
                         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+
                     <ImageButton
                             android:id="@+id/btn_search_note"
                             android:layout_width="50dp"
@@ -93,101 +94,113 @@
         </androidx.core.widget.NestedScrollView>
 
         <LinearLayout
-            android:id="@+id/fab_menu_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|bottom"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:visibility="gone">
+                android:id="@+id/fab_menu_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
 
-            <!-- Camera FAB -->
-<!--            <LinearLayout-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:gravity="center_vertical"-->
-<!--                android:layout_marginBottom="16dp">-->
-<!--                -->
-<!--                <TextView-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Camera Note"-->
-<!--                    android:background="@drawable/fab_label_background"-->
-<!--                    android:padding="8dp"-->
-<!--                    android:layout_marginEnd="8dp"-->
-<!--                    android:textColor="@color/white"/>-->
+            <!--             Camera FAB-->
+            <LinearLayout
+                    android:id="@+id/fab_camera_menu_item"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
 
-<!--                <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--                    android:id="@+id/fab_camera"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:src="@drawable/ic_camera"-->
-<!--                    android:contentDescription="Add Camera Note"-->
-<!--                    app:fabSize="mini"/>-->
-<!--            </LinearLayout>-->
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Camera"
+                        android:background="@drawable/fab_label_background"
+                        android:padding="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:textColor="@color/white"/>
 
-            <!-- Handwritten FAB -->
-<!--            <LinearLayout-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:gravity="center_vertical"-->
-<!--                android:layout_marginBottom="16dp">-->
-<!--                -->
-<!--                <TextView-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Handwritten Note"-->
-<!--                    android:background="@drawable/fab_label_background"-->
-<!--                    android:padding="8dp"-->
-<!--                    android:layout_marginEnd="8dp"-->
-<!--                    android:textColor="@color/white"/>-->
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_camera"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_camera"
+                        android:contentDescription="Add Camera Note"
+                        app:fabSize="mini"/>
+            </LinearLayout>
 
-<!--                <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--                    android:id="@+id/fab_handwritten"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:src="@drawable/ic_pen"-->
-<!--                    android:contentDescription="Add Handwritten Note"-->
-<!--                    app:fabSize="mini"/>-->
-<!--            </LinearLayout>-->
+            <!--             Handwritten FAB-->
+            <LinearLayout
+                    android:id="@+id/fab_handwritten_menu_item"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
 
-            <!-- Text FAB -->
-<!--            <LinearLayout-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:gravity="center_vertical"-->
-<!--                android:layout_marginBottom="16dp">-->
-<!--                -->
-<!--                <TextView-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:text="Text Note"-->
-<!--                    android:background="@drawable/fab_label_background"-->
-<!--                    android:padding="8dp"-->
-<!--                    android:layout_marginEnd="8dp"-->
-<!--                    android:textColor="@color/white"/>-->
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Handwritten"
+                        android:background="@drawable/fab_label_background"
+                        android:padding="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:textColor="@color/white"/>
 
-<!--                <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--                    android:id="@+id/fab_text"-->
-<!--                    android:layout_width="wrap_content"-->
-<!--                    android:layout_height="wrap_content"-->
-<!--                    android:src="@drawable/ic_text"-->
-<!--                    android:contentDescription="Add Text Note"-->
-<!--                    app:fabSize="mini"/>-->
-<!--            </LinearLayout>-->
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_handwritten"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_pen"
+                        android:contentDescription="Add Handwritten Note"
+                        app:fabSize="mini"/>
+            </LinearLayout>
+
+            <!--             Text FAB-->
+            <LinearLayout
+                    android:id="@+id/fab_text_menu_item"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Text"
+                        android:background="@drawable/fab_label_background"
+                        android:padding="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:textColor="@color/white"/>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_text"
+                        android:contentDescription="Add Text Note"
+                        app:fabSize="mini"/>
+
+            </LinearLayout>
         </LinearLayout>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fab_add_note"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="16dp"
-            android:contentDescription="Add Note"
-            android:src="@drawable/ic_pen"
-            android:layout_gravity="end|bottom"/>
+                android:id="@+id/fab_add_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:contentDescription="Add Note"
+                android:src="@drawable/ic_pen"
+                android:layout_gravity="end|bottom"/>
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/new_note_opt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                android:contentDescription="Add Note"
+                android:src="@drawable/ic_add"
+                android:layout_gravity="end|bottom"/>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-    <!-- Navigation view for the sidebar -->
 
+    <!-- Navigation view for the sidebar -->
     <LinearLayout
             android:layout_gravity="start"
             android:layout_width="250dp"
