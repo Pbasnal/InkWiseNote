@@ -89,7 +89,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ github.ref }}
-          release_name: Release v1.${{ github.ref }} #${{ github.run_number }}
+          release_name: Release v1.${{ github.run_number }}
           body: |
             Changes in this Release:
             - Description of changes
