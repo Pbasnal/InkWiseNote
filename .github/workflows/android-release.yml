@@ -88,8 +88,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release v1.${{ github.ref }} #${{ github.run_number }}
+          tag_name: v1.0.0
+          release_name: Release v1.${{ github.run_number }}
           body: |
             Changes in this Release:
             - Description of changes
