@@ -118,7 +118,7 @@ public class DrawingView extends View {
         int toolType = event.getToolType(0);
 
         if (toolType != MotionEvent.TOOL_TYPE_STYLUS
-//                && toolType != MotionEvent.TOOL_TYPE_FINGER
+                && toolType != MotionEvent.TOOL_TYPE_FINGER
         ) {
             // Process only stylus input
             return false;
