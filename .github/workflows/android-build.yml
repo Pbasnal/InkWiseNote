@@ -25,6 +25,12 @@ jobs:
           api-level: 34  # Target SDK and Compile SDK level
           build-tools: 34.0.0  # Corresponding build tools version
 
+      - name: Set up environment variable
+        env:
+          VISION_API_KEY: ${{ secrets.VISION_API_KEY }}
+          VISION_API_ENDPOINT: ${{ secrets.VISION_API_ENDPOINT }}
+        run: echo "Environment variable set for VISION_API"
+
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
 

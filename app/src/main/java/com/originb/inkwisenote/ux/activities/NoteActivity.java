@@ -231,27 +231,33 @@ public class NoteActivity extends AppCompatActivity {
         Optional<NoteEntity> noteEntityOpt = noteStack.getCurrentNoteEntity();
         noteEntityOpt.ifPresent(noteEntity -> noteEntity.getNoteMeta().setNoteTitle(noteTitle));
 
-        noteEntityOpt.ifPresent(this::saveNoteFiles);
-        Toast.makeText(this, "Analyzing notes", Toast.LENGTH_SHORT).show();
+        noteEntityOpt.ifPresent(noteEntity -> {
+            saveNoteFiles(noteEntity);
+            updateNoteMeta(noteEntity.getNoteMeta());
+            textProcessingDbQueries.insertJob(noteEntity.getNoteId());
+        });
 
-        Optional<AzureOcrResult> azureOcrResult = noteEntityOpt.flatMap(n -> applyAzureOcr(drawingView.getBitmap()));
 
-        // if the code is here, then this should have a valid value;
-        NoteMeta noteMeta = noteEntityOpt.get().getNoteMeta();
-        azureOcrResult.filter(res -> !Strings.isEmptyOrWhitespace(res.readResult.content))
-                .map(res -> new NoteOcrText(noteMeta.getNoteId(), res.readResult.content))
-                .ifPresent(noteOcrText -> {
-                    List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(noteOcrText.getNoteId());
-                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
-                        noteTextDbHelper.insertTextToDb(noteOcrText);
-                    } else {
-                        noteTextDbHelper.updateTextToDb(noteOcrText);
-                    }
+//        Toast.makeText(this, "Analyzing notes", Toast.LENGTH_SHORT).show();
+//
+//        Optional<AzureOcrResult> azureOcrResult = noteEntityOpt.flatMap(n -> applyAzureOcr(drawingView.getBitmap()));
+//
+//        // if the code is here, then this should have a valid value;
+//        NoteMeta noteMeta = noteEntityOpt.get().getNoteMeta();
+//        azureOcrResult.filter(res -> !Strings.isEmptyOrWhitespace(res.readResult.content))
+//                .map(res -> new NoteOcrText(noteMeta.getNoteId(), res.readResult.content))
+//                .ifPresent(noteOcrText -> {
+//                    List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(noteOcrText.getNoteId());
+//                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
+//                        noteTextDbHelper.insertTextToDb(noteOcrText);
+//                    } else {
+//                        noteTextDbHelper.updateTextToDb(noteOcrText);
+//                    }
+//
+//                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
+//                    Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
+//                });
 
-                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
-                    Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
-                });
-        updateNoteMeta(noteMeta);
     }
 
 //    private void applyOcrWithTess(NoteMeta noteMeta, Function<NoteMeta, Void> callback) {
@@ -269,26 +275,7 @@ public class NoteActivity extends AppCompatActivity {
 //                .get();
 //    }
 
-    private Optional<AzureOcrResult> applyAzureOcr(Bitmap bitmap) {
-        Optional<AzureOcrResult> ocrResult = Try.to(() -> {
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-                    // Compress the bitmap into the ByteArrayOutputStream
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
-
-                    // Convert the ByteArrayOutputStream to an InputStream
-                    byte[] byteArray = byteArrayOutputStream.toByteArray();
-                    InputStream imageStream = new ByteArrayInputStream(byteArray);
-                    AzureOcrResult azureOcrResult = OcrService.convertHandwritingToText(imageStream, appSecrets).get();
-
-                    Log.d("NoteActivity", "Ocr result: " + azureOcrResult);
-
-                    return azureOcrResult;
-                }, debugContext)
-                .logIfError("Failed to convert handwriting to text")
-                .get();
-        return ocrResult;
-    }
 
     private void saveNoteFiles(NoteEntity noteEntity) {
         Try.to(() -> noteRepository.updateNote(noteEntity.getNoteMeta(),

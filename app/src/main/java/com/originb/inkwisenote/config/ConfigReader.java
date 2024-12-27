@@ -4,6 +4,7 @@ import android.content.Context;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.modules.commonutils.Strings;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import lombok.Getter;
 
@@ -76,7 +77,14 @@ public class ConfigReader {
     public static void setRuntimeSetting(ConfigKeys configKey, String value) {
         getInstance().getAppConfig().getRuntimeSettings().put(configKey, value);
     }
+
     public static String getRuntimeSetting(ConfigKeys configKey, String defaultValue) {
-       return getInstance().getAppConfig().getRuntimeSettings().getOrDefault(configKey, defaultValue);
+        return getInstance().getAppConfig().getRuntimeSettings().getOrDefault(configKey, defaultValue);
+    }
+
+    public static boolean isAzureOcrEnabled() {
+        AppSecrets appSecrets = getInstance().getAppConfig().getAppSecrets();
+        return Strings.isNotEmpty(appSecrets.visionApi.visionApiEndpoint) ||
+                Strings.isNotEmpty(appSecrets.visionApi.visionApiKey);
     }
 }

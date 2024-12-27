@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
+import com.originb.inkwisenote.data.notedata.NoteOcrText;
 import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingJobStatus;
 import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
 
@@ -89,6 +90,43 @@ public class TextProcessingJobContract {
             return textProcessingJobStatus;
         }
 
+        public TextProcessingJobStatus readFirstNoteAtStage(TextProcessingStage textProcessingStage) {
+            SQLiteDatabase db = getReadableDatabase();
+
+            // Define a projection that specifies which columns from the database
+            // you will actually use after this query.
+            String[] projection = {
+                    TextProcessingJobEntry._ID,
+                    TextProcessingJobEntry.COLUMN_NAME_NOTE_ID,
+                    TextProcessingJobEntry.COLUMN_NAME_STAGE
+            };
+
+            // Filter results WHERE "title" = 'My Title'
+            String selection = TextProcessingJobEntry.COLUMN_NAME_STAGE + " = ?";
+            String[] selectionArgs = {textProcessingStage.toString()};
+
+            Cursor cursor = db.query(
+                    TextProcessingJobEntry.TABLE_NAME,   // The table to query
+                    projection,                          // The array of columns to return (pass null to get all)
+                    selection,                           // No where clause
+                    selectionArgs,                       // No where clause arguments
+                    null,                                // Don't group the rows
+                    null,                                // Don't filter by row groups
+                    null                                 // The sort order with LIMIT
+            );
+
+            TextProcessingJobStatus textProcessingJobStatus = null;
+            if (cursor.moveToNext()) {
+                textProcessingJobStatus = new TextProcessingJobStatus(cursor.getLong(
+                        cursor.getColumnIndexOrThrow(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID)),
+                        cursor.getString(
+                                cursor.getColumnIndexOrThrow(TextProcessingJobEntry.COLUMN_NAME_STAGE)));
+                cursor.close();
+                Log.d("TextProcessingJobContract", "Loaded text jobs for " + textProcessingStage);
+            }
+            return textProcessingJobStatus;
+        }
+
         public void insertJob(Long noteId) {
             SQLiteDatabase db = getWritableDatabase();
 
@@ -98,7 +136,7 @@ public class TextProcessingJobContract {
 
                 ContentValues values = new ContentValues();
                 values.put(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID, noteId);
-                values.put(TextProcessingJobEntry.COLUMN_NAME_STAGE, TextProcessingStage.Tokenization);
+                values.put(TextProcessingJobEntry.COLUMN_NAME_STAGE, TextProcessingStage.TEXT_PARSING.toString());
 
                 // Insert the new row
                 long newRowId = db.insert(TextProcessingJobEntry.TABLE_NAME, null, values);
@@ -117,6 +155,25 @@ public class TextProcessingJobContract {
                 // End the transaction
                 db.endTransaction();
             }
+        }
+
+        public void updateTextToDb(Long noteId, TextProcessingStage textProcessingStage) {
+            SQLiteDatabase db = getWritableDatabase();
+
+            // New value for one column
+//            String noteText = noteText.getExtractedText();
+            ContentValues values = new ContentValues();
+            values.put(TextProcessingJobEntry.COLUMN_NAME_STAGE, textProcessingStage.toString());
+
+            // Which row to update, based on the title
+            String selection = TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " = ?";
+            String[] selectionArgs = {noteId.toString()};
+
+            int count = db.update(
+                    TextProcessingJobEntry.TABLE_NAME,
+                    values,
+                    selection,
+                    selectionArgs);
         }
 
         public Boolean deleteJob(Long noteId) {
