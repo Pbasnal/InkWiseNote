@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
-    @Setter
-    private boolean continueJob = true;
+public class TextProcessingJob extends AsyncJob {
+//    @Setter
+//    private boolean continueJob = true;
 
     private JobService jobService;
     private JobParameters jobParams;
@@ -49,7 +49,7 @@ public class TextProcessingJob extends AsyncTask<Void, Void, Void> {
 
         if (Objects.isNull(jobStatus)) return null;
 
-        if (!TextProcessingStage.Tokenization.equals(jobStatus.getStage())) {
+        if (!TextProcessingStage.TOKENIZATION.isEqualTo(jobStatus.getStage())) {
             return null;
         }
 

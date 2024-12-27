@@ -25,6 +25,7 @@ public class OcrService {
         return analyzeImageTask;
     }
 
+
     public static class AnalyzeImageTask extends AsyncTask<InputStream, Void, AzureOcrResult> {
         public String VISION_KEY = "";
         public String VISION_ENDPOINT = "";

@@ -54,7 +54,7 @@ public class TextProcessingJobContractTest {
 
         assertNotNull(status);
         assertEquals(noteId, status.getNoteId());
-        assertEquals(TextProcessingStage.Tokenization, status.getStage());
+        assertEquals(TextProcessingStage.TOKENIZATION, status.getStage());
     }
 
     @Test

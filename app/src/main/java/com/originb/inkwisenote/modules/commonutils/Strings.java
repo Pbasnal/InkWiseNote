@@ -6,6 +6,11 @@ import com.originb.inkwisenote.modules.functionalUtils.Try;
 import java.util.Objects;
 
 public class Strings {
+
+    public static boolean isNotEmpty(String string) {
+        return !isNullOrWhitespace(string);
+    }
+
     public static boolean isNullOrWhitespace(String string) {
         if (Objects.isNull(string)) return true;
         if (string.trim() == "") return true;
