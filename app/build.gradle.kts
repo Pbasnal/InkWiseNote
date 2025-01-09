@@ -10,15 +10,13 @@ file("secrets.properties").takeIf { it.exists() }?.apply {
     FileInputStream(this).use { properties.load(it) }
 }
 
-// Print all properties
-println("Loaded properties:")
-properties.forEach { key, value ->
-    println("$key: $value")
-}
-
 android {
     namespace = "com.originb.inkwisenote"
     compileSdk = 34
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.originb.inkwisenote"
