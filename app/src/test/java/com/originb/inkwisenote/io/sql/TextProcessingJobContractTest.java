@@ -54,7 +54,22 @@ public class TextProcessingJobContractTest {
 
         assertNotNull(status);
         assertEquals(noteId, status.getNoteId());
-        assertEquals(TextProcessingStage.TOKENIZATION, status.getStage());
+        assertEquals(TextProcessingStage.TEXT_PARSING.toString(), status.getStage());
+    }
+
+    @Test
+    public void testInsertAndReadJobForTokenization() {
+        // Insert a job
+        Long noteId = 1L;
+        dbHelper.insertJob(noteId);
+        dbHelper.updateTextToDb(noteId, TextProcessingStage.TOKENIZATION);
+
+        // Read and verify
+        TextProcessingJobStatus status = dbHelper.readFirstNoteJobStatus();
+
+        assertNotNull(status);
+        assertEquals(noteId, status.getNoteId());
+        assertEquals(TextProcessingStage.TOKENIZATION.toString(), status.getStage());
     }
 
     @Test
