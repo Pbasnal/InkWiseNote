@@ -54,8 +54,10 @@ jobs:
           VISION_API_KEY: ${{ secrets.VISION_API_KEY }}
           VISION_API_ENDPOINT: ${{ secrets.VISION_API_ENDPOINT }}
         run: |
-          touch app/secrets.properties
-          echo "VISION_API_KEY=${VISION_API_KEY}\nVISION_API_ENDPOINT=${VISION_API_ENDPOINT}" >> ~/app/secrets.properties
+          touch ./app/secrets.properties
+          ls -l ./app/
+          echo "VISION_API_KEY=${VISION_API_KEY}" >> ./app/secrets.properties
+          echo "VISION_API_ENDPOINT=${VISION_API_ENDPOINT}" >> ./app/secrets.properties
 
       - name: Build with Gradle
         run: ./gradlew build
