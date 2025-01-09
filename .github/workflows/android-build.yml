@@ -33,6 +33,7 @@ jobs:
           touch ./app/secrets.properties
           ls -l ./app/
           echo "VISION_API_KEY=${VISION_API_KEY}\nVISION_API_ENDPOINT=${VISION_API_ENDPOINT}" >> ./app/secrets.properties
+          cat ./app/secrets.properties
 
       - name: Grant execute permission for Gradlew
         run: chmod +x gradlew
