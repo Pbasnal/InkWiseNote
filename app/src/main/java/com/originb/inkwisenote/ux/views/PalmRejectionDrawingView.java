@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import com.originb.inkwisenote.config.ConfigReader;
-import com.originb.inkwisenote.data.config.PageTemplate;
+import com.originb.inkwisenote.data.notedata.PageTemplate;
 import com.originb.inkwisenote.data.views.WriteablePath;
 import lombok.Getter;
 

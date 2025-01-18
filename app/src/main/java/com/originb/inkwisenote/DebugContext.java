@@ -1,5 +1,7 @@
 package com.originb.inkwisenote;
 
+import android.util.Log;
+
 public class DebugContext {
 
     private String EventCode;
@@ -13,6 +15,14 @@ public class DebugContext {
     }
 
     public String getDebugInfo() {
-        return "Debug info";
+        return EventCode;
+    }
+
+    public void logDebug(String message) {
+        Log.d(EventCode, message);
+    }
+
+    public void logError(String message) {
+        Log.e(EventCode, message);
     }
 }

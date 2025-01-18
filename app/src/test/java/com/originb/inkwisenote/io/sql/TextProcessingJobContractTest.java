@@ -2,8 +2,8 @@ package com.originb.inkwisenote.io.sql;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingJobStatus;
-import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

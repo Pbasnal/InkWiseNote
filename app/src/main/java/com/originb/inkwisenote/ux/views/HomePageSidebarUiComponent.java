@@ -15,7 +15,7 @@ import com.originb.inkwisenote.ux.activities.AdminActivity;
 import com.originb.inkwisenote.adapters.ExpandableMenuListAdapter;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.config.Feature;
-import com.originb.inkwisenote.data.sidebar.MenuItemData;
+import com.originb.inkwisenote.adapters.MenuItemData;
 import com.originb.inkwisenote.io.FolderHierarchyRepository;
 import com.originb.inkwisenote.modules.repositories.DirectoryContents;
 import com.originb.inkwisenote.modules.repositories.FolderItem;

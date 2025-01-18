@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.sidebar;
+package com.originb.inkwisenote.adapters;
 
 import lombok.Getter;
 

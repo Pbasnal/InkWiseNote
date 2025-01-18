@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.modules.backgroundjobs.data;
+package com.originb.inkwisenote.data.backgroundjobs;
 
 public enum TextProcessingStage {
     TEXT_PARSING("text_parsing"),

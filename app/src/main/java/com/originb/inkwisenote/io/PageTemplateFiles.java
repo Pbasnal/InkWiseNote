@@ -2,7 +2,7 @@ package com.originb.inkwisenote.io;
 
 import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote.constants.Returns;
-import com.originb.inkwisenote.data.config.PageTemplate;
+import com.originb.inkwisenote.data.notedata.PageTemplate;
 import com.originb.inkwisenote.io.utils.BytesFileIoUtils;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

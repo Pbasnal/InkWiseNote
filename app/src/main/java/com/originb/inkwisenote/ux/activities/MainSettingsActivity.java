@@ -9,7 +9,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import com.originb.inkwisenote.data.config.PageSettings;
+import com.originb.inkwisenote.data.notedata.PageSettings;
 import com.originb.inkwisenote.modules.LayoutEngine;
 
 public class MainSettingsActivity extends AppCompatActivity {

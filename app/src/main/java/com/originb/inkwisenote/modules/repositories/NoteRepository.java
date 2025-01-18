@@ -4,7 +4,7 @@ import android.graphics.Bitmap;
 import android.util.Log;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
-import com.originb.inkwisenote.data.config.PageTemplate;
+import com.originb.inkwisenote.data.notedata.PageTemplate;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;

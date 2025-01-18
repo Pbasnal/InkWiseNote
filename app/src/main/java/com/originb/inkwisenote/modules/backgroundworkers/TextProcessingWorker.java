@@ -1,65 +1,82 @@
-package com.originb.inkwisenote.modules.backgroundjobs;
+package com.originb.inkwisenote.modules.backgroundworkers;
 
-import android.app.job.JobParameters;
-import android.app.job.JobService;
-import android.os.AsyncTask;
+import android.content.Context;
 import android.util.Log;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 import com.google.android.gms.common.util.CollectionUtils;
+import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
-import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingJobStatus;
-import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
 import com.originb.inkwisenote.modules.commonutils.Either;
 import com.originb.inkwisenote.modules.commonutils.Strings;
+import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.tfidf.NoteTfIdfLogic;
-import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
-public class TextProcessingJob extends AsyncJob {
-//    @Setter
-//    private boolean continueJob = true;
-
-    private JobService jobService;
-    private JobParameters jobParams;
+public class TextProcessingWorker extends Worker {
     private NoteTfIdfLogic noteTfIdfLogic;
-
     private TextProcessingJobContract.TextProcessingDbQueries textProcessingJobDbHelper;
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
 
-    TextProcessingJob(JobService jobService, JobParameters jobParams) {
-        this.jobService = jobService;
-        this.jobParams = jobParams;
+    private final DebugContext debugContext = new DebugContext("TextProcessingWorker");
+
+    public TextProcessingWorker(@NotNull Context context, @NotNull WorkerParameters workerParams) {
+        super(context, workerParams);
         this.noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
 
         textProcessingJobDbHelper = Repositories.getInstance().getTextProcessingJobDbHelper();
         noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
     }
 
+    @NotNull
     @Override
-    protected Void doInBackground(Void... voids) {
-        // Perform your background task here
-        Log.d("MyJobService", "Performing background task");
-        TextProcessingJobStatus jobStatus = textProcessingJobDbHelper.readFirstNoteJobStatus();
+    public Result doWork() {
+        return processText();
+    }
 
-        if (Objects.isNull(jobStatus)) return null;
+    public Result processText() {
+        Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), debugContext).get();
+        List<NoteOcrText> noteOcrTexts = noteIdOpt.filter(this::isNoteIdGreaterThan0)
+                .map(this::validateJobStatus)
+                .map(noteTextDbHelper::readTextFromDb)
+                .orElse(new ArrayList<>());
 
-        if (!TextProcessingStage.TOKENIZATION.isEqualTo(jobStatus.getStage())) {
-            return null;
-        }
-
-        List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(jobStatus.getNoteId());
         noteOcrTexts.stream()
                 .map(note -> handleException(this::extractTermsFromNote, note))
                 .map(eitherTerms -> handleException(this::createBiRelationalGraph, eitherTerms.result))
                 .forEach(this::deleteTextJob);
 
-        return null;
+        return Result.success();
+    }
+
+    private boolean isNoteIdGreaterThan0(long noteId) {
+        if (noteId == -1) {
+            Log.e(debugContext.getDebugInfo(), "Got incorrect note id (-1) as input");
+            return false;
+        }
+        return true;
+    }
+
+    private Long validateJobStatus(Long noteId) {
+        TextProcessingJobStatus jobStatus = textProcessingJobDbHelper.getNoteStatus(noteId);
+        if (Objects.isNull(jobStatus)) return null;
+        if (!TextProcessingStage.TOKENIZATION.isEqualTo(jobStatus.getStage())) {
+            debugContext.logError("Note is not in TEXT_PARSING stage. " + jobStatus);
+            return null;
+        }
+
+        return noteId;
     }
 
     private void deleteTextJob(Either<Exception, Long> eitherResult) {
@@ -111,11 +128,6 @@ public class TextProcessingJob extends AsyncJob {
                 documentTerms.terms);
 
         return documentTerms.documentId;
-    }
-
-    @Override
-    protected void onPostExecute(Void aVoid) {
-        jobService.jobFinished(jobParams, true);
     }
 
     private static class DocumentTerms {
