@@ -12,6 +12,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
@@ -236,6 +237,8 @@ public class NoteActivity extends AppCompatActivity {
             } else {
                 textProcessingDbQueries.updateTextToDb(jobStatus.getNoteId(), TextProcessingStage.TEXT_PARSING);
             }
+
+            AppState.getInstance().setNoteStatus(noteEntity.getNoteId(), TextProcessingStage.TEXT_PARSING);
             WorkManagerBus.scheduleWorkForTextParsing(this, noteEntity.getNoteId());
         });
 

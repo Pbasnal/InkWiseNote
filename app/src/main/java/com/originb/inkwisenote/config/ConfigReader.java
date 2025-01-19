@@ -43,11 +43,14 @@ public class ConfigReader {
             reader.close();
             is.close();
 
-            is = context.getResources().openRawResource(R.raw.app);
-            reader = new InputStreamReader(is, "UTF-8");
-            appConfig.setAppSecrets(om.readValue(reader, AppSecrets.class));
-            reader.close();
-            is.close();
+            if (isFeatureEnabled(Feature.AZURE_OCR)) {
+                is = context.getResources().openRawResource(R.raw.app);
+                reader = new InputStreamReader(is, "UTF-8");
+                appConfig.setAppSecrets(om.readValue(reader, AppSecrets.class));
+                reader.close();
+                is.close();
+            }
+
         } catch (Exception e) {
             appConfig = AppConfig.createDefault();
             e.printStackTrace();
@@ -84,7 +87,8 @@ public class ConfigReader {
 
     public static boolean isAzureOcrEnabled() {
         AppSecrets appSecrets = getInstance().getAppConfig().getAppSecrets();
-        return Strings.isNotEmpty(appSecrets.visionApi.visionApiEndpoint) ||
-                Strings.isNotEmpty(appSecrets.visionApi.visionApiKey);
+        return getInstance().isFeatureEnabled(Feature.AZURE_OCR) &&
+                (Strings.isNotEmpty(appSecrets.visionApi.visionApiEndpoint) ||
+                Strings.isNotEmpty(appSecrets.visionApi.visionApiKey));
     }
 }

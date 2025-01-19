@@ -9,6 +9,7 @@ import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.ocr.AzureOcrResult;
@@ -58,7 +59,7 @@ public class TextParsingWorker extends Worker {
     public Result parseText() {
         Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), debugContext).get();
 
-        return noteIdOpt.filter(this::isNoteIdGreaterThan0)
+        Result result = noteIdOpt.filter(this::isNoteIdGreaterThan0)
                 .map(this::validateJobStatus)
                 .flatMap(bitmapRepository::getFullBitmap)
                 .flatMap(this::applyAzureOcr)
@@ -78,6 +79,10 @@ public class TextParsingWorker extends Worker {
 
                     return Result.success();
                 }).orElse(Result.failure());
+
+
+        AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.TOKENIZATION);
+        return result;
     }
 
     private boolean isNoteIdGreaterThan0(long noteId) {
@@ -90,8 +95,12 @@ public class TextParsingWorker extends Worker {
 
     private Long validateJobStatus(Long noteId) {
         TextProcessingJobStatus jobStatus = textProcessingJobDbHelper.getNoteStatus(noteId);
-        if (Objects.isNull(jobStatus)) return null;
+        if (Objects.isNull(jobStatus)) {
+            AppState.getInstance().setNoteStatus(noteId, TextProcessingStage.NOTE_READY);
+            return null;
+        }
         if (!TextProcessingStage.TEXT_PARSING.isEqualTo(jobStatus.getStage())) {
+            AppState.getInstance().setNoteStatus(noteId, TextProcessingStage.NOTE_READY);
             debugContext.logError("Note is not in TEXT_PARSING stage. " + jobStatus);
             return null;
         }

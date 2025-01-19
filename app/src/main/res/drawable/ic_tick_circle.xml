@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/drawable/ic_tick_circle_outline.xml -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24"
+        android:viewportHeight="24">
+
+    <!-- Circle Arc (Lower Half) -->
+    <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:fillColor="@android:color/transparent"
+            android:pathData="M16,4 A9,9 0 1,0 21,10"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+
+    <!-- Tick Mark -->
+    <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2"
+            android:fillColor="@android:color/transparent"
+            android:pathData="M8,12 L12,15 L20,5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+
+</vector>

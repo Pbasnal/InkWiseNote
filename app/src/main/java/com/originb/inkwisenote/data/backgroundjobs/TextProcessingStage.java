@@ -2,7 +2,8 @@ package com.originb.inkwisenote.data.backgroundjobs;
 
 public enum TextProcessingStage {
     TEXT_PARSING("text_parsing"),
-    TOKENIZATION("tokenization");
+    TOKENIZATION("tokenization"),
+    NOTE_READY("note_ready");
 
     private final String textProcessingStage;
 

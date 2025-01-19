@@ -68,15 +68,43 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal"
-                            android:gravity="end">
+                            android:gravity="center_vertical|end">
 
-                        <TextView
+                        <LinearLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:text="@string/app_name"
-                                style="@style/TextAppearance.AppCompat.Headline"
-                                android:textColor="@color/white"
-                                android:padding="10dp"/>
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:gravity="center_horizontal">
+
+                            <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="@string/app_name"
+                                    style="@style/TextAppearance.AppCompat.Headline"
+                                    android:textColor="@color/white"
+                                    android:paddingTop="0dp"
+                                    android:paddingBottom="0dp"
+                                    android:layout_marginBottom="0dp"
+                                    android:paddingEnd="5dp"
+                                    android:paddingStart="5dp"/>
+
+                            <LinearLayout
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_horizontal">
+
+                                <ImageButton
+                                        android:id="@+id/ocr_status"
+                                        android:layout_width="20dp"
+                                        android:layout_height="20dp"
+
+                                        android:src="@drawable/ic_ocr_cloud"
+                                        android:background="@android:color/transparent"
+
+                                        android:scaleType="fitCenter"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
 
                         <ImageButton
                                 android:id="@+id/btn_search_note"
@@ -84,7 +112,6 @@
                                 android:layout_height="50dp"
 
                                 android:layout_margin="5dp"
-                                android:layout_gravity="right"
                                 android:src="@drawable/ic_search"
                                 android:background="@android:color/transparent"
                                 app:tint="@color/white"

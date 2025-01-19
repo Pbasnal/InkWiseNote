@@ -59,6 +59,9 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     implementation("androidx.work:work-runtime:2.9.0")
 
+    implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
+    implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

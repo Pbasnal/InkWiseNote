@@ -171,7 +171,7 @@ public class TextProcessingJobContract {
                 db.beginTransaction();
 
                 ContentValues values = new ContentValues();
-                values.put(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID, noteId);
+                values.put(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID, noteId.toString());
                 values.put(TextProcessingJobEntry.COLUMN_NAME_STAGE, TextProcessingStage.TEXT_PARSING.toString());
 
                 // Insert the new row

@@ -6,12 +6,13 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.notedata.NoteOcrText;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
 import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
 import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
-import com.originb.inkwisenote.modules.commonutils.Either;
+import com.originb.inkwisenote.modules.functionalUtils.Either;
 import com.originb.inkwisenote.modules.commonutils.Strings;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -57,6 +58,7 @@ public class TextProcessingWorker extends Worker {
                 .map(eitherTerms -> handleException(this::createBiRelationalGraph, eitherTerms.result))
                 .forEach(this::deleteTextJob);
 
+        AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.NOTE_READY);
         return Result.success();
     }
 

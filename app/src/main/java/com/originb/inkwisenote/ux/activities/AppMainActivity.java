@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.config.ConfigKeys;
 import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.ux.utils.Routing;
 
@@ -18,6 +19,8 @@ public class AppMainActivity extends AppCompatActivity {
 
         registerModules();
         initializeModules();
+
+        AppState.getInstance().updateState();
 
         Routing.HomePageActivity.openHomePageAndStartFresh(this);
     }
