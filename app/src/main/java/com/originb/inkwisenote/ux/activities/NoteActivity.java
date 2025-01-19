@@ -1,6 +1,5 @@
 package com.originb.inkwisenote.ux.activities;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.EditText;
@@ -9,29 +8,25 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import com.google.android.gms.common.util.CollectionUtils;
-import com.google.android.gms.common.util.Strings;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
-import com.originb.inkwisenote.data.notedata.NoteOcrText;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
+import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
 import com.originb.inkwisenote.ux.utils.NoteStack;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
-import com.originb.inkwisenote.io.ocr.AzureOcrResult;
-import com.originb.inkwisenote.io.ocr.OcrService;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.ux.views.DrawingView;
 import com.originb.inkwisenote.R;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -234,7 +229,17 @@ public class NoteActivity extends AppCompatActivity {
         noteEntityOpt.ifPresent(noteEntity -> {
             saveNoteFiles(noteEntity);
             updateNoteMeta(noteEntity.getNoteMeta());
-            textProcessingDbQueries.insertJob(noteEntity.getNoteId());
+            TextProcessingJobStatus jobStatus = textProcessingDbQueries.getNoteStatus(noteEntity.getNoteId());
+
+            if (Objects.isNull(jobStatus)) {
+                textProcessingDbQueries.insertJob(noteEntity.getNoteId());
+
+            } else {
+                textProcessingDbQueries.updateTextToDb(jobStatus.getNoteId(), TextProcessingStage.TEXT_PARSING);
+            }
+
+            AppState.getInstance().setNoteStatus(noteEntity.getNoteId(), TextProcessingStage.TEXT_PARSING);
+            WorkManagerBus.scheduleWorkForTextParsing(this, noteEntity.getNoteId());
         });
 
 
@@ -274,7 +279,6 @@ public class NoteActivity extends AppCompatActivity {
 //                .logIfError("Failed to convert handwriting to text")
 //                .get();
 //    }
-
 
 
     private void saveNoteFiles(NoteEntity noteEntity) {

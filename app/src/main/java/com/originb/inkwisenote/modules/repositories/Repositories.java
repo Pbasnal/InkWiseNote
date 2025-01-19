@@ -2,7 +2,7 @@ package com.originb.inkwisenote.modules.repositories;
 
 
 import android.content.Context;
-import com.originb.inkwisenote.data.config.PageSettings;
+import com.originb.inkwisenote.data.notedata.PageSettings;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;

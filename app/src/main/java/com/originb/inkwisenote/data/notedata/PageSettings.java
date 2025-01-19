@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.config;
+package com.originb.inkwisenote.data.notedata;
 
 import java.util.List;
 import java.util.function.Consumer;

@@ -44,15 +44,15 @@ public class RelatedNotesActivity extends AppCompatActivity {
 
         createGridLayoutToShowNotes();
 
-
         Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(rootNoteId);
-        Set<String> terms = tfIdfScores.keySet();
+        Set<String> filteredTerms = new HashSet<>();
         for (String key : tfIdfScores.keySet()) {
-            if (tfIdfScores.get(key) <= 0.1) {
-                terms.remove(key);
+            if (tfIdfScores.get(key) > 0.1) {
+                filteredTerms.add(key);
             }
         }
-        Map<String, Set<Long>> termNoteIds = noteTermFrequencyDbQueries.getNoteIdsForTerms(terms);
+
+        Map<String, Set<Long>> termNoteIds = noteTermFrequencyDbQueries.getNoteIdsForTerms(filteredTerms);
         Set<Long> relatedNoteIds = termNoteIds.values().stream()
                 .flatMap(Set::stream)
                 .collect(Collectors.toSet());

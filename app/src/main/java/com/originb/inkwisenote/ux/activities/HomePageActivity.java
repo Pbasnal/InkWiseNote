@@ -1,19 +1,28 @@
 package com.originb.inkwisenote.ux.activities;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.media.Image;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.ux.views.HomePageSidebarUiComponent;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
@@ -60,6 +69,19 @@ public class HomePageActivity extends AppCompatActivity {
         createSettingsBtn();
         createSearchBtn();
 
+        observeAppState();
+    }
+
+    private void observeAppState() {
+        ImageButton ocrAzureStatusIndicator = findViewById(R.id.ocr_status);
+        AppState.getInstance().observeIfAzureOcrRunning(this, isAzureOcrRunning -> {
+            if (isAzureOcrRunning) {
+                ocrAzureStatusIndicator.setColorFilter(null);
+            } else {
+                ocrAzureStatusIndicator.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
+            }
+        });
+        AppState.getInstance().updateState();
     }
 
     private void createSearchBtn() {
@@ -107,6 +129,14 @@ public class HomePageActivity extends AppCompatActivity {
                 .collect(Collectors.toList());
 
         noteGridAdapter.setNoteIds(noteIds);
+
+
+        AppState.getInstance().observeNoteStateChange(this, noteStateMap -> {
+            for (Long noteId : noteStateMap.keySet()) {
+                TextProcessingStage noteState = noteStateMap.getOrDefault(noteId, TextProcessingStage.NOTE_READY);
+                noteGridAdapter.updateCardStatus(noteId, noteState);
+            }
+        });
 
         noteGridAdapter.notifyDataSetChanged();
     }

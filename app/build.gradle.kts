@@ -57,8 +57,12 @@ dependencies {
     implementation("com.rmtheis:tess-two:9.1.0")
     implementation("com.google.code.gson:gson:2.10")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
-    annotationProcessor("org.projectlombok:lombok:1.18.30")
+    implementation("androidx.work:work-runtime:2.9.0")
 
+    implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
+    implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+
+    annotationProcessor("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")

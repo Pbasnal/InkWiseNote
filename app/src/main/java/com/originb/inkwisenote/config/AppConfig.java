@@ -1,6 +1,6 @@
 package com.originb.inkwisenote.config;
 
-import com.originb.inkwisenote.data.config.PageTemplate;
+import com.originb.inkwisenote.data.notedata.PageTemplate;
 import lombok.Getter;
 import lombok.Setter;
 

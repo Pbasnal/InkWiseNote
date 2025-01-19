@@ -1,6 +1,7 @@
 {
   "enabledFeatures": [
     "HOME_PAGE_NAVIGATION_SIDEBAR",
+    "AZURE_OCR",
     "CAMERA_NOTE",
     "ADMIN_VIEW"
   ],

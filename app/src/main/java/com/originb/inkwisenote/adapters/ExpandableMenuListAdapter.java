@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.data.sidebar.MenuItemData;
 
 import java.util.List;
 

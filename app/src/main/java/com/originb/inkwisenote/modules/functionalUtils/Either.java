@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.modules.commonutils;
+package com.originb.inkwisenote.modules.functionalUtils;
 
 public class Either<Err, Res> {
     public Err error;

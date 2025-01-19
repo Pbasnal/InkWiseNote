@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.modules.backgroundjobs.data;
+package com.originb.inkwisenote.data.backgroundjobs;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

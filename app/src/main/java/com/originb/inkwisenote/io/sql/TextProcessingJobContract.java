@@ -6,9 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
 import android.util.Log;
-import com.originb.inkwisenote.data.notedata.NoteOcrText;
-import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingJobStatus;
-import com.originb.inkwisenote.modules.backgroundjobs.data.TextProcessingStage;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
+import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
 
 public class TextProcessingJobContract {
     // To prevent someone from accidentally instantiating the contract class,
@@ -127,6 +126,43 @@ public class TextProcessingJobContract {
             return textProcessingJobStatus;
         }
 
+        public TextProcessingJobStatus getNoteStatus(Long noteId) {
+            SQLiteDatabase db = getReadableDatabase();
+
+            // Define a projection that specifies which columns from the database
+            // you will actually use after this query.
+            String[] projection = {
+                    TextProcessingJobEntry._ID,
+                    TextProcessingJobEntry.COLUMN_NAME_NOTE_ID,
+                    TextProcessingJobEntry.COLUMN_NAME_STAGE
+            };
+
+            // Filter results WHERE "title" = 'My Title'
+            String selection = TextProcessingJobEntry.COLUMN_NAME_NOTE_ID + " = ?";
+            String[] selectionArgs = {noteId.toString()};
+
+            Cursor cursor = db.query(
+                    TextProcessingJobEntry.TABLE_NAME,   // The table to query
+                    projection,                          // The array of columns to return (pass null to get all)
+                    selection,                           // No where clause
+                    selectionArgs,                       // No where clause arguments
+                    null,                                // Don't group the rows
+                    null,                                // Don't filter by row groups
+                    null                                 // The sort order with LIMIT
+            );
+
+            TextProcessingJobStatus textProcessingJobStatus = null;
+            if (cursor.moveToNext()) {
+                textProcessingJobStatus = new TextProcessingJobStatus(cursor.getLong(
+                        cursor.getColumnIndexOrThrow(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID)),
+                        cursor.getString(
+                                cursor.getColumnIndexOrThrow(TextProcessingJobEntry.COLUMN_NAME_STAGE)));
+                cursor.close();
+                Log.d("TextProcessingJobContract", "Loaded text jobs for noteId " + noteId);
+            }
+            return textProcessingJobStatus;
+        }
+
         public void insertJob(Long noteId) {
             SQLiteDatabase db = getWritableDatabase();
 
@@ -135,7 +171,7 @@ public class TextProcessingJobContract {
                 db.beginTransaction();
 
                 ContentValues values = new ContentValues();
-                values.put(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID, noteId);
+                values.put(TextProcessingJobEntry.COLUMN_NAME_NOTE_ID, noteId.toString());
                 values.put(TextProcessingJobEntry.COLUMN_NAME_STAGE, TextProcessingStage.TEXT_PARSING.toString());
 
                 // Insert the new row
