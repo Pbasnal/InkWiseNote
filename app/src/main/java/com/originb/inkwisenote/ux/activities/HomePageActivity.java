@@ -14,6 +14,7 @@ import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
@@ -70,6 +71,9 @@ public class HomePageActivity extends AppCompatActivity {
         createSearchBtn();
 
         observeAppState();
+
+        TextView textView = findViewById(R.id.debug_view);
+        textView.setText(ConfigReader.getInstance().getAppConfig().getAppSecrets().toString());
     }
 
     private void observeAppState() {
