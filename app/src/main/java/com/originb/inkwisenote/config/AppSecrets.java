@@ -14,4 +14,9 @@ public class AppSecrets {
         public String visionApiKey;
         public String visionApiEndpoint;
     }
+
+    @Override
+    public String toString() {
+        return visionApi.visionApiKey + " | " + visionApi.visionApiEndpoint;
+    }
 }
