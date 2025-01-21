@@ -40,11 +40,27 @@ public class RelatedNotesActivity extends AppCompatActivity {
         noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
 
         Long rootNoteId = getIntent().getLongExtra("noteId", 0);
-        setRootNote(rootNoteId);
+        NoteEntity noteEntity = getRootNote(rootNoteId);
+        setRootNote(noteEntity);
 
         createGridLayoutToShowNotes();
 
-        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(rootNoteId);
+        Set<Long> relatedNoteIds = getNoteIdsRelatedByTfIdf(noteEntity);
+        relatedNoteIds.addAll(getNotesRelatedByCreation(noteEntity));
+
+        relatedNoteIds.remove(rootNoteId);
+        noteGridAdapter.setNoteIds(new ArrayList<>(relatedNoteIds));
+    }
+
+    private Set<Long> getNotesRelatedByCreation(NoteEntity noteEntity) {
+        Set<Long> connectedNotes = noteEntity.getNoteMeta().getNextNoteIds();
+        connectedNotes.addAll(noteEntity.getNoteMeta().getPrevNoteIds());
+
+        return connectedNotes;
+    }
+
+    private Set<Long> getNoteIdsRelatedByTfIdf(NoteEntity noteEntity) {
+        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(noteEntity.getNoteId());
         Set<String> filteredTerms = new HashSet<>();
         for (String key : tfIdfScores.keySet()) {
             if (tfIdfScores.get(key) > 0.1) {
@@ -56,39 +72,38 @@ public class RelatedNotesActivity extends AppCompatActivity {
         Set<Long> relatedNoteIds = termNoteIds.values().stream()
                 .flatMap(Set::stream)
                 .collect(Collectors.toSet());
-        relatedNoteIds.remove(rootNoteId);
 
-        noteGridAdapter.setNoteIds(new ArrayList<>(relatedNoteIds));
-
-        noteGridAdapter.notifyDataSetChanged();
+        return relatedNoteIds;
     }
 
-    private void setRootNote(Long rootNoteId) {
+    private NoteEntity getRootNote(Long rootNoteId) {
+        Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(rootNoteId);
+        return noteEntityOpt.get();
+    }
+
+    private void setRootNote(NoteEntity noteEntity) {
         View includedCard = findViewById(R.id.main_note_card);
 
         // Then access its child views
         ImageView cardImage = includedCard.findViewById(R.id.card_image);
         TextView cardTitle = includedCard.findViewById(R.id.card_name);
-        ImageButton graphButton = includedCard.findViewById(R.id.btn_graph_view);
         ImageButton deleteButton = includedCard.findViewById(R.id.btn_dlt_note);
 
-        Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(rootNoteId);
-        noteEntityOpt.ifPresent(noteEntity -> {
-            noteRepository.getThumbnail(noteEntity.getNoteId())
-                    .ifPresent(cardImage::setImageBitmap);
 
-            String noteTitle = Optional.ofNullable(noteEntity.getNoteMeta().getNoteTitle())
-                    .filter(title -> !title.trim().isEmpty())
-                    .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
-            cardTitle.setText(noteTitle);
+        noteRepository.getThumbnail(noteEntity.getNoteId())
+                .ifPresent(cardImage::setImageBitmap);
 
-            cardImage.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
-            cardTitle.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
+        String noteTitle = Optional.ofNullable(noteEntity.getNoteMeta().getNoteTitle())
+                .filter(title -> !title.trim().isEmpty())
+                .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
+        cardTitle.setText(noteTitle);
 
-            deleteButton.setOnClickListener(v -> {
-                noteRepository.deleteNote(rootNoteId);
-                Routing.HomePageActivity.openHomePageAndStartFresh(this);
-            });
+        cardImage.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
+        cardTitle.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
+
+        deleteButton.setOnClickListener(v -> {
+            noteRepository.deleteNote(noteEntity.getNoteId());
+            Routing.HomePageActivity.openHomePageAndStartFresh(this);
         });
     }
 

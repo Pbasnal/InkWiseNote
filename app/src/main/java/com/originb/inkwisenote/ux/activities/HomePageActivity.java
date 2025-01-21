@@ -131,15 +131,12 @@ public class HomePageActivity extends AppCompatActivity {
 
         noteGridAdapter.setNoteIds(noteIds);
 
-
         AppState.getInstance().observeNoteStateChange(this, noteStateMap -> {
             for (Long noteId : noteStateMap.keySet()) {
                 TextProcessingStage noteState = noteStateMap.getOrDefault(noteId, TextProcessingStage.NOTE_READY);
                 noteGridAdapter.updateCardStatus(noteId, noteState);
             }
         });
-
-        noteGridAdapter.notifyDataSetChanged();
     }
 
     @Override
