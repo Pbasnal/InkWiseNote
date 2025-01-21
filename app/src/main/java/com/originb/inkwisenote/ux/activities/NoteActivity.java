@@ -140,7 +140,7 @@ public class NoteActivity extends AppCompatActivity {
     private void setNewNoteButton() {
         newNoteButton = findViewById(R.id.fab_add_note);
         newNoteButton.setOnClickListener(v -> {
-            saveCurrentNote();
+
 
             Optional<NoteEntity> newNoteEntityOpt = noteRepository.saveNote(workingNotePath,
                     "",
@@ -155,6 +155,7 @@ public class NoteActivity extends AppCompatActivity {
                 currentNoteMeta.getNextNoteIds().add(newNoteMeta.getNoteId());
                 newNoteMeta.getPrevNoteIds().add(currentNoteMeta.getNoteId());
 
+                saveCurrentNote();
                 noteStack.setCurrentNote(newNoteEntityOpt.get());
                 renderNote(newNoteEntityOpt.get());
             }

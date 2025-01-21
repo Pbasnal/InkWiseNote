@@ -129,14 +129,14 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
             if (TextProcessingStage.NOTE_READY != noteStatus) {
                 if (!isAnimationRunning) {
-                    noteStatusImg.startAnimation(rotateAnimation);
+                    noteStatusImg.clearAnimation();
                     noteStatusImg.setImageResource(R.drawable.ic_in_process);
-//                    noteStatusImg.clearAnimation();
+                    noteStatusImg.post(() -> noteStatusImg.startAnimation(rotateAnimation));
                     isAnimationRunning = true;
                 }
             } else {
                 noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
-//                noteStatusImg.clearAnimation();
+                noteStatusImg.clearAnimation();
                 isAnimationRunning = false;
             }
         }

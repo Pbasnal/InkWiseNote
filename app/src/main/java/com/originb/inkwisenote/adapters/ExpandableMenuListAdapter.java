@@ -54,7 +54,7 @@ public class ExpandableMenuListAdapter extends RecyclerView.Adapter<ExpandableMe
                         menuItem.setExpanded(true);
                         addChildItemsToMenu(menuItem);
                     }
-                    notifyDataSetChanged();
+                    notifyAll();
                 }
             });
         }
