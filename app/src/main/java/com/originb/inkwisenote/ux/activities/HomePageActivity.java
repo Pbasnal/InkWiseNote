@@ -71,9 +71,6 @@ public class HomePageActivity extends AppCompatActivity {
         createSearchBtn();
 
         observeAppState();
-
-        TextView textView = findViewById(R.id.debug_view);
-        textView.setText(ConfigReader.getInstance().getAppConfig().getAppSecrets().toString());
     }
 
     private void observeAppState() {
