@@ -27,8 +27,10 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val visionApiKey: String = System.getenv("VISION_API_KEY") ?: properties.getProperty("VISION_API_KEY")
-        val visionApiEndpoint: String = System.getenv("VISION_API_ENDPOINT") ?: properties.getProperty("VISION_API_ENDPOINT")
+        val visionApiKey: String = System.getenv("VISION_API_KEY")
+            ?: properties.getProperty("VISION_API_KEY")
+        val visionApiEndpoint: String = System.getenv("VISION_API_ENDPOINT")
+            ?: properties.getProperty("VISION_API_ENDPOINT")
 
         buildConfigField("String", "VISION_API_KEY", "\"$visionApiKey\"")
         buildConfigField("String", "VISION_API_ENDPOINT", "\"$visionApiEndpoint\"")
