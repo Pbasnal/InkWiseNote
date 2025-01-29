@@ -27,10 +27,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private NoteGridAdapter noteGridAdapter;
 
-    //    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
     private NoteRepository noteRepository;
-
-//    private NoteTfIdfLogic noteTfIdfLogic;
 
     private NoteRelationDao noteRelationDao;
 
@@ -40,10 +37,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_related_notes);
 
         noteRepository = Repositories.getInstance().getNoteRepository();
-//        noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
         noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
-
-//        noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
 
         Long rootNoteId = getIntent().getLongExtra("noteId", 0);
         NoteEntity noteEntity = getRootNote(rootNoteId);
