@@ -1,0 +1,60 @@
+#name: Publish APK to Google Play
+#
+#on:
+#  push:
+#    tags:
+#      - 'v*'  # This triggers the workflow on tags following the pattern v1.0, v2.0, etc.
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: Checkout code
+#        uses: actions/checkout@v2
+#
+#      - name: Set up JDK
+#        uses: actions/setup-java@v2
+#        with:
+#          distribution: 'zulu'
+#          java-version: '17'
+#
+#      - name: Set up Android SDK
+#        uses: android-actions/setup-android@v2
+#        with:
+#          api-level: 34
+#          build-tools: 34.0.0
+#
+#      - name: Grant execute permission for Gradlew
+#        run: chmod +x gradlew
+#
+#      - name: Cache Gradle Wrapper
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.gradle/wrapper
+#          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+#          restore-keys: |
+#            ${{ runner.os }}-gradle-wrapper-
+#
+#      - name: Cache Gradle Dependencies
+#        uses: actions/cache@v2
+#        with:
+#          path: |
+#            ~/.gradle/caches
+#            ~/.gradle/kotlin
+#            ~/.gradle/daemon
+#          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
+#          restore-keys: |
+#            ${{ runner.os }}-gradle-caches-
+#
+#      - name: Install Bundler
+#        run: gem install bundler
+#
+#      - name: Install Fastlane
+#        run: bundle install --path vendor/bundle
+#
+#      - name: Build and Deploy
+#        env:
+#          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+#        run: bundle exec fastlane deploy

@@ -1,0 +1,118 @@
+name: Android Build Release APK
+
+on:
+  workflow_run:
+    workflows: [ "Android Build" ]
+    types:
+      - completed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 34  # Target SDK and Compile SDK level
+          build-tools: 34.0.0  # Corresponding build tools version
+
+      - name: Grant execute permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Cache Gradle Wrapper
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-wrapper-
+
+      - name: Cache Gradle Dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/kotlin
+            ~/.gradle/daemon
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/gradle.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-caches-
+
+      - name: Set up environment variable
+        env:
+          VISION_API_KEY: ${{ secrets.VISION_API_KEY }}
+          VISION_API_ENDPOINT: ${{ secrets.VISION_API_ENDPOINT }}
+        run: |
+          touch ./app/secrets.properties
+          ls -l ./app/
+          echo "VISION_API_KEY=${VISION_API_KEY}" >> ./app/secrets.properties
+          echo "VISION_API_ENDPOINT=${VISION_API_ENDPOINT}" >> ./app/secrets.properties
+
+      - name: Build with Gradle
+        run: ./gradlew build
+
+      - name: Build APK
+        run: ./gradlew assembleRelease
+
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+
+      - name: Sign Release AAB
+        id: sign_app
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (33.0.0) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Create and push a new tag
+        run: |
+          git config --global user.email "pankajbasnal17@gmail.com"
+          git config --global user.name "Pbasnal"
+          git tag v1.${{ github.run_number }}
+          git push origin v1.${{ github.run_number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.${{ github.run_number }}
+          release_name: Release v1.${{ github.run_number }}
+          body: |
+            Changes in this Release:
+            - Description of changes
+          draft: false
+          prerelease: false
+
+      - name: Upload APK to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          asset_name: inkwise-note.apk
+          asset_content_type: application/vnd.android.package-archive
