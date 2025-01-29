@@ -5,7 +5,6 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,14 +13,11 @@ import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteRelation;
-import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.modules.tfidf.NoteTfIdfLogic;
 import com.originb.inkwisenote.ux.utils.Routing;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RelatedNotesActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -58,30 +54,6 @@ public class RelatedNotesActivity extends AppCompatActivity {
                     noteGridAdapter.setNoteIds(relatedNoteIds);
                 });
     }
-
-//    private Set<Long> getNotesRelatedByCreation(NoteEntity noteEntity) {
-//        Set<Long> connectedNotes = noteEntity.getNoteMeta().getNextNoteIds();
-//        connectedNotes.addAll(noteEntity.getNoteMeta().getPrevNoteIds());
-//
-//        return connectedNotes;
-//    }
-//
-//    private Set<Long> getNoteIdsRelatedByTfIdf(NoteEntity noteEntity) {
-//        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(noteEntity.getNoteId());
-//        Set<String> filteredTerms = new HashSet<>();
-//        for (String key : tfIdfScores.keySet()) {
-//            if (tfIdfScores.get(key) > 0.1) {
-//                filteredTerms.add(key);
-//            }
-//        }
-//
-//        Map<String, Set<Long>> termNoteIds = noteTermFrequencyDbQueries.getNoteIdsForTerms(filteredTerms);
-//        Set<Long> relatedNoteIds = termNoteIds.values().stream()
-//                .flatMap(Set::stream)
-//                .collect(Collectors.toSet());
-//
-//        return relatedNoteIds;
-//    }
 
     private NoteEntity getRootNote(Long rootNoteId) {
         Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(rootNoteId);
