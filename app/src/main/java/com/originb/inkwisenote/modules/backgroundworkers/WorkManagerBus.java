@@ -30,4 +30,16 @@ public class WorkManagerBus {
 
         WorkManager.getInstance(context).enqueue(textProcessingWork);
     }
+
+    public static void scheduleWorkForFindingRelatedNotes(Context context, Long noteId) {
+        Data inputData = new Data.Builder()
+                .putLong("note_id", noteId) // Path of the image file
+                .build();
+
+        OneTimeWorkRequest noteRelationWorker = new OneTimeWorkRequest.Builder(NoteRelationWorker.class)
+                .setInputData(inputData)
+                .build();
+
+        WorkManager.getInstance(context).enqueue(noteRelationWorker);
+    }
 }

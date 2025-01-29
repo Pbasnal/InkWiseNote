@@ -2,6 +2,7 @@ package com.originb.inkwisenote.modules.repositories;
 
 
 import android.content.Context;
+import androidx.room.Room;
 import com.originb.inkwisenote.data.notedata.PageSettings;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
@@ -9,6 +10,7 @@ import com.originb.inkwisenote.io.PageTemplateFiles;
 //import com.originb.inkwisenote.io.ocr.TesseractsOcr;
 import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
 import com.originb.inkwisenote.io.sql.NoteTextContract;
+import com.originb.inkwisenote.io.sql.NotesDatabase;
 import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,6 +30,8 @@ public class Repositories {
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
     private TextProcessingJobContract.TextProcessingDbQueries textProcessingJobDbHelper;
     private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
+
+    private NotesDatabase notesDb;
 
     private PageSettings pageSettings;
 
@@ -49,7 +53,10 @@ public class Repositories {
         noteTextDbHelper = new NoteTextContract.NoteTextDbHelper(appContext);
         textProcessingJobDbHelper = new TextProcessingJobContract.TextProcessingDbQueries(appContext);
         noteTermFrequencyDbQueries = new NoteTermFrequencyContract.NoteTermFrequencyDbQueries(appContext);
-
+        notesDb = Room.databaseBuilder(appContext,
+                        NotesDatabase.class, "NoteText.db")
+//                .fallbackToDestructiveMigration()
+                .build();
 
         noteMetaRepository = new NoteMetaFiles(appContext.getFilesDir());
         bitmapRepository = new NoteBitmapFiles(appContext.getFilesDir());

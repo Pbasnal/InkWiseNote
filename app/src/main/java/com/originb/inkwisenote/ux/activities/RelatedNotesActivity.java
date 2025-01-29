@@ -10,24 +10,22 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
+import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
-import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
+import com.originb.inkwisenote.data.notedata.NoteRelation;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.modules.tfidf.NoteTfIdfLogic;
 import com.originb.inkwisenote.ux.utils.Routing;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class RelatedNotesActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private NoteGridAdapter noteGridAdapter;
 
-    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
     private NoteRepository noteRepository;
 
-    private NoteTfIdfLogic noteTfIdfLogic;
+    private NoteRelationDao noteRelationDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +33,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
         setContentView(R.layout.activity_related_notes);
 
         noteRepository = Repositories.getInstance().getNoteRepository();
-        noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
-
-        noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
+        noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
 
         Long rootNoteId = getIntent().getLongExtra("noteId", 0);
         NoteEntity noteEntity = getRootNote(rootNoteId);
@@ -45,35 +41,18 @@ public class RelatedNotesActivity extends AppCompatActivity {
 
         createGridLayoutToShowNotes();
 
-        Set<Long> relatedNoteIds = getNoteIdsRelatedByTfIdf(noteEntity);
-        relatedNoteIds.addAll(getNotesRelatedByCreation(noteEntity));
+        noteRelationDao.getRelatedNotesOf(noteEntity.getNoteId())
+                .observe(this, noteRelations -> {
 
-        relatedNoteIds.remove(rootNoteId);
-        noteGridAdapter.setNoteIds(new ArrayList<>(relatedNoteIds));
-    }
+                    Set<Long> relatedNoteIds = new HashSet<>();
+                    for (NoteRelation noteRelation : noteRelations) {
+                        relatedNoteIds.add(noteRelation.getNoteId());
+                        relatedNoteIds.add(noteRelation.getRelatedNoteId());
+                    }
 
-    private Set<Long> getNotesRelatedByCreation(NoteEntity noteEntity) {
-        Set<Long> connectedNotes = noteEntity.getNoteMeta().getNextNoteIds();
-        connectedNotes.addAll(noteEntity.getNoteMeta().getPrevNoteIds());
-
-        return connectedNotes;
-    }
-
-    private Set<Long> getNoteIdsRelatedByTfIdf(NoteEntity noteEntity) {
-        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(noteEntity.getNoteId());
-        Set<String> filteredTerms = new HashSet<>();
-        for (String key : tfIdfScores.keySet()) {
-            if (tfIdfScores.get(key) > 0.1) {
-                filteredTerms.add(key);
-            }
-        }
-
-        Map<String, Set<Long>> termNoteIds = noteTermFrequencyDbQueries.getNoteIdsForTerms(filteredTerms);
-        Set<Long> relatedNoteIds = termNoteIds.values().stream()
-                .flatMap(Set::stream)
-                .collect(Collectors.toSet());
-
-        return relatedNoteIds;
+                    relatedNoteIds.remove(rootNoteId);
+                    noteGridAdapter.setNoteIds(relatedNoteIds);
+                });
     }
 
     private NoteEntity getRootNote(Long rootNoteId) {

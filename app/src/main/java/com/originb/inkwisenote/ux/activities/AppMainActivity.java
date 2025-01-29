@@ -7,8 +7,12 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.config.ConfigKeys;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.config.AppState;
+import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.ux.utils.Routing;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class AppMainActivity extends AppCompatActivity {
 

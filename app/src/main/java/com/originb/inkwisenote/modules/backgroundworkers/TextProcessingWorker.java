@@ -59,6 +59,10 @@ public class TextProcessingWorker extends Worker {
                 .forEach(this::deleteTextJob);
 
         AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.NOTE_READY);
+
+        WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), noteIdOpt.get());
+
+
         return Result.success();
     }
 
