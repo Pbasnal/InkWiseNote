@@ -2,6 +2,7 @@ package com.originb.inkwisenote.modules.repositories;
 
 import android.graphics.Bitmap;
 import android.util.Log;
+import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.notedata.PageTemplate;
@@ -22,12 +23,15 @@ public class NoteRepository {
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
     private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
 
+    private NoteRelationDao noteRelationDao;
+
     public NoteRepository() {
         this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
         this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
         this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
         this.noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
         this.noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
+        this.noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
     }
 
     public void loadAllNotes() {
@@ -64,6 +68,9 @@ public class NoteRepository {
         // delete note search text
         noteTextDbHelper.deleteNoteText(noteId);
         noteTermFrequencyDbQueries.deleteTermFrequencies(noteId);
+        new Thread(() -> {
+            noteRelationDao.deleteByNoteId(noteId);
+        }).start();
     }
 
     public NoteMeta getNoteAtIndex(int position) {

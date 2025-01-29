@@ -74,14 +74,20 @@ public class TextParsingWorker extends Worker {
                     }
 
                     textProcessingJobDbHelper.updateTextToDb(noteIdOpt.get(), TextProcessingStage.TOKENIZATION);
+                    AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.TOKENIZATION);
 
                     WorkManagerBus.scheduleWorkForTextProcessing(getApplicationContext(), noteIdOpt.get());
 
                     return Result.success();
-                }).orElse(Result.failure());
+                }).orElseGet(() -> {
+                    // should be moved to a state machine
+                    textProcessingJobDbHelper.updateTextToDb(noteIdOpt.get(), TextProcessingStage.NOTE_READY);
+                    AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.NOTE_READY);
+                    WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), noteIdOpt.get());
+                    return Result.failure();
+                });
 
 
-        AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.TOKENIZATION);
         return result;
     }
 

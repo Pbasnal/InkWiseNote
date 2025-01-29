@@ -10,9 +10,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
+import com.originb.inkwisenote.data.config.AppState;
+import com.originb.inkwisenote.data.dao.NoteRelationDao;
+import com.originb.inkwisenote.data.notedata.NoteRelation;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
@@ -20,6 +25,7 @@ import com.originb.inkwisenote.modules.repositories.Repositories;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
 
@@ -28,18 +34,65 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
     private List<Long> noteIds;
 
+    private Map<Long, List<NoteRelation>> noteRelationMap = new HashMap<>();
     private Map<Long, NoteCardHolder> noteCards = new HashMap<>();
 
     public NoteGridAdapter(ComponentActivity parentActivity, List<Long> noteIds) {
         this.noteRepository = Repositories.getInstance().getNoteRepository();
-
         this.parentActivity = parentActivity;
         this.noteIds = noteIds;
+
+        AppState.getInstance().observeNoteRelationships(parentActivity, this::updateNoteRelations);
     }
 
-    public void setNoteIds(List<Long> noteIds) {
-        this.noteIds = noteIds;
+    public void updateNoteRelations(Map<Long, List<NoteRelation>> updatedNoteRelationMap) {
+        for (Long noteId : updatedNoteRelationMap.keySet()) {
+            List<NoteRelation> updatedRelations = updatedNoteRelationMap.getOrDefault(noteId, new ArrayList<>());
+            boolean notify = !noteRelationMap.containsKey(noteId) && !updatedRelations.isEmpty();
+
+            if (notify) {
+                this.noteRelationMap.put(noteId, updatedRelations);
+                int position = noteIds.indexOf(noteId);
+                notifyItemChanged(position);
+            }
+        }
+
+//            this.noteRelationMap = noteRelationShipMap;
+//            notifyDataSetChanged();
+    }
+
+    public void setNoteIds(Set<Long> noteIds) {
+        this.noteIds = new ArrayList<>(noteIds);
+
+        Set<Long> noteIdsThatDontHaveRelationship = new HashSet<>();
+        for (Long noteId : noteIds) {
+            if (!noteRelationMap.containsKey(noteId)) {
+                noteIdsThatDontHaveRelationship.add(noteId);
+            }
+        }
+
         notifyDataSetChanged();
+        if (!noteIdsThatDontHaveRelationship.isEmpty()) {
+            NoteRelationDao noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
+
+//            noteIdsThatDontHaveRelationship.forEach(noteIdToRefresh ->
+//            {
+//                noteRelationDao.getRelatedNotesOf(noteIdToRefresh).observe(parentActivity, allNoteRelations -> {
+//                    AppState.getInstance().updatedRelatedNotes(noteIdToRefresh, allNoteRelations);
+//                });
+//            });
+
+
+            noteRelationDao.getRelatedNotesOf(noteIdsThatDontHaveRelationship)
+                    .observe(parentActivity, allNoteRelations -> {
+                        Map<Long, List<NoteRelation>> allNoteRelationMap = allNoteRelations.stream()
+                                .collect(Collectors.groupingBy(NoteRelation::getNoteId));
+
+                        allNoteRelationMap.putAll(allNoteRelations.stream()
+                                .collect(Collectors.groupingBy(NoteRelation::getRelatedNoteId)));
+                        AppState.getInstance().updatedRelatedNotes(allNoteRelationMap);
+                    });
+        }
     }
 
     @NonNull
@@ -120,6 +173,15 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
                     .filter(title -> !title.trim().isEmpty())
                     .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
             this.noteTitle.setText(noteTitle);
+
+
+            if (noteRelationMap.containsKey(noteEntity.getNoteId())) {
+                graphButton.setVisibility(View.VISIBLE); // Show the button
+                graphButton.setEnabled(true);
+            } else {
+                graphButton.setVisibility(View.GONE);
+                graphButton.setEnabled(false);
+            }
         }
 
         public void updateNoteStatus(Long noteId, TextProcessingStage noteStatus) {

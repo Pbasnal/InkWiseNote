@@ -12,12 +12,14 @@ import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NoteSearchActivity extends AppCompatActivity {
     private EditText searchInput;
     private Button searchButton;
-    private List<Long> resultsList;
+    private Set<Long> resultsList;
 
     private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
 
@@ -45,13 +47,13 @@ public class NoteSearchActivity extends AppCompatActivity {
     }
 
     public void createGridLayoutToShowNotes() {
-        resultsList = new ArrayList<>();
+        resultsList = new HashSet<>();
 
         recyclerView = findViewById(R.id.note_search_card_grid_view);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(this, resultsList);
+        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
 
         recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
