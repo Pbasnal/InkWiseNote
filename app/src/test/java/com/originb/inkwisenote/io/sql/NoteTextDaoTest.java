@@ -1,8 +1,8 @@
 package com.originb.inkwisenote.io.sql;
 
-import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
-import com.originb.inkwisenote.data.notedata.NoteOcrText;
+import androidx.room.Room;
+import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
+import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,49 +10,41 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 
-import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
-public class NoteTextContractTest {
-    private NoteTextContract.NoteTextDbHelper dbHelper;
-    private Context context;
-    private File dbFile;
+public class NoteTextDaoTest {
+    private NoteOcrTextDao noteOcrTextDao;
+
+    private NotesDatabase db;
 
     @Before
     public void setUp() {
-        context = RuntimeEnvironment.getApplication();
-        dbFile = new File(context.getCacheDir(), "test_database.db");
-        dbHelper = new NoteTextContract.NoteTextDbHelper(context, dbFile.getAbsolutePath());
+        db = Room.inMemoryDatabaseBuilder(RuntimeEnvironment.getApplication(), NotesDatabase.class)
+                .allowMainThreadQueries() // Use cautiously, only for tests
+                .build();
+        noteOcrTextDao = db.noteOcrTextDao();
     }
 
     @After
     public void tearDown() {
-        dbHelper.close();
-        if (dbFile.exists()) {
-            dbFile.delete();
-        }
-    }
-
-    @Test
-    public void testDatabaseCreation() {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        assertTrue(db.isOpen());
+        db.close();
     }
 
     @Test
     public void testInsertAndReadText() {
         // Create test data
         NoteOcrText testNote = new NoteOcrText(1L, "Test extracted text");
-        
+
         // Insert test data
-        dbHelper.insertTextToDb(testNote);
-        
+        noteOcrTextDao.insertTextToDb(testNote);
+
         // Read and verify
-        List<NoteOcrText> result = dbHelper.readTextFromDb(1L);
-        
+        List<NoteOcrText> result = noteOcrTextDao.readTextFromDb(1L);
+
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
         assertEquals(testNote.getNoteId(), result.get(0).getNoteId());
@@ -63,15 +55,15 @@ public class NoteTextContractTest {
     public void testUpdateText() {
         // Insert initial data
         NoteOcrText initialNote = new NoteOcrText(1L, "Initial text");
-        dbHelper.insertTextToDb(initialNote);
-        
+        noteOcrTextDao.insertTextToDb(initialNote);
+
         // Update the text
         NoteOcrText updatedNote = new NoteOcrText(1L, "Updated text");
-        dbHelper.updateTextToDb(updatedNote);
-        
+        noteOcrTextDao.updateTextToDb(updatedNote);
+
         // Verify update
-        List<NoteOcrText> result = dbHelper.readTextFromDb(1L);
-        
+        List<NoteOcrText> result = noteOcrTextDao.readTextFromDb(1L);
+
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
         assertEquals("Updated text", result.get(0).getExtractedText());
@@ -80,14 +72,16 @@ public class NoteTextContractTest {
     @Test
     public void testSearchText() {
         // Insert test data
-        dbHelper.insertTextToDb(new NoteOcrText(1L, "First test note"));
-        dbHelper.insertTextToDb(new NoteOcrText(2L, "Second test note"));
-        dbHelper.insertTextToDb(new NoteOcrText(3L, "Different content"));
-        
+        noteOcrTextDao.insertTextToDb(new NoteOcrText(1L, "First test note"));
+        noteOcrTextDao.insertTextToDb(new NoteOcrText(2L, "Second test note"));
+        noteOcrTextDao.insertTextToDb(new NoteOcrText(3L, "Different content"));
+
         // Search for notes containing "test"
-        List<Long> searchResults = dbHelper.searchTextFromDb("test");
-        
+        List<Long> searchResults = noteOcrTextDao.searchTextFromDb("test")
+                .stream().map(NoteOcrText::getNoteId).collect(Collectors.toList());
+
         assertEquals(2, searchResults.size());
+
         assertTrue(searchResults.contains(1L));
         assertTrue(searchResults.contains(2L));
     }
@@ -96,24 +90,17 @@ public class NoteTextContractTest {
     public void testDeleteText() {
         // Insert test data
         NoteOcrText testNote = new NoteOcrText(1L, "Test note to delete");
-        dbHelper.insertTextToDb(testNote);
-        
-        // Verify insertion
-        List<NoteOcrText> beforeDelete = dbHelper.readTextFromDb(1L);
-        assertEquals(1, beforeDelete.size());
-        
-        // Delete the note
-        dbHelper.deleteNoteText(1L);
-        
-        // Verify deletion
-        List<NoteOcrText> afterDelete = dbHelper.readTextFromDb(1L);
-        assertTrue(afterDelete.isEmpty());
-    }
+        noteOcrTextDao.insertTextToDb(testNote);
 
-    @Test
-    public void testDatabaseUpgrade() {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        dbHelper.onUpgrade(db, 1, 2);
-        assertTrue(db.isOpen());
+        // Verify insertion
+        List<NoteOcrText> beforeDelete = noteOcrTextDao.readTextFromDb(1L);
+        assertEquals(1, beforeDelete.size());
+
+        // Delete the note
+        noteOcrTextDao.deleteNoteText(1L);
+
+        // Verify deletion
+        List<NoteOcrText> afterDelete = noteOcrTextDao.readTextFromDb(1L);
+        assertTrue(afterDelete.isEmpty());
     }
 } 

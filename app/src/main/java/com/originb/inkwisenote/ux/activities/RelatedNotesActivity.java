@@ -12,7 +12,7 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
-import com.originb.inkwisenote.data.notedata.NoteRelation;
+import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.ux.utils.Routing;

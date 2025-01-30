@@ -1,8 +1,7 @@
-package com.originb.inkwisenote.data.notedata;
+package com.originb.inkwisenote.data.entities.notedata;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import lombok.Getter;
 import lombok.Setter;
