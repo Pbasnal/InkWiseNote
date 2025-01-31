@@ -16,9 +16,8 @@ import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
 import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
 import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
 import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-
-import java.util.List;
 
 public class AdminActivity extends AppCompatActivity {
     private TableLayout tableLayout;
@@ -69,16 +68,18 @@ public class AdminActivity extends AppCompatActivity {
         tableLayout.addView(headerRow);
 
         // Add data rows
-        List<NoteTermFrequency> entries = noteTermFrequencyDao.getAllTermFrequencies();
-        if (CollectionUtils.isEmpty(entries)) return;
+        BackgroundOps.execute(() -> noteTermFrequencyDao.getAllTermFrequencies(), entries -> {
 
-        for (NoteTermFrequency entry : entries) {
-            TableRow row = new TableRow(this);
-            addCell(row, String.valueOf(entry.getNoteId()));
-            addCell(row, entry.getTerm());
-            addCell(row, String.valueOf(entry.getTermFrequency()));
-            tableLayout.addView(row);
-        }
+            if (CollectionUtils.isEmpty(entries)) return;
+
+            for (NoteTermFrequency entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getNoteId()));
+                addCell(row, entry.getTerm());
+                addCell(row, String.valueOf(entry.getTermFrequency()));
+                tableLayout.addView(row);
+            }
+        });
     }
 
     private void showNoteTextData() {
@@ -91,13 +92,14 @@ public class AdminActivity extends AppCompatActivity {
         tableLayout.addView(headerRow);
 
         // Add data rows
-        List<NoteOcrText> entries = noteOcrTextDao.getAllNoteText();
-        for (NoteOcrText entry : entries) {
-            TableRow row = new TableRow(this);
-            addCell(row, String.valueOf(entry.getNoteId()));
-            addCell(row, entry.getExtractedText());
-            tableLayout.addView(row);
-        }
+        BackgroundOps.execute(() -> noteOcrTextDao.getAllNoteText(), entries -> {
+            for (NoteOcrText entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getNoteId()));
+                addCell(row, entry.getExtractedText());
+                tableLayout.addView(row);
+            }
+        });
     }
 
     private void addHeaderCell(TableRow row, String text) {

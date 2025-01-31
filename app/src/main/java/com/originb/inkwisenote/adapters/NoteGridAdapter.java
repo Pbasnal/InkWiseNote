@@ -16,6 +16,8 @@ import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
+import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
+import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
@@ -27,8 +29,9 @@ import java.util.stream.Collectors;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
 
-    private ComponentActivity parentActivity;
-    private NoteRepository noteRepository;
+    private final ComponentActivity parentActivity;
+    private final NoteRepository noteRepository;
+    private final NoteOperations noteOperations;
 
     private List<Long> noteIds;
 
@@ -39,6 +42,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         this.noteRepository = Repositories.getInstance().getNoteRepository();
         this.parentActivity = parentActivity;
         this.noteIds = noteIds;
+        noteOperations = new NoteOperations(parentActivity);
 
         AppState.getInstance().observeNoteRelationships(parentActivity, this::updateNoteRelations);
     }
@@ -205,7 +209,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             int position = getAdapterPosition();
             Long noteId = noteIds.get(position);
             // delete note files
-            noteRepository.deleteNote(noteId);
+            noteOperations.deleteNote(noteId);
 
             // delete note from list
             noteIds.remove(position);
