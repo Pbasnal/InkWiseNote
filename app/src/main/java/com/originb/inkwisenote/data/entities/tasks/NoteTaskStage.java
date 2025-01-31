@@ -15,4 +15,8 @@ public enum NoteTaskStage {
     public String toString() {
         return textProcessingStage;
     }
+
+    public boolean equals(NoteTaskStage noteTaskStage) {
+        return this.toString().equals(noteTaskStage.toString());
+    }
 }

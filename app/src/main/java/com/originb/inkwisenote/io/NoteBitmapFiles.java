@@ -105,8 +105,9 @@ public class NoteBitmapFiles {
         }
 
         if (fullImages.containsKey(bitmapId)) {
-            return Optional.ofNullable(fullImages.get(bitmapId))
+            Optional<Bitmap> result = Optional.ofNullable(fullImages.get(bitmapId))
                     .map(b -> b.bitmap);
+            return result;
         } else if (thumbnails.containsKey(bitmapId)) {
             BitmapInfo bitmapInfo = thumbnails.get(bitmapId);
             BitmapFileIoUtils.readBitmapFromFile(bitmapInfo.getBitmapPath(),

@@ -3,6 +3,7 @@ package com.originb.inkwisenote.modules.backgroundworkers;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import androidx.work.ListenableWorker;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.android.gms.common.util.CollectionUtils;
@@ -61,36 +62,42 @@ public class TextParsingWorker extends Worker {
     public Result parseText() {
         Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), debugContext).get();
 
-        Result result = noteIdOpt.filter(this::isNoteIdGreaterThan0)
-                .map(this::validateJobStatus)
-                .flatMap(bitmapRepository::getFullBitmap)
-                .flatMap(this::applyAzureOcr)
-                .filter(res -> !Strings.isNullOrWhitespace(res.readResult.content))
-                .map(res -> new NoteOcrText(noteIdOpt.get(), res.readResult.content))
-                .map(noteOcrText -> {
-                    List<NoteOcrText> noteOcrTexts = noteOcrTextDao.readTextFromDb(noteOcrText.getNoteId());
-                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
-                        noteOcrTextDao.insertTextToDb(noteOcrText);
-                    } else {
-                        noteOcrTextDao.updateTextToDb(noteOcrText);
-                    }
+        if (!noteIdOpt.isPresent()) return null;
+        Long noteId = noteIdOpt.get();
 
-                    noteTaskStatusDao.updateNoteTask(TfIdfRelationTasks.tokenizationTask(noteIdOpt.get()));
-                    AppState.getInstance().setNoteStatus(noteIdOpt.get(), NoteTaskStage.TOKENIZATION);
+        if (!isNoteIdGreaterThan0(noteId) || !validateJobStatus(noteId)) return onFailure(noteId);
 
-                    WorkManagerBus.scheduleWorkForTextProcessing(getApplicationContext(), noteIdOpt.get());
+        Optional<Bitmap> bitmapOpt = bitmapRepository.getFullBitmap(noteId);
+        if (!bitmapOpt.isPresent()) return onFailure(noteId);
+        Bitmap noteBitmap = bitmapOpt.get();
 
-                    return Result.success();
-                }).orElseGet(() -> {
-                    // should be moved to a state machine
-                    noteTaskStatusDao.updateNoteTask(TfIdfRelationTasks.completeTask(noteIdOpt.get()));
-                    AppState.getInstance().setNoteStatus(noteIdOpt.get(), NoteTaskStage.NOTE_READY);
-                    WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), noteIdOpt.get());
-                    return Result.failure();
-                });
+        Optional<AzureOcrResult> azureResultOpt = applyAzureOcr(noteBitmap);
+        if (!azureResultOpt.isPresent()) return onFailure(noteId);
+        NoteOcrText noteOcrText = new NoteOcrText(noteIdOpt.get(), azureResultOpt.get().readResult.content);
 
+        List<NoteOcrText> noteOcrTexts = noteOcrTextDao.readTextFromDb(noteOcrText.getNoteId());
+        if (CollectionUtils.isEmpty(noteOcrTexts)) {
+            noteOcrTextDao.insertTextToDb(noteOcrText);
+        } else {
+            noteOcrTextDao.updateTextToDb(noteOcrText);
+        }
 
-        return result;
+        if (!Strings.isNullOrWhitespace(noteOcrText.getExtractedText())) {
+            noteTaskStatusDao.updateNoteTask(TfIdfRelationTasks.tokenizationTask(noteIdOpt.get()));
+            AppState.getInstance().setNoteStatus(noteIdOpt.get(), NoteTaskStage.TOKENIZATION);
+
+            WorkManagerBus.scheduleWorkForTextProcessing(getApplicationContext(), noteIdOpt.get());
+        }
+
+        return Result.success();
+
+    }
+
+    private Result onFailure(Long noteId) {
+        noteTaskStatusDao.updateNoteTask(TfIdfRelationTasks.completeTask(noteId));
+        AppState.getInstance().setNoteStatus(noteId, NoteTaskStage.NOTE_READY);
+        WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), noteId);
+        return ListenableWorker.Result.failure();
     }
 
     private boolean isNoteIdGreaterThan0(long noteId) {
@@ -101,22 +108,23 @@ public class TextParsingWorker extends Worker {
         return true;
     }
 
-    private Long validateJobStatus(Long noteId) {
+    private boolean validateJobStatus(Long noteId) {
         NoteTaskStatus jobStatus = noteTaskStatusDao.getNoteStatus(noteId, NoteTaskName.TF_IDF_RELATION);
         if (Objects.isNull(jobStatus)) {
             AppState.getInstance().setNoteStatus(noteId, NoteTaskStage.NOTE_READY);
-            return null;
+            return false;
         }
-        if (NoteTaskStage.TEXT_PARSING == jobStatus.getStage()) {
+        if (!NoteTaskStage.TEXT_PARSING.equals(jobStatus.getStage())) {
             AppState.getInstance().setNoteStatus(noteId, NoteTaskStage.NOTE_READY);
             debugContext.logError("Note is not in TEXT_PARSING stage. " + jobStatus);
-            return null;
+            return false;
         }
 
-        return noteId;
+        return true;
     }
 
     private Optional<AzureOcrResult> applyAzureOcr(Bitmap bitmap) {
+        Log.d("got bitmap", "bitmap");
         Optional<AzureOcrResult> ocrResult = Try.to(() -> {
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 

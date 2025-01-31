@@ -132,8 +132,8 @@ public class TextProcessingWorker extends Worker {
     private Long createBiRelationalGraph(DocumentTerms documentTerms) {
         if (Objects.isNull(documentTerms)) return null;
         if (CollectionUtils.isEmpty(documentTerms.terms)) return documentTerms.documentId;
-        mainHandler.post(() -> noteTfIdfLogic.addOrUpdateNote(documentTerms.documentId,
-                        documentTerms.terms));
+        noteTfIdfLogic.addOrUpdateNote(documentTerms.documentId,
+                        documentTerms.terms);
 
         return documentTerms.documentId;
     }
