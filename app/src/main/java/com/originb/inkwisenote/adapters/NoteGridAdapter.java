@@ -16,7 +16,6 @@ import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
-import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
 import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
