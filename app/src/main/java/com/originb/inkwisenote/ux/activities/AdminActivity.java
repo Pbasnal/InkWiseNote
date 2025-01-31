@@ -9,20 +9,20 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.gms.common.util.CollectionUtils;
 import com.google.android.material.tabs.TabLayout;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.data.admin.NoteExtractedTextEntry;
-import com.originb.inkwisenote.data.admin.TermFrequencyEntry;
-import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
+import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
+import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
+import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-
-import java.util.List;
 
 public class AdminActivity extends AppCompatActivity {
     private TableLayout tableLayout;
-    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries termFrequencyQueries;
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+    private NoteTermFrequencyDao noteTermFrequencyDao;
+    private NoteOcrTextDao noteOcrTextDao;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,8 +30,8 @@ public class AdminActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin);
 
         tableLayout = findViewById(R.id.data_table);
-        termFrequencyQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
-        noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
+        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
 
         TabLayout tabLayout = findViewById(R.id.table_selector_tabs);
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -45,10 +45,12 @@ public class AdminActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
         });
 
         // Show term frequency data by default
@@ -57,7 +59,7 @@ public class AdminActivity extends AppCompatActivity {
 
     private void showTermFrequencyData() {
         tableLayout.removeAllViews();
-        
+
         // Add header
         TableRow headerRow = new TableRow(this);
         addHeaderCell(headerRow, "Note ID");
@@ -66,19 +68,23 @@ public class AdminActivity extends AppCompatActivity {
         tableLayout.addView(headerRow);
 
         // Add data rows
-        List<TermFrequencyEntry> entries = termFrequencyQueries.getAllTermFrequencies();
-        for (TermFrequencyEntry entry : entries) {
-            TableRow row = new TableRow(this);
-            addCell(row, String.valueOf(entry.getNoteId()));
-            addCell(row, entry.getTerm());
-            addCell(row, String.valueOf(entry.getFrequency()));
-            tableLayout.addView(row);
-        }
+        BackgroundOps.execute(() -> noteTermFrequencyDao.getAllTermFrequencies(), entries -> {
+
+            if (CollectionUtils.isEmpty(entries)) return;
+
+            for (NoteTermFrequency entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getNoteId()));
+                addCell(row, entry.getTerm());
+                addCell(row, String.valueOf(entry.getTermFrequency()));
+                tableLayout.addView(row);
+            }
+        });
     }
 
     private void showNoteTextData() {
         tableLayout.removeAllViews();
-        
+
         // Add header
         TableRow headerRow = new TableRow(this);
         addHeaderCell(headerRow, "Note ID");
@@ -86,13 +92,14 @@ public class AdminActivity extends AppCompatActivity {
         tableLayout.addView(headerRow);
 
         // Add data rows
-        List<NoteExtractedTextEntry> entries = noteTextDbHelper.getAllNoteText();
-        for (NoteExtractedTextEntry entry : entries) {
-            TableRow row = new TableRow(this);
-            addCell(row, String.valueOf(entry.getNoteId()));
-            addCell(row, entry.getText());
-            tableLayout.addView(row);
-        }
+        BackgroundOps.execute(() -> noteOcrTextDao.getAllNoteText(), entries -> {
+            for (NoteOcrText entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getNoteId()));
+                addCell(row, entry.getExtractedText());
+                tableLayout.addView(row);
+            }
+        });
     }
 
     private void addHeaderCell(TableRow row, String text) {
@@ -110,12 +117,5 @@ public class AdminActivity extends AppCompatActivity {
         textView.setPadding(16, 16, 16, 16);
         textView.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(textView);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        termFrequencyQueries.close();
-        noteTextDbHelper.close();
     }
 } 

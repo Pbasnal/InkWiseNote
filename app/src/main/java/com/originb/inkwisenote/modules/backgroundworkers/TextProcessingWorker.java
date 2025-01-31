@@ -1,17 +1,20 @@
 package com.originb.inkwisenote.modules.backgroundworkers;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.data.config.AppState;
-import com.originb.inkwisenote.data.notedata.NoteOcrText;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
-import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
-import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
-import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
+import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
+import com.originb.inkwisenote.data.dao.NoteTaskStatusDao;
+import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskName;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.modules.functionalUtils.Either;
 import com.originb.inkwisenote.modules.commonutils.Strings;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
@@ -27,17 +30,17 @@ import java.util.function.Function;
 
 public class TextProcessingWorker extends Worker {
     private NoteTfIdfLogic noteTfIdfLogic;
-    private TextProcessingJobContract.TextProcessingDbQueries textProcessingJobDbHelper;
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
-
+    private NoteTaskStatusDao noteTaskStatusDao;
+    private NoteOcrTextDao noteOcrTextDao;
+    private Handler mainHandler = new Handler(Looper.getMainLooper());
     private final DebugContext debugContext = new DebugContext("TextProcessingWorker");
 
     public TextProcessingWorker(@NotNull Context context, @NotNull WorkerParameters workerParams) {
         super(context, workerParams);
         this.noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
 
-        textProcessingJobDbHelper = Repositories.getInstance().getTextProcessingJobDbHelper();
-        noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        noteTaskStatusDao = Repositories.getInstance().getNotesDb().noteTaskStatusDao();
+        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
     }
 
     @NotNull
@@ -50,7 +53,7 @@ public class TextProcessingWorker extends Worker {
         Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), debugContext).get();
         List<NoteOcrText> noteOcrTexts = noteIdOpt.filter(this::isNoteIdGreaterThan0)
                 .map(this::validateJobStatus)
-                .map(noteTextDbHelper::readTextFromDb)
+                .map(noteOcrTextDao::readTextFromDb)
                 .orElse(new ArrayList<>());
 
         noteOcrTexts.stream()
@@ -58,10 +61,9 @@ public class TextProcessingWorker extends Worker {
                 .map(eitherTerms -> handleException(this::createBiRelationalGraph, eitherTerms.result))
                 .forEach(this::deleteTextJob);
 
-        AppState.getInstance().setNoteStatus(noteIdOpt.get(), TextProcessingStage.NOTE_READY);
+        AppState.getInstance().setNoteStatus(noteIdOpt.get(), NoteTaskStage.NOTE_READY);
 
         WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), noteIdOpt.get());
-
 
         return Result.success();
     }
@@ -75,9 +77,9 @@ public class TextProcessingWorker extends Worker {
     }
 
     private Long validateJobStatus(Long noteId) {
-        TextProcessingJobStatus jobStatus = textProcessingJobDbHelper.getNoteStatus(noteId);
+        NoteTaskStatus jobStatus = noteTaskStatusDao.getNoteStatus(noteId, NoteTaskName.TF_IDF_RELATION);
         if (Objects.isNull(jobStatus)) return null;
-        if (!TextProcessingStage.TOKENIZATION.isEqualTo(jobStatus.getStage())) {
+        if (NoteTaskStage.TOKENIZATION != jobStatus.getStage()) {
             debugContext.logError("Note is not in TEXT_PARSING stage. " + jobStatus);
             return null;
         }
@@ -86,7 +88,7 @@ public class TextProcessingWorker extends Worker {
     }
 
     private void deleteTextJob(Either<Exception, Long> eitherResult) {
-        textProcessingJobDbHelper.deleteJob(eitherResult.result);
+        noteTaskStatusDao.deleteNoteTask(eitherResult.result, NoteTaskName.TF_IDF_RELATION);
     }
 
     private <T, R> Either<Exception, R> handleException(Function<T, R> function, T input) {
@@ -129,9 +131,8 @@ public class TextProcessingWorker extends Worker {
     private Long createBiRelationalGraph(DocumentTerms documentTerms) {
         if (Objects.isNull(documentTerms)) return null;
         if (CollectionUtils.isEmpty(documentTerms.terms)) return documentTerms.documentId;
-
         noteTfIdfLogic.addOrUpdateNote(documentTerms.documentId,
-                documentTerms.terms);
+                        documentTerms.terms);
 
         return documentTerms.documentId;
     }

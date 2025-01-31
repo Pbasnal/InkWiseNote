@@ -13,16 +13,20 @@ import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.config.AppState;
+import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
+import com.originb.inkwisenote.data.dao.NoteTaskStatusDao;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskName;
+import com.originb.inkwisenote.data.entities.tasks.TfIdfRelationTasks;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
-import com.originb.inkwisenote.io.sql.TextProcessingJobContract;
-import com.originb.inkwisenote.data.backgroundjobs.TextProcessingJobStatus;
-import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
+import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.ux.utils.NoteStack;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.ux.views.DrawingView;
 import com.originb.inkwisenote.R;
@@ -39,9 +43,10 @@ public class NoteActivity extends AppCompatActivity {
 
     private NoteRepository noteRepository;
     //    private TesseractsOcr tesseractsOcr;
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
-    private TextProcessingJobContract.TextProcessingDbQueries textProcessingDbQueries;
+    private NoteOcrTextDao noteOcrTextDao;
+    private NoteTaskStatusDao noteTaskStatusDao;
     private AppSecrets appSecrets;
+    private NoteOperations noteOperations;
 
     private DrawingView drawingView;
 
@@ -74,12 +79,13 @@ public class NoteActivity extends AppCompatActivity {
         drawingView = findViewById(R.id.drawing_view);
 
 //        tesseractsOcr = Repositories.getInstance().getTesseractsOcr();
-        noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
-        textProcessingDbQueries = Repositories.getInstance().getTextProcessingJobDbHelper();
+        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        noteTaskStatusDao = Repositories.getInstance().getNotesDb().noteTaskStatusDao();
         noteRepository = new NoteRepository();
         appSecrets = ConfigReader.fromContext(this).getAppConfig().getAppSecrets();
         noteStack = new NoteStack(noteRepository);
         debugContext = new DebugContext("NoteActivity");
+        noteOperations = new NoteOperations(this);
 
         noteTitleField = findViewById(R.id.note_title);
         createdTime = findViewById(R.id.note_created_time);
@@ -225,78 +231,30 @@ public class NoteActivity extends AppCompatActivity {
     private void saveCurrentNote() {
         String noteTitle = noteTitleField.getText().toString();
         Optional<NoteEntity> noteEntityOpt = noteStack.getCurrentNoteEntity();
-        noteEntityOpt.ifPresent(noteEntity -> noteEntity.getNoteMeta().setNoteTitle(noteTitle));
 
-        noteEntityOpt.ifPresent(noteEntity -> {
-            saveNoteFiles(noteEntity);
-            updateNoteMeta(noteEntity.getNoteMeta());
-            TextProcessingJobStatus jobStatus = textProcessingDbQueries.getNoteStatus(noteEntity.getNoteId());
+        if (!noteEntityOpt.isPresent()) return;
 
-            if (Objects.isNull(jobStatus)) {
-                textProcessingDbQueries.insertJob(noteEntity.getNoteId());
+        NoteEntity noteEntity = noteEntityOpt.get();
+        noteEntity.getNoteMeta().setNoteTitle(noteTitle);
 
-            } else {
-                textProcessingDbQueries.updateTextToDb(jobStatus.getNoteId(), TextProcessingStage.TEXT_PARSING);
-            }
-
-            AppState.getInstance().setNoteStatus(noteEntity.getNoteId(), TextProcessingStage.TEXT_PARSING);
-            WorkManagerBus.scheduleWorkForTextParsing(this, noteEntity.getNoteId());
-        });
-
-
-//        Toast.makeText(this, "Analyzing notes", Toast.LENGTH_SHORT).show();
-//
-//        Optional<AzureOcrResult> azureOcrResult = noteEntityOpt.flatMap(n -> applyAzureOcr(drawingView.getBitmap()));
-//
-//        // if the code is here, then this should have a valid value;
-//        NoteMeta noteMeta = noteEntityOpt.get().getNoteMeta();
-//        azureOcrResult.filter(res -> !Strings.isEmptyOrWhitespace(res.readResult.content))
-//                .map(res -> new NoteOcrText(noteMeta.getNoteId(), res.readResult.content))
-//                .ifPresent(noteOcrText -> {
-//                    List<NoteOcrText> noteOcrTexts = noteTextDbHelper.readTextFromDb(noteOcrText.getNoteId());
-//                    if (CollectionUtils.isEmpty(noteOcrTexts)) {
-//                        noteTextDbHelper.insertTextToDb(noteOcrText);
-//                    } else {
-//                        noteTextDbHelper.updateTextToDb(noteOcrText);
-//                    }
-//
-//                    textProcessingDbQueries.insertJob(noteMeta.getNoteId());
-//                    Toast.makeText(this, "Generated text from note", Toast.LENGTH_SHORT).show();
-//                });
-
+        noteOperations.updateNote(noteEntity, drawingView.getBitmap(), drawingView.getPageTemplate());
     }
 
-//    private void applyOcrWithTess(NoteMeta noteMeta, Function<NoteMeta, Void> callback) {
-//        Try.to(() -> {
-//                    Bitmap bitmap = drawingView.getBitmap();
-//                    String imageText = tesseractsOcr.extractText(bitmap);
-//                    noteMeta.setExtractedText(imageText);
-////                    OcrService.convertHandwritingToText(imageStream, result -> {
-//                    Log.d("NoteActivity", "Ocr result: " + imageText);
-////                        noteMeta.setAzureOcrResult(imageText);
-//                    callback.apply(noteMeta);
-////                    });
-//                }, debugContext)
-//                .logIfError("Failed to convert handwriting to text")
+//    private void saveNoteFiles(NoteEntity noteEntity) {
+//        Try.to(() -> noteRepository.updateNote(noteEntity.getNoteMeta(),
+//                                drawingView.getBitmap(),
+//                                drawingView.getPageTemplate())
+//                        , debugContext)
+//                .logIfError("Failed to save note " + noteEntity)
 //                .get();
 //    }
-
-
-    private void saveNoteFiles(NoteEntity noteEntity) {
-        Try.to(() -> noteRepository.updateNote(noteEntity.getNoteMeta(),
-                                drawingView.getBitmap(),
-                                drawingView.getPageTemplate())
-                        , debugContext)
-                .logIfError("Failed to save note " + noteEntity)
-                .get();
-    }
-
-    private void updateNoteMeta(NoteMeta noteMeta) {
-        Try.to(() -> noteRepository.updateNoteMeta(noteMeta)
-                        , debugContext)
-                .logIfError("Failed to update noteMeta " + noteMeta)
-                .get();
-    }
+//
+//    private void updateNoteMeta(NoteMeta noteMeta) {
+//        Try.to(() -> noteRepository.updateNoteMeta(noteMeta)
+//                        , debugContext)
+//                .logIfError("Failed to update noteMeta " + noteMeta)
+//                .get();
+//    }
 
     private String getCreateDateTime(NoteEntity noteEntity) {
 

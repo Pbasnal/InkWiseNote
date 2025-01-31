@@ -9,9 +9,10 @@ import androidx.work.WorkerParameters;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
+import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
-import com.originb.inkwisenote.data.notedata.NoteRelation;
-import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
+import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -23,10 +24,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class NoteRelationWorker extends Worker {
-    private NoteRepository noteRepository;
-    private NoteTfIdfLogic noteTfIdfLogic;
-    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
-    private NoteRelationDao noteRelationDao;
+    private final NoteRepository noteRepository;
+    private final NoteTfIdfLogic noteTfIdfLogic;
+    private final NoteTermFrequencyDao noteTermFrequencyDao;
+    private final NoteRelationDao noteRelationDao;
 
     private final DebugContext debugContext = new DebugContext("NoteRelationWorker");
 
@@ -35,7 +36,7 @@ public class NoteRelationWorker extends Worker {
 
         noteRepository = Repositories.getInstance().getNoteRepository();
         noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
-        noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
+        noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
 
         noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
     }
@@ -80,9 +81,8 @@ public class NoteRelationWorker extends Worker {
             }
         }
 
-        Map<String, Set<Long>> termNoteIds = noteTermFrequencyDbQueries.getNoteIdsForTerms(filteredTerms);
-        Set<Long> relatedNoteIds = termNoteIds.values().stream()
-                .flatMap(Set::stream)
+        Set<Long> relatedNoteIds = noteTermFrequencyDao.getNoteIdsForTerms(filteredTerms)
+                .stream().map(NoteTermFrequency::getNoteId)
                 .collect(Collectors.toSet());
 
         return relatedNoteIds;

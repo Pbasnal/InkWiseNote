@@ -10,14 +10,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
-import com.originb.inkwisenote.data.notedata.NoteRelation;
+import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
+import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
+import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
@@ -29,8 +29,9 @@ import java.util.stream.Collectors;
 
 public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCardHolder> {
 
-    private ComponentActivity parentActivity;
-    private NoteRepository noteRepository;
+    private final ComponentActivity parentActivity;
+    private final NoteRepository noteRepository;
+    private final NoteOperations noteOperations;
 
     private List<Long> noteIds;
 
@@ -41,6 +42,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         this.noteRepository = Repositories.getInstance().getNoteRepository();
         this.parentActivity = parentActivity;
         this.noteIds = noteIds;
+        noteOperations = new NoteOperations(parentActivity);
 
         AppState.getInstance().observeNoteRelationships(parentActivity, this::updateNoteRelations);
     }
@@ -115,7 +117,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         });
     }
 
-    public void updateCardStatus(Long noteId, TextProcessingStage noteStatus) {
+    public void updateCardStatus(Long noteId, NoteTaskStage noteStatus) {
         if (noteCards.containsKey(noteId)) {
             NoteCardHolder noteCard = noteCards.get(noteId);
             noteCard.updateNoteStatus(noteId, noteStatus);
@@ -184,12 +186,12 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             }
         }
 
-        public void updateNoteStatus(Long noteId, TextProcessingStage noteStatus) {
+        public void updateNoteStatus(Long noteId, NoteTaskStage noteStatus) {
             if (!noteId.equals(noteEntity.getNoteId())) {
                 return;
             }
 
-            if (TextProcessingStage.NOTE_READY != noteStatus) {
+            if (NoteTaskStage.NOTE_READY != noteStatus) {
                 if (!isAnimationRunning) {
                     noteStatusImg.clearAnimation();
                     noteStatusImg.setImageResource(R.drawable.ic_in_process);
@@ -207,7 +209,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             int position = getAdapterPosition();
             Long noteId = noteIds.get(position);
             // delete note files
-            noteRepository.deleteNote(noteId);
+            noteOperations.deleteNote(noteId);
 
             // delete note from list
             noteIds.remove(position);

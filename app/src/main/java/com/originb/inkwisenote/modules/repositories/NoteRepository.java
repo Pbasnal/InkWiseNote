@@ -2,15 +2,15 @@ package com.originb.inkwisenote.modules.repositories;
 
 import android.graphics.Bitmap;
 import android.util.Log;
+import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
+import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.notedata.PageTemplate;
 import com.originb.inkwisenote.io.NoteBitmapFiles;
 import com.originb.inkwisenote.io.NoteMetaFiles;
 import com.originb.inkwisenote.io.PageTemplateFiles;
-import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,8 +20,8 @@ public class NoteRepository {
     private NoteMetaFiles noteMetaFiles;
     private NoteBitmapFiles noteBitmapFiles;
     private PageTemplateFiles pageTemplateFiles;
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
-    private NoteTermFrequencyContract.NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
+    private NoteOcrTextDao noteOcrTextDao;
+    private NoteTermFrequencyDao noteTermFrequencyDao;
 
     private NoteRelationDao noteRelationDao;
 
@@ -29,8 +29,8 @@ public class NoteRepository {
         this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
         this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
         this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
-        this.noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
-        this.noteTermFrequencyDbQueries = Repositories.getInstance().getNoteTermFrequencyDbQueries();
+        this.noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        this.noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
         this.noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
     }
 
@@ -66,8 +66,8 @@ public class NoteRepository {
         pageTemplateFiles.deletePageTemplate(noteId);
 
         // delete note search text
-        noteTextDbHelper.deleteNoteText(noteId);
-        noteTermFrequencyDbQueries.deleteTermFrequencies(noteId);
+        noteOcrTextDao.deleteNoteText(noteId);
+        noteTermFrequencyDao.deleteTermFrequencies(noteId);
         new Thread(() -> {
             noteRelationDao.deleteByNoteId(noteId);
         }).start();

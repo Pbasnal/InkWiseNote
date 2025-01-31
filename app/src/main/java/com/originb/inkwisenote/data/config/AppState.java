@@ -5,11 +5,10 @@ import android.util.Log;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
-import com.google.android.gms.common.util.MapUtils;
 import com.originb.inkwisenote.DebugContext;
 import com.originb.inkwisenote.config.ConfigReader;
-import com.originb.inkwisenote.data.backgroundjobs.TextProcessingStage;
-import com.originb.inkwisenote.data.notedata.NoteRelation;
+import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
+import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
 import com.originb.inkwisenote.modules.commonutils.Maps;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 
@@ -31,7 +30,7 @@ public class AppState {
     DebugContext debugContext = new DebugContext("AppState");
 
     private final MutableLiveData<Boolean> isAzureOcrRunning = new MutableLiveData<>(false);
-    private final MutableLiveData<Map<Long, TextProcessingStage>> noteState = new MutableLiveData<>(new HashMap<>());
+    private final MutableLiveData<Map<Long, NoteTaskStage>> noteState = new MutableLiveData<>(new HashMap<>());
     private MutableLiveData<Map<Long, List<NoteRelation>>> liveNoteRelationshipMap = new MutableLiveData<>(new HashMap<>());
 
     public void updateState() {
@@ -45,9 +44,9 @@ public class AppState {
         }
     }
 
-    public void setNoteStatus(Long noteId, TextProcessingStage textProcessingStage) {
-        Map<Long, TextProcessingStage> noteStateMap = noteState.getValue();
-        noteStateMap.put(noteId, textProcessingStage);
+    public void setNoteStatus(Long noteId, NoteTaskStage noteTaskStage) {
+        Map<Long, NoteTaskStage> noteStateMap = noteState.getValue();
+        noteStateMap.put(noteId, noteTaskStage);
 
         if (Looper.myLooper() == Looper.getMainLooper()) {
             // We are on the main thread
@@ -58,7 +57,7 @@ public class AppState {
         }
     }
 
-    public void observeNoteStateChange(LifecycleOwner owner, Observer<Map<Long, TextProcessingStage>> observer) {
+    public void observeNoteStateChange(LifecycleOwner owner, Observer<Map<Long, NoteTaskStage>> observer) {
         noteState.observe(owner, observer);
     }
 

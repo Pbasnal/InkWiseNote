@@ -12,7 +12,9 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.dao.NoteRelationDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
-import com.originb.inkwisenote.data.notedata.NoteRelation;
+import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
+import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
+import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.ux.utils.Routing;
@@ -22,6 +24,7 @@ import java.util.*;
 public class RelatedNotesActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private NoteGridAdapter noteGridAdapter;
+    private NoteOperations noteOperations;
 
     private NoteRepository noteRepository;
 
@@ -34,6 +37,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
 
         noteRepository = Repositories.getInstance().getNoteRepository();
         noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
+        noteOperations = new NoteOperations(this);
 
         Long rootNoteId = getIntent().getLongExtra("noteId", 0);
         NoteEntity noteEntity = getRootNote(rootNoteId);
@@ -81,7 +85,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
         cardTitle.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
 
         deleteButton.setOnClickListener(v -> {
-            noteRepository.deleteNote(noteEntity.getNoteId());
+            noteOperations.deleteNote(noteEntity.getNoteId());
             Routing.HomePageActivity.openHomePageAndStartFresh(this);
         });
     }

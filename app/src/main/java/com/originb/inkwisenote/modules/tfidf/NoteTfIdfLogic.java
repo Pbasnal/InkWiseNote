@@ -1,22 +1,26 @@
 package com.originb.inkwisenote.modules.tfidf;
 
 import android.util.Log;
+import com.google.android.gms.common.util.CollectionUtils;
+import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
+import com.originb.inkwisenote.data.entities.notedata.TermOccurrence;
 import com.originb.inkwisenote.modules.commonutils.Maps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.io.sql.NoteTermFrequencyContract.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class NoteTfIdfLogic {
 
-    private NoteTermFrequencyDbQueries noteTermFrequencyDbQueries;
+    private NoteTermFrequencyDao noteTermFrequencyDao;
 
     public NoteTfIdfLogic(Repositories repositories) {
-        noteTermFrequencyDbQueries = repositories.getNoteTermFrequencyDbQueries();
+        noteTermFrequencyDao = repositories.getNotesDb().noteTermFrequencyDao();
     }
 
     public void addOrUpdateNote(Long noteId, List<String> termsList) {
-        Map<String, Integer> termFrequenciesOfNote = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+        Map<String, Integer> termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId));
 
         if (termFrequenciesOfNote.isEmpty()) {
             insertDocument(noteId, termsList);
@@ -28,7 +32,7 @@ public class NoteTfIdfLogic {
     // IDF is calculated by dividing the total number of documents
     // by the number of documents in the collection containing the term.
     private Map<String, Double> calculateIdf(Set<String> terms, int N) {
-        Map<String, Integer> termDf = noteTermFrequencyDbQueries.getTermOccurrences(terms);
+        Map<String, Integer> termDf = toTermOccuranceMap(noteTermFrequencyDao.getTermOccurrences(terms));
         Map<String, Double> termIdfScore = new HashMap<>();
         for (String term : termDf.keySet()) {
             int df = termDf.getOrDefault(term, 0);
@@ -39,12 +43,33 @@ public class NoteTfIdfLogic {
         return termIdfScore;
     }
 
-    private void insertDocument(Long noteId, List<String> termsList) {
-        Map<String, Integer> termFrequencies = new HashMap<>();
-        for (String term : termsList) {
-            termFrequencies.put(term, termFrequencies.getOrDefault(term, 0) + 1);
+    private Map<String, Integer> toTermOccuranceMap(List<TermOccurrence> termOccurrences) {
+        Map<String, Integer> termFrequenciesOfNote = new HashMap<>();
+        for (TermOccurrence termOccurrence : termOccurrences) {
+            termFrequenciesOfNote.put(termOccurrence.getTerm(), termOccurrence.getOccurrenceCount());
         }
-        noteTermFrequencyDbQueries.insertTermFrequencieToDb(noteId, termFrequencies);
+        return termFrequenciesOfNote;
+    }
+
+    private Map<String, Integer> toTermFrequencyMap(List<NoteTermFrequency> noteTermFrequencies) {
+        Map<String, Integer> termFrequenciesOfNote = new HashMap<>();
+        if (CollectionUtils.isEmpty(noteTermFrequencies)) return termFrequenciesOfNote;
+        for (NoteTermFrequency noteTermFrequency : noteTermFrequencies) {
+            termFrequenciesOfNote.put(noteTermFrequency.getTerm(), noteTermFrequency.getTermFrequency());
+        }
+        return termFrequenciesOfNote;
+    }
+
+
+    private void insertDocument(Long noteId, List<String> termsList) {
+        Map<String, NoteTermFrequency> termFrequencies = new HashMap<>();
+        for (String term : termsList) {
+            NoteTermFrequency termFq = termFrequencies.getOrDefault(term, new NoteTermFrequency(noteId, term, 0));
+            termFq.setTermFrequency(termFq.getTermFrequency() + 1);
+            termFrequencies.put(term, termFq);
+        }
+
+        noteTermFrequencyDao.insertTermFrequenciesToDb(new ArrayList<>(termFrequencies.values()));
     }
 
     public void updateDocument(Long noteId,
@@ -60,27 +85,28 @@ public class NoteTfIdfLogic {
         // clearing out all existing term frequencies
         // update repeatedTerms, insert addedTerms and delete removed terms - 3 queries
         // delete old terms and insert new - 2 queries
-        noteTermFrequencyDbQueries.deleteTermFrequencies(noteId);
+        noteTermFrequencyDao.deleteTermFrequencies(noteId);
         insertDocument(noteId, newTerms);
     }
 
     public void deleteDocument(Long noteId) {
-        Map<String, Integer> termFrequenciesOfNote = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+        Map<String, Integer> termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId));
         if (Objects.isNull(termFrequenciesOfNote) || termFrequenciesOfNote.isEmpty()) return;
 
-        noteTermFrequencyDbQueries.deleteTermFrequencies(noteId);
+        noteTermFrequencyDao.deleteTermFrequencies(noteId);
 
-        int N = noteTermFrequencyDbQueries.getDistinctNoteIdCount();
+        // todo: is this needed?
+        int N = noteTermFrequencyDao.getDistinctNoteIdCount();
         Map<String, Double> termIdfScores = calculateIdf(termFrequenciesOfNote.keySet(), N);
     }
 
     public Map<String, Double> getTfIdf(Long noteId) {
         Map<String, Double> tfIdfScores = new HashMap<>();
 
-        Map<String, Integer> termFrequenciesOfNote = noteTermFrequencyDbQueries.readTermFrequenciesOfNote(noteId);
+        Map<String, Integer> termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId));
         if (Maps.isEmpty(termFrequenciesOfNote)) return tfIdfScores;
 
-        int N = noteTermFrequencyDbQueries.getDistinctNoteIdCount();
+        int N = noteTermFrequencyDao.getDistinctNoteIdCount();
         Map<String, Double> termIdfScores = calculateIdf(termFrequenciesOfNote.keySet(), N);
 
         if (Maps.isEmpty(termIdfScores)) return tfIdfScores;
@@ -98,8 +124,18 @@ public class NoteTfIdfLogic {
     }
 
     public Map<String, Set<Long>> getRelatedDocuments(Set<String> terms) {
-        Map<String, Set<Long>> termNoteIds = noteTermFrequencyDbQueries.getNoteIdsForTerms(terms);
+        Map<String, Set<Long>> termNoteIds = toTermNoteIdsMap(noteTermFrequencyDao.getNoteIdsForTerms(terms));
         if (Maps.isEmpty(termNoteIds)) return new HashMap<>();
+        return termNoteIds;
+    }
+
+    private Map<String, Set<Long>> toTermNoteIdsMap(List<NoteTermFrequency> termFrequencies) {
+        Map<String, Set<Long>> termNoteIds = new HashMap<>();
+        for (NoteTermFrequency noteTermFrequency : termFrequencies) {
+            Set<Long> noteIds = termNoteIds.getOrDefault(noteTermFrequency.getTerm(), new HashSet<>());
+            noteIds.add(noteTermFrequency.getNoteId());
+            termNoteIds.put(noteTermFrequency.getTerm(), noteIds);
+        }
         return termNoteIds;
     }
 

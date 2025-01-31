@@ -8,20 +8,22 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
-import com.originb.inkwisenote.io.sql.NoteTextContract;
+import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
+import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class NoteSearchActivity extends AppCompatActivity {
     private EditText searchInput;
     private Button searchButton;
     private Set<Long> resultsList;
 
-    private NoteTextContract.NoteTextDbHelper noteTextDbHelper;
+    private NoteOcrTextDao noteOcrTextDao;
 
     private RecyclerView recyclerView;
     private NoteGridAdapter noteGridAdapter;
@@ -31,7 +33,7 @@ public class NoteSearchActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_results);
 
-        noteTextDbHelper = Repositories.getInstance().getNoteTextDbHelper();
+        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
 
         searchInput = findViewById(R.id.searchInput);
         searchButton = findViewById(R.id.searchButton);
@@ -74,6 +76,8 @@ public class NoteSearchActivity extends AppCompatActivity {
     }
 
     private List<Long> searchInDb(String searchTerm) {
-        return noteTextDbHelper.searchTextFromDb(searchTerm);
+        return noteOcrTextDao.searchTextFromDb(searchTerm).stream()
+                .map(NoteOcrText::getNoteId)
+                .collect(Collectors.toList());
     }
 }
