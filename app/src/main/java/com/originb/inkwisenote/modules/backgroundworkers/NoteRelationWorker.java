@@ -24,10 +24,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class NoteRelationWorker extends Worker {
-    private NoteRepository noteRepository;
-    private NoteTfIdfLogic noteTfIdfLogic;
-    private NoteTermFrequencyDao noteTermFrequencyDao;
-    private NoteRelationDao noteRelationDao;
+    private final NoteRepository noteRepository;
+    private final NoteTfIdfLogic noteTfIdfLogic;
+    private final NoteTermFrequencyDao noteTermFrequencyDao;
+    private final NoteRelationDao noteRelationDao;
 
     private final DebugContext debugContext = new DebugContext("NoteRelationWorker");
 
