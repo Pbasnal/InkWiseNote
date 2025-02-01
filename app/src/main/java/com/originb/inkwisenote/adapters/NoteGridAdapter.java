@@ -34,8 +34,8 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
     private List<Long> noteIds;
 
-    private Map<Long, List<NoteRelation>> noteRelationMap = new HashMap<>();
-    private Map<Long, NoteCardHolder> noteCards = new HashMap<>();
+    private final Map<Long, List<NoteRelation>> noteRelationMap = new HashMap<>();
+    private final Map<Long, NoteCardHolder> noteCards = new HashMap<>();
 
     public NoteGridAdapter(ComponentActivity parentActivity, List<Long> noteIds) {
         this.noteRepository = Repositories.getInstance().getNoteRepository();
@@ -57,9 +57,6 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
                 notifyItemChanged(position);
             }
         }
-
-//            this.noteRelationMap = noteRelationShipMap;
-//            notifyDataSetChanged();
     }
 
     public void setNoteIds(Set<Long> noteIds) {
@@ -75,14 +72,6 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         notifyDataSetChanged();
         if (!noteIdsThatDontHaveRelationship.isEmpty()) {
             NoteRelationDao noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
-
-//            noteIdsThatDontHaveRelationship.forEach(noteIdToRefresh ->
-//            {
-//                noteRelationDao.getRelatedNotesOf(noteIdToRefresh).observe(parentActivity, allNoteRelations -> {
-//                    AppState.getInstance().updatedRelatedNotes(noteIdToRefresh, allNoteRelations);
-//                });
-//            });
-
 
             noteRelationDao.getRelatedNotesOf(noteIdsThatDontHaveRelationship)
                     .observe(parentActivity, allNoteRelations -> {
