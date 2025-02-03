@@ -183,7 +183,7 @@ public class HomePageActivity extends AppCompatActivity {
             fabText.setOnClickListener(v -> {
                 toggleFabMenu();
                 // Handle text note creation
-//            Routing.NoteActivity.newTextNoteIntent(this, getFilesDir().getPath());
+            Routing.NoteActivity.newMarkdownNoteIntent(this, getFilesDir().getPath());
             });
         } else {
             findViewById(R.id.fab_text_menu_item).setVisibility(View.INVISIBLE);
