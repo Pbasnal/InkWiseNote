@@ -17,6 +17,12 @@ public class Routing {
             intent.putExtra("noteId", noteId);
             packageContext.startActivity(intent);
         }
+
+        public static void newMarkdownNoteIntent(Context packageContext, String currentDirectoryPath) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.MarkdownNoteActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            packageContext.startActivity(intent);
+        }
     }
 
     public static class RelatedNotesActivity {

@@ -18,6 +18,7 @@
         <activity android:name=".ux.activities.NoteActivity" />
         <activity android:name=".ux.activities.NoteSearchActivity" />
         <activity android:name=".ux.activities.HomePageActivity" />
+        <activity android:name=".ux.activities.MarkdownNoteActivity" />
         <activity android:name=".ux.activities.AppMainActivity"
                   android:exported="true">
             <intent-filter>
