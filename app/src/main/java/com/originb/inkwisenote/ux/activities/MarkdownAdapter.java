@@ -17,11 +17,13 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.modules.commonutils.Strings;
 import io.noties.markwon.Markwon;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockViewHolder> {
-    private List<Block> blocks;
+    private Map<Integer, Block> blocks; // position to block mapping
     private static Markwon markwon;
     private final Context packageContext;
     private final RecyclerView recyclerView;
@@ -29,7 +31,12 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
     private int positionInFocus = 0;
 
     public MarkdownAdapter(Context packageContext, RecyclerView recyclerView, List<Block> blocks) {
-        this.blocks = blocks;
+        this.blocks = new HashMap<>();
+        int i = 0;
+        for (Block block : blocks) {
+            this.blocks.put(i, block);
+            i++;
+        }
         markwon = Markwon.create(packageContext);
         this.packageContext = packageContext;
         this.recyclerView = recyclerView;
@@ -44,8 +51,8 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
 
     @Override
     public void onBindViewHolder(@NonNull BlockViewHolder holder, int position) {
-        Block block = blocks.get(position);
-        holder.bind(block);
+//        Block block = blocks.get(position);
+        holder.bind(position);
     }
 
     @Override
@@ -63,25 +70,20 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
             editText = itemView.findViewById(R.id.edit_text);
         }
 
-
         // todo: scenario of holding the enter key for too long
-        public void onFocusChange(View view, boolean hasFocus, Block block) {
+        public void onFocusChange(View view, boolean hasFocus) {
             int position = getAdapterPosition();
-            String editTextText = editText.getText().toString();
-            String textViewText = textView.getText().toString();
+            Block block = blocks.get(position);
             String blockText = block.getText();
 
-            Log.d("Something wrong", editTextText + textViewText + position + blockText);
             if (hasFocus) {
-//                editText.setText(block.getText());
-                editText.setSelection(editText.getText().length());
+                editText.setText(blockText);
                 editText.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.GONE);
                 // Set the selection to the end of the text
             } else {
-                if (!Strings.isNullOrWhitespace(editTextText)) {
-                    markwon.setMarkdown(textView, editTextText);
-                    textViewText = textView.getText().toString();
+                if (!Strings.isNullOrWhitespace(blockText)) {
+                    markwon.setMarkdown(textView, blockText);
                     notifyItemChanged(position);
                     editText.setVisibility(View.GONE);
                     textView.setVisibility(View.VISIBLE);
@@ -89,61 +91,20 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
             }
         }
 
-        public void bind(Block block) {
-            editText.addTextChangedListener(new BlockTextWatcher(this, block));
-            editText.setOnFocusChangeListener((view, hasFocus) -> onFocusChange(view, hasFocus, block));
+        public void bind(int position) {
+            editText.addTextChangedListener(new BlockTextWatcher(this, blocks.get(position)));
+            editText.setOnFocusChangeListener(this::onFocusChange);
             textView.setOnClickListener(view -> {
-                int position = getAdapterPosition();
-                String editTextText = editText.getText().toString();
-                String textViewText = textView.getText().toString();
-                String blockText = block.getText();
+                Block block = blocks.get(getAdapterPosition());
 
-                Log.d("Something wrong", editTextText + textViewText + position + blockText);
-                // editText.setText(block.getText());
+                editText.setText(block.getText());
                 editText.setVisibility(View.VISIBLE);
                 textView.setVisibility(View.GONE);
 
                 // Set the selection to the end of the text
                 editText.requestFocus();
-                editText.setSelection(editText.getText().length());
+                editText.setSelection(block.getText().length());
             });
-//            textView.setOnClickListener(view -> {
-//                int itemPosition = getAdapterPosition();
-//                if (itemPosition == positionInFocus) return;
-//                positionInFocus = itemPosition;
-//
-//                notifyItemChanged(itemPosition);
-//
-//                View focusedItem = recyclerView.getFocusedChild();
-//                notifyItemChanged(recyclerView.getChildAdapterPosition(focusedItem));
-//            });
-//            editText.setOnClickListener(view -> {
-//                int itemPosition = getAdapterPosition();
-//                if (itemPosition == positionInFocus) return;
-//                positionInFocus = itemPosition;
-//                notifyItemChanged(itemPosition);
-//
-//                View focusedItem = recyclerView.getFocusedChild();
-//                notifyItemChanged(recyclerView.getChildAdapterPosition(focusedItem));
-//            });
-
-//            int currentPosition = getAdapterPosition();
-//
-//            if (this.itemView.hasFocus() || positionInFocus == currentPosition) {
-//                editText.setText(block.getText());
-//                editText.setVisibility(View.VISIBLE);
-//                textView.setVisibility(View.GONE);
-//                editText.requestFocus();
-//                // Set the selection to the end of the text
-//                editText.setSelection(editText.getText().length());
-//            } else {
-//                if (!Strings.isNullOrWhitespace(block.getText())) {
-//                    markwon.setMarkdown(textView, block.getText());
-//
-//                    editText.setVisibility(View.GONE);
-//                    textView.setVisibility(View.VISIBLE);
-//                }
-//            }
         }
     }
 
@@ -179,7 +140,7 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
 
                 int nextPosition = adapterPosition + 1;
                 if (nextPosition >= blocks.size()) {
-                    blocks.add(new Block(BlockType.MARKDOWN));
+                    blocks.put(blocks.size(), new Block(BlockType.MARKDOWN));
                     notifyItemInserted(nextPosition);
                 } else {
                     notifyItemChanged(nextPosition);
