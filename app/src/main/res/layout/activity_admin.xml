@@ -1,46 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:padding="16dp">
+
+    <LinearLayout
+            android:layout_weight="0.02"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+        <TextView
+                android:layout_weight="0.02"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:textColor="@color/black"
+                android:textSize="18dp"
+                android:text="NoteId"/>
+        <TextView
+                android:layout_weight="0.02"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/black"
+                android:layout_gravity="center_vertical"
+                android:textSize="18dp"
+                android:text=" : "/>
+        <EditText
+                android:id="@+id/note_id_query"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_height="wrap_content"
+
+                android:text="1235234">
+        </EditText>
+        <Button
+                android:id="@+id/filter_query"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Filter"/>
+    </LinearLayout>
 
     <com.google.android.material.tabs.TabLayout
-        android:id="@+id/table_selector_tabs"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+            android:layout_weight="0.02"
+            android:id="@+id/table_selector_tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
         <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Term Frequencies" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Term Frequencies"/>
 
         <com.google.android.material.tabs.TabItem
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Note Text" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Note Text"/>
     </com.google.android.material.tabs.TabLayout>
 
     <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+            android:layout_weight="0.96"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
         <TableLayout
-            android:id="@+id/data_table"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:stretchColumns="*">
+                android:id="@+id/data_table"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:stretchColumns="*">
 
             <!-- Header Row -->
             <TableRow
-                android:id="@+id/table_header"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/dark_gray"
-                android:padding="8dp">
+                    android:id="@+id/table_header"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/dark_gray"
+                    android:padding="8dp">
             </TableRow>
 
         </TableLayout>
     </HorizontalScrollView>
 
-</LinearLayout> 
+</LinearLayout>

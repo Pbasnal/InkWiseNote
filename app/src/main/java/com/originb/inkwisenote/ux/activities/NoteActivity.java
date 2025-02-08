@@ -89,7 +89,6 @@ public class NoteActivity extends AppCompatActivity {
 
         noteTitleField = findViewById(R.id.note_title);
         createdTime = findViewById(R.id.note_created_time);
-//        ocrResult = findViewById(R.id.ocr_result);
 
         setNewNoteButton();
         setPrevNoteButton();
@@ -146,7 +145,6 @@ public class NoteActivity extends AppCompatActivity {
     private void setNewNoteButton() {
         newNoteButton = findViewById(R.id.fab_add_note);
         newNoteButton.setOnClickListener(v -> {
-
 
             Optional<NoteEntity> newNoteEntityOpt = noteRepository.saveNote(workingNotePath,
                     "",
@@ -239,22 +237,6 @@ public class NoteActivity extends AppCompatActivity {
 
         noteOperations.updateNote(noteEntity, drawingView.getBitmap(), drawingView.getPageTemplate());
     }
-
-//    private void saveNoteFiles(NoteEntity noteEntity) {
-//        Try.to(() -> noteRepository.updateNote(noteEntity.getNoteMeta(),
-//                                drawingView.getBitmap(),
-//                                drawingView.getPageTemplate())
-//                        , debugContext)
-//                .logIfError("Failed to save note " + noteEntity)
-//                .get();
-//    }
-//
-//    private void updateNoteMeta(NoteMeta noteMeta) {
-//        Try.to(() -> noteRepository.updateNoteMeta(noteMeta)
-//                        , debugContext)
-//                .logIfError("Failed to update noteMeta " + noteMeta)
-//                .get();
-//    }
 
     private String getCreateDateTime(NoteEntity noteEntity) {
 

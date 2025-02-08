@@ -3,9 +3,7 @@ package com.originb.inkwisenote.ux.activities;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
+import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -19,45 +17,55 @@ import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+
 public class AdminActivity extends AppCompatActivity {
     private TableLayout tableLayout;
     private NoteTermFrequencyDao noteTermFrequencyDao;
     private NoteOcrTextDao noteOcrTextDao;
+    private EditText editText;
+    private Button filterQueryBtn ;
+    private String selectedTab = "Term Frequencies";
+
+    private Map<String, Consumer<Long>> tablePopulators = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
 
+        editText = findViewById(R.id.note_id_query);
+        filterQueryBtn = findViewById(R.id.filter_query);
         tableLayout = findViewById(R.id.data_table);
         noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
         noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
 
+        tablePopulators.put("Term Frequencies", this::showTermFrequencyData);
+        tablePopulators.put("Note Text", this::showNoteTextData);
+
         TabLayout tabLayout = findViewById(R.id.table_selector_tabs);
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        tabLayout.addOnTabSelectedListener(new TableSelector() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
-                    showTermFrequencyData();
-                } else {
-                    showNoteTextData();
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
+                Long noteId = Long.parseLong(editText.getText().toString());
+                selectedTab = tab.getText().toString();
+                tablePopulators.get(selectedTab).accept(noteId);
             }
         });
 
         // Show term frequency data by default
-        showTermFrequencyData();
+        showTermFrequencyData(0L);
+
+        filterQueryBtn.setOnClickListener((btn) -> {
+            Long noteId = Long.parseLong(editText.getText().toString());
+            tablePopulators.get(selectedTab).accept(noteId);
+        });
     }
 
-    private void showTermFrequencyData() {
+    private void showTermFrequencyData(Long noteId) {
         tableLayout.removeAllViews();
 
         // Add header
@@ -82,7 +90,7 @@ public class AdminActivity extends AppCompatActivity {
         });
     }
 
-    private void showNoteTextData() {
+    private void showNoteTextData(Long noteId) {
         tableLayout.removeAllViews();
 
         // Add header
@@ -117,5 +125,20 @@ public class AdminActivity extends AppCompatActivity {
         textView.setPadding(16, 16, 16, 16);
         textView.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(textView);
+    }
+
+    public abstract class TableSelector implements TabLayout.OnTabSelectedListener {
+        @Override
+        public abstract void onTabSelected(TabLayout.Tab tab);
+
+        @Override
+        public void onTabUnselected(TabLayout.Tab tab) {
+
+        }
+
+        @Override
+        public void onTabReselected(TabLayout.Tab tab) {
+
+        }
     }
 } 

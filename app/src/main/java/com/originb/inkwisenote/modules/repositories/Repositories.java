@@ -21,7 +21,7 @@ public class Repositories {
     private NoteBitmapFiles bitmapRepository;
     private PageTemplateFiles pageTemplateFiles;
     private NoteRepository noteRepository;
-
+    private SmartNotebookRepository smartNotebookRepository;
     // private TesseractsOcr TesseractsOcr;
 
     private NotesDatabase notesDb;
@@ -55,6 +55,7 @@ public class Repositories {
         pageSettings = new PageSettings();
 
         noteRepository = new NoteRepository();
+        smartNotebookRepository = new SmartNotebookRepository();
     }
 
     public static void initRepositories() {
