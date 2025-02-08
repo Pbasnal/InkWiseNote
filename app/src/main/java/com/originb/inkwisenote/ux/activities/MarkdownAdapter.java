@@ -51,7 +51,6 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
 
     @Override
     public void onBindViewHolder(@NonNull BlockViewHolder holder, int position) {
-//        Block block = blocks.get(position);
         holder.bind(position);
     }
 
@@ -84,9 +83,9 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
             } else {
                 if (!Strings.isNullOrWhitespace(blockText)) {
                     markwon.setMarkdown(textView, blockText);
-                    notifyItemChanged(position);
                     editText.setVisibility(View.GONE);
                     textView.setVisibility(View.VISIBLE);
+                    notifyItemChanged(position);
                 }
             }
         }
