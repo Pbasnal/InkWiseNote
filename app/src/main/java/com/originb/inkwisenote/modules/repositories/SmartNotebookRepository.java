@@ -50,9 +50,12 @@ public class SmartNotebookRepository {
 
 
     // Create the data and return the notebook entity
-    public Optional<SmartNotebook> initializeNewSmartNote(String title, Bitmap bitmap, PageTemplate pageTemplate) {
+    public Optional<SmartNotebook> initializeNewSmartNote(String title,
+                                                          String directoryPath,
+                                                          Bitmap bitmap,
+                                                          PageTemplate pageTemplate) {
 
-        AtomicNoteEntity atomicNoteEntity = newHandwrittenNote("", "");
+        AtomicNoteEntity atomicNoteEntity = newHandwrittenNote("", directoryPath);
 
         noteBitmapFiles.saveBitmap(atomicNoteEntity.getNoteId(),
                 atomicNoteEntity.getFilepath(),
@@ -70,6 +73,25 @@ public class SmartNotebookRepository {
 
         SmartNotebook smartNotebook = new SmartNotebook(smartBookEntity, smartBookPage, atomicNoteEntity);
         return Optional.ofNullable(smartNotebook);
+    }
+
+    public Optional<Bitmap> getNoteImage(AtomicNoteEntity atomicNote, boolean loadFullImage) {
+        if (loadFullImage) {
+            Optional<Bitmap> bitmapOpt = noteBitmapFiles.getFullBitmap(atomicNote.getNoteId());
+            return bitmapOpt;
+        }
+
+        return noteBitmapFiles.getThumbnail(atomicNote.getNoteId());
+    }
+
+    public Optional<SmartNotebook> getSmartNotebookContainingNote(long noteId) {
+        List<SmartBookPage> pagesOfNote = smartBookPagesDao.getSmartBookPagesOfNote(noteId);
+        if (pagesOfNote == null || pagesOfNote.isEmpty()) return Optional.empty();
+
+        // TODO: only get the first page for now. We will fetch more later
+        long bookId = pagesOfNote.stream().findFirst().map(SmartBookPage::getBookId).get();
+
+        return getSmartNotebook(bookId);
     }
 
     public Optional<SmartNotebook> getSmartNotebook(long bookId) {
@@ -100,7 +122,7 @@ public class SmartNotebookRepository {
         } else {
             atomicNoteEntity.setFilename(filename);
         }
-        if (Strings.isNullOrWhitespace(filename)) {
+        if (Strings.isNullOrWhitespace(filepath)) {
             atomicNoteEntity.setFilepath("");
         } else {
             atomicNoteEntity.setFilepath(filepath);
@@ -121,7 +143,8 @@ public class SmartNotebookRepository {
         } else {
             smartBookEntity.setTitle(title);
         }
-        smartBooksDao.insertSmartBook(smartBookEntity);
+        long bookId = smartBooksDao.insertSmartBook(smartBookEntity);
+        smartBookEntity.setBookId(bookId);
 
         return smartBookEntity;
     }

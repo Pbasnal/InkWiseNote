@@ -3,6 +3,7 @@ package com.originb.inkwisenote.modules.messaging;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
@@ -35,6 +36,20 @@ public class BackgroundOps {
             T result = callFuture.get();
 
             getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result));
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static <T> void executeOpt(Callable<Optional<T>> callable, Consumer<T> resultOnMainThread) {
+        try {
+            Future<Optional<T>> callFuture = getInstance().executor.submit(callable);
+            Optional<T> result = callFuture.get();
+
+            if (result.isPresent()) {
+                getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result.get()));
+            }
 
         } catch (Exception e) {
             throw new RuntimeException(e);

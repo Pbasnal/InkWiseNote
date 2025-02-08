@@ -25,6 +25,29 @@ public class Routing {
         }
     }
 
+    public static class SmartNotebookActivity {
+        public static void newNoteIntent(Context packageContext, String currentDirectoryPath) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.smartnotebook.SmartNotebookActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            packageContext.startActivity(intent);
+        }
+
+        public static void openNotebookIntent(Context packageContext, String currentDirectoryPath, Long bookId) {
+
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.smartnotebook.SmartNotebookActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            intent.putExtra("bookId", bookId);
+            packageContext.startActivity(intent);
+        }
+
+        public static void openNoteIntent(Context packageContext, String currentDirectoryPath, Long noteId) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.smartnotebook.SmartNotebookActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            intent.putExtra("noteId", noteId);
+            packageContext.startActivity(intent);
+        }
+    }
+
     public static class RelatedNotesActivity {
         public static void openRelatedNotesIntent(Context packageContext, Long noteId) {
             Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.RelatedNotesActivity.class);

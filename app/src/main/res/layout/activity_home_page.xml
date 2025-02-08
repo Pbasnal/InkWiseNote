@@ -157,7 +157,7 @@
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Camera"
+                        android:text="SmartNote"
                         android:background="@drawable/fab_label_background"
                         android:padding="8dp"
                         android:layout_marginEnd="8dp"

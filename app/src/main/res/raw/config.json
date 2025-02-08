@@ -3,7 +3,8 @@
     "HOME_PAGE_NAVIGATION_SIDEBAR",
     "AZURE_OCR",
     "MARKDOWN_EDITOR",
-    "ADMIN_VIEW"
+    "ADMIN_VIEW",
+    "CAMERA_NOTE"
   ],
   "pageTemplates": {
     "BASIC_RULED_PAGE_TEMPLATE": {

@@ -27,8 +27,6 @@ public class RuledPageBackground {
         templateCanvas = new Canvas(pageTemplateBitmap);
 
         pageTemplate = loadPageTemplate();
-
-
     }
 
     public void onSizeChanged(int w, int h, int oldw, int oldh) {

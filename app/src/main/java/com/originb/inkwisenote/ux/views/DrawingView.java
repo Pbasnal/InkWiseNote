@@ -50,7 +50,7 @@ public class DrawingView extends View {
         paths = new ArrayList<>();
         paints = new ArrayList<>();
 
-        userDrawingBitmap = Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
+        userDrawingBitmap = getDefaultBitmap();
 
         userDrwaingCanvas = new Canvas(userDrawingBitmap);
         ruledPageBackground = new RuledPageBackground(ConfigReader.fromContext(context),
@@ -59,9 +59,16 @@ public class DrawingView extends View {
         pageTemplateBitmap = ruledPageBackground.drawTemplate();
     }
 
+    public static Bitmap getDefaultBitmap() {
+        return Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+
+        if (w == 0 || h == 0) return;
+
         sizeChangeUserDrawingBitmap(w, h, oldw, oldh);
         if (w != oldw || h != oldh) {
             Bitmap newBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);

@@ -10,10 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.google.android.material.tabs.TabLayout;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
-import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
-import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
-import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
+import com.originb.inkwisenote.data.dao.*;
+import com.originb.inkwisenote.data.entities.notedata.*;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
@@ -26,8 +24,12 @@ public class AdminActivity extends AppCompatActivity {
     private TableLayout tableLayout;
     private NoteTermFrequencyDao noteTermFrequencyDao;
     private NoteOcrTextDao noteOcrTextDao;
+    private AtomicNoteEntitiesDao atomicNoteEntitiesDao;
+    private SmartBooksDao smartBooksDao;
+    private SmartBookPagesDao smartBookPagesDao;
+
     private EditText editText;
-    private Button filterQueryBtn ;
+    private Button filterQueryBtn;
     private String selectedTab = "Term Frequencies";
 
     private Map<String, Consumer<Long>> tablePopulators = new HashMap<>();
@@ -40,11 +42,18 @@ public class AdminActivity extends AppCompatActivity {
         editText = findViewById(R.id.note_id_query);
         filterQueryBtn = findViewById(R.id.filter_query);
         tableLayout = findViewById(R.id.data_table);
+
         noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
         noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
+        smartBooksDao = Repositories.getInstance().getNotesDb().smartBooksDao();
+        smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
 
         tablePopulators.put("Term Frequencies", this::showTermFrequencyData);
         tablePopulators.put("Note Text", this::showNoteTextData);
+        tablePopulators.put("Atomic Notes", this::showNoteAtomicNotes);
+        tablePopulators.put("Smart Books", this::showSmartBooks);
+        tablePopulators.put("Smart Book Pages", this::showSmartBookPages);
 
         TabLayout tabLayout = findViewById(R.id.table_selector_tabs);
         tabLayout.addOnTabSelectedListener(new TableSelector() {
@@ -64,6 +73,80 @@ public class AdminActivity extends AppCompatActivity {
             tablePopulators.get(selectedTab).accept(noteId);
         });
     }
+
+    private void showNoteAtomicNotes(Long noteId) {
+        tableLayout.removeAllViews();
+
+        // Add header
+        TableRow headerRow = new TableRow(this);
+        addHeaderCell(headerRow, "Note ID");
+        addHeaderCell(headerRow, "filename");
+        addHeaderCell(headerRow, "filepath");
+        addHeaderCell(headerRow, "note_type");
+        tableLayout.addView(headerRow);
+
+        // Add data rows
+        BackgroundOps.execute(() -> atomicNoteEntitiesDao.getAllAtomicNotes(), entries -> {
+
+            if (CollectionUtils.isEmpty(entries)) return;
+
+            for (AtomicNoteEntity entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getNoteId()));
+                addCell(row, entry.getFilename());
+                addCell(row, entry.getFilepath());
+                addCell(row, entry.getNoteType());
+                tableLayout.addView(row);
+            }
+        });
+    }
+
+    private void showSmartBooks(Long noteId) {
+        tableLayout.removeAllViews();
+
+        // Add header
+        TableRow headerRow = new TableRow(this);
+        addHeaderCell(headerRow, "Book ID");
+        addHeaderCell(headerRow, "Title");
+        tableLayout.addView(headerRow);
+
+        // Add data rows
+        BackgroundOps.execute(() -> smartBooksDao.getAllSmartBooks(), entries -> {
+
+            if (CollectionUtils.isEmpty(entries)) return;
+
+            for (SmartBookEntity entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getBookId()));
+                addCell(row, entry.getTitle());
+                tableLayout.addView(row);
+            }
+        });
+    }
+
+    private void showSmartBookPages(Long noteId) {
+        tableLayout.removeAllViews();
+
+        // Add header
+        TableRow headerRow = new TableRow(this);
+        addHeaderCell(headerRow, "Book ID");
+        addHeaderCell(headerRow, "Note ID");
+        tableLayout.addView(headerRow);
+
+        // Add data rows
+        BackgroundOps.execute(() -> smartBookPagesDao.getAllSmartBookPages(), entries -> {
+
+            if (CollectionUtils.isEmpty(entries)) return;
+
+            for (SmartBookPage entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getBookId()));
+                addCell(row, String.valueOf(entry.getNoteId()));
+                tableLayout.addView(row);
+            }
+        });
+    }
+
 
     private void showTermFrequencyData(Long noteId) {
         tableLayout.removeAllViews();

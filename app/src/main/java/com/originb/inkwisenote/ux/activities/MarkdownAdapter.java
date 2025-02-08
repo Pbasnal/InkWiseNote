@@ -127,8 +127,6 @@ public class MarkdownAdapter extends RecyclerView.Adapter<MarkdownAdapter.BlockV
             char secondLastChar = s.charAt(s.length() - 2);
             char lastChar = s.charAt(s.length() - 1);
             if (lastChar == '\n' && secondLastChar == '\n') {
-                Log.d("MarkdownEditor", "pressed enter");
-                Toast.makeText(packageContext, "", Toast.LENGTH_SHORT).show();
                 block.setText(s.delete(s.length() - 2, s.length()).toString());
                 int adapterPosition = view.getAdapterPosition();
                 notifyItemChanged(adapterPosition);

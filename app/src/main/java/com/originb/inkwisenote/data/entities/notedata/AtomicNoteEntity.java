@@ -2,9 +2,7 @@ package com.originb.inkwisenote.data.entities.notedata;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
-import com.originb.inkwisenote.modules.commonutils.Strings;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

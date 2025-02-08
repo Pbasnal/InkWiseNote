@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
@@ -171,7 +172,7 @@ public class HomePageActivity extends AppCompatActivity {
             fabCamera.setOnClickListener(v -> {
                 toggleFabMenu();
                 // Handle camera note creation
-//            Routing.NoteActivity.newCameraNoteIntent(this, getFilesDir().getPath());
+                Routing.SmartNotebookActivity.newNoteIntent(this, getFilesDir().getPath());
             });
         } else {
             findViewById(R.id.fab_camera_menu_item).setVisibility(View.GONE);
@@ -183,7 +184,7 @@ public class HomePageActivity extends AppCompatActivity {
             fabText.setOnClickListener(v -> {
                 toggleFabMenu();
                 // Handle text note creation
-            Routing.NoteActivity.newMarkdownNoteIntent(this, getFilesDir().getPath());
+                Routing.NoteActivity.newMarkdownNoteIntent(this, getFilesDir().getPath());
             });
         } else {
             findViewById(R.id.fab_text_menu_item).setVisibility(View.INVISIBLE);

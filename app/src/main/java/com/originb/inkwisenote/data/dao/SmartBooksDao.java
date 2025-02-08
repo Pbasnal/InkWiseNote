@@ -11,6 +11,9 @@ public interface SmartBooksDao {
     @Query("SELECT * FROM smart_books WHERE book_id = :bookId")
     SmartBookEntity getSmartBook(long bookId);
 
+    @Query("SELECT * FROM smart_books ")
+    List<SmartBookEntity> getAllSmartBooks();
+
     @Query("SELECT * FROM smart_books WHERE book_id IN (:bookIds)")
     List<SmartBookEntity> getSmartBooks(Set<Long> bookIds);
 
