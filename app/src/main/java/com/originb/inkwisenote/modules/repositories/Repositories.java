@@ -22,6 +22,7 @@ public class Repositories {
     private PageTemplateFiles pageTemplateFiles;
     private NoteRepository noteRepository;
     private SmartNotebookRepository smartNotebookRepository;
+    private HandwrittenNoteRepository handwrittenNoteRepository;
     // private TesseractsOcr TesseractsOcr;
 
     private NotesDatabase notesDb;
@@ -56,6 +57,7 @@ public class Repositories {
 
         noteRepository = new NoteRepository();
         smartNotebookRepository = new SmartNotebookRepository();
+        handwrittenNoteRepository = new HandwrittenNoteRepository();
     }
 
     public static void initRepositories() {

@@ -16,8 +16,11 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.originb.inkwisenote.adapters.smartnotes.SmartNoteGridAdapter;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.data.config.AppState;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
+import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.ux.views.HomePageSidebarUiComponent;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
@@ -31,7 +34,8 @@ import java.util.stream.Collectors;
 
 public class HomePageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
-    private NoteGridAdapter noteGridAdapter;
+    //    private NoteGridAdapter noteGridAdapter;
+    private SmartNoteGridAdapter smartNoteGridAdapter;
 
     private ImageButton noteSearchButton;
 
@@ -45,12 +49,16 @@ public class HomePageActivity extends AppCompatActivity {
 
     private HomePageSidebarUiComponent homePageSidebarUiComponent;
 
+    private SmartNotebookRepository smartNotebookRepository;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home_page);
 
         configReader = ConfigReader.fromContext(this);
+
+        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
 
         createSidebarIfEnabled();
         createGridLayoutToShowNotes();
@@ -101,9 +109,10 @@ public class HomePageActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
+        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
+//        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
 
-        recyclerView.setAdapter(noteGridAdapter);
+        recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
     }
 
@@ -121,14 +130,17 @@ public class HomePageActivity extends AppCompatActivity {
         Set<Long> noteIds = Arrays.stream(Repositories.getInstance().getNoteMetaRepository().getAllNoteIds())
                 .collect(Collectors.toSet());
 
-        noteGridAdapter.setNoteIds(noteIds);
+//        noteGridAdapter.setNoteIds(noteIds);
+        BackgroundOps.execute(() -> smartNotebookRepository.getAllSmartNotebooks(),
+                smartNotebooks -> smartNoteGridAdapter.setSmartNoteBooks(smartNotebooks)
+        );
 
-        AppState.getInstance().observeNoteStateChange(this, noteStateMap -> {
-            for (Long noteId : noteStateMap.keySet()) {
-                NoteTaskStage noteState = noteStateMap.getOrDefault(noteId, NoteTaskStage.NOTE_READY);
-                noteGridAdapter.updateCardStatus(noteId, noteState);
-            }
-        });
+//        AppState.getInstance().observeNoteStateChange(this, noteStateMap -> {
+//            for (Long noteId : noteStateMap.keySet()) {
+//                NoteTaskStage noteState = noteStateMap.getOrDefault(noteId, NoteTaskStage.NOTE_READY);
+//                noteGridAdapter.updateCardStatus(noteId, noteState);
+//            }
+//        });
     }
 
     @Override
@@ -220,6 +232,4 @@ public class HomePageActivity extends AppCompatActivity {
                 .withEndAction(() -> fabMenuContainer.setVisibility(View.GONE))
                 .start();
     }
-
-
 }

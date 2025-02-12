@@ -20,6 +20,18 @@ public class WorkManagerBus {
         WorkManager.getInstance(context).enqueue(textParsingWork);
     }
 
+    public static void scheduleWorkForTextParsingForBook(Context context, Long bookId) {
+        Data inputData = new Data.Builder()
+                .putLong("book_id", bookId) // Path of the image file
+                .build();
+
+        OneTimeWorkRequest textParsingWork = new OneTimeWorkRequest.Builder(TextParsingWorker.class)
+                .setInputData(inputData)
+                .build();
+
+        WorkManager.getInstance(context).enqueue(textParsingWork);
+    }
+
     public static void scheduleWorkForTextProcessing(Context context, Long noteId) {
         Data inputData = new Data.Builder()
                 .putLong("note_id", noteId) // Path of the image file

@@ -1,21 +1,16 @@
 package com.originb.inkwisenote.modules.repositories;
 
-import android.graphics.Bitmap;
+import android.util.Log;
+import com.originb.inkwisenote.commonutils.DateTimeUtils;
 import com.originb.inkwisenote.data.dao.AtomicNoteEntitiesDao;
 import com.originb.inkwisenote.data.dao.SmartBookPagesDao;
 import com.originb.inkwisenote.data.dao.SmartBooksDao;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
-import com.originb.inkwisenote.data.notedata.PageTemplate;
-import com.originb.inkwisenote.io.NoteBitmapFiles;
-import com.originb.inkwisenote.io.PageTemplateFiles;
 import com.originb.inkwisenote.modules.commonutils.Strings;
 
-import java.security.cert.PKIXRevocationChecker;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,8 +19,7 @@ import java.util.stream.Collectors;
 public class SmartNotebookRepository {
 
     //    private NoteMetaFiles noteMetaFiles;
-    private final NoteBitmapFiles noteBitmapFiles;
-    private final PageTemplateFiles pageTemplateFiles;
+
 //    private NoteOcrTextDao noteOcrTextDao;
 //    private NoteTermFrequencyDao noteTermFrequencyDao;
 //
@@ -37,8 +31,7 @@ public class SmartNotebookRepository {
 
     public SmartNotebookRepository() {
 //        this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
-        this.noteBitmapFiles = Repositories.getInstance().getBitmapRepository();
-        this.pageTemplateFiles = Repositories.getInstance().getPageTemplateFiles();
+
 //        this.noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
 //        this.noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
 //        this.noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
@@ -50,38 +43,43 @@ public class SmartNotebookRepository {
 
 
     // Create the data and return the notebook entity
-    public Optional<SmartNotebook> initializeNewSmartNote(String title,
-                                                          String directoryPath,
-                                                          Bitmap bitmap,
-                                                          PageTemplate pageTemplate) {
+    public Optional<SmartNotebook> initializeNewSmartNotebook(String title,
+                                                              String directoryPath) {
 
         AtomicNoteEntity atomicNoteEntity = newHandwrittenNote("", directoryPath);
 
-        noteBitmapFiles.saveBitmap(atomicNoteEntity.getNoteId(),
-                atomicNoteEntity.getFilepath(),
-                atomicNoteEntity.getFilename(),
-                bitmap);
-
-        pageTemplateFiles.savePageTemplate(atomicNoteEntity.getNoteId(),
-                atomicNoteEntity.getFilepath(),
-                atomicNoteEntity.getFilename(),
-                pageTemplate);
-
         SmartBookEntity smartBookEntity = newSmartBook(title, atomicNoteEntity.getCreatedTimeMillis());
 
-        SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity);
+        SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity, 0);
 
         SmartNotebook smartNotebook = new SmartNotebook(smartBookEntity, smartBookPage, atomicNoteEntity);
         return Optional.ofNullable(smartNotebook);
     }
 
-    public Optional<Bitmap> getNoteImage(AtomicNoteEntity atomicNote, boolean loadFullImage) {
-        if (loadFullImage) {
-            Optional<Bitmap> bitmapOpt = noteBitmapFiles.getFullBitmap(atomicNote.getNoteId());
-            return bitmapOpt;
-        }
+    public void deleteSmartNotebook(SmartNotebook smartNotebook) {
+        // will pages allow this to be deleted first?
+        smartNotebook.getAtomicNotes()
+                .stream().map(AtomicNoteEntity::getNoteId)
+                .forEach(atomicNoteEntitiesDao::deleteAtomicNote);
 
-        return noteBitmapFiles.getThumbnail(atomicNote.getNoteId());
+        smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
+
+        smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+    }
+
+    public void updateNotebook(SmartNotebook smartNotebook) {
+        long updateTime = System.currentTimeMillis();
+
+        SmartBookEntity smartBookEntity = smartNotebook.getSmartBook();
+        smartBookEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
+        smartBooksDao.updateSmartBook(smartBookEntity);
+
+        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
+            atomicNote.setLastModifiedTimeMillis(updateTime);
+        }
+        atomicNoteEntitiesDao.updateAtomicNote(smartNotebook.getAtomicNotes());
+
+        int updateResult = smartBookPagesDao.updateSmartBookPage(smartNotebook.getSmartBookPages());
     }
 
     public Optional<SmartNotebook> getSmartNotebookContainingNote(long noteId) {
@@ -92,6 +90,28 @@ public class SmartNotebookRepository {
         long bookId = pagesOfNote.stream().findFirst().map(SmartBookPage::getBookId).get();
 
         return getSmartNotebook(bookId);
+    }
+
+    public List<SmartNotebook> getAllSmartNotebooks() {
+        List<SmartBookEntity> smartBooks = smartBooksDao.getAllSmartBooks();
+        if (smartBooks == null || smartBooks.isEmpty()) return new ArrayList<>();
+
+        List<SmartNotebook> smartNotebooks = new ArrayList<>();
+
+        for (SmartBookEntity smartBook : smartBooks) {
+            List<SmartBookPage> smartBookPages = smartBookPagesDao.getSmartBookPages(smartBook.getBookId());
+            if (smartBookPages == null || smartBookPages.isEmpty()) continue;
+
+            Set<Long> noteIds = smartBookPages.stream()
+                    .map(SmartBookPage::getNoteId)
+                    .collect(Collectors.toSet());
+
+            List<AtomicNoteEntity> atomicNoteEntities = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+
+            smartNotebooks.add(new SmartNotebook(smartBook, smartBookPages, atomicNoteEntities));
+        }
+
+        return smartNotebooks;
     }
 
     public Optional<SmartNotebook> getSmartNotebook(long bookId) {
@@ -112,13 +132,13 @@ public class SmartNotebookRepository {
         return Optional.ofNullable(smartNotebook);
     }
 
-    private AtomicNoteEntity newHandwrittenNote(String filename, String filepath) {
+    public AtomicNoteEntity newHandwrittenNote(String filename, String filepath) {
         long createdTimeMillis = System.currentTimeMillis();
         AtomicNoteEntity atomicNoteEntity = new AtomicNoteEntity();
         atomicNoteEntity.setCreatedTimeMillis(createdTimeMillis);
 
         if (Strings.isNullOrWhitespace(filename)) {
-            atomicNoteEntity.setFilename(createdTimeMillis + ".png");
+            atomicNoteEntity.setFilename(String.valueOf(createdTimeMillis));
         } else {
             atomicNoteEntity.setFilename(filename);
         }
@@ -139,33 +159,33 @@ public class SmartNotebookRepository {
     private SmartBookEntity newSmartBook(String title, long createdDateTimeMs) {
         SmartBookEntity smartBookEntity = new SmartBookEntity();
         if (Strings.isNullOrWhitespace(title)) {
-            smartBookEntity.setTitle(msToDateTime(createdDateTimeMs));
+            smartBookEntity.setTitle(DateTimeUtils.msToDateTime(createdDateTimeMs));
         } else {
             smartBookEntity.setTitle(title);
         }
+        smartBookEntity.setCreatedTimeMillis(createdDateTimeMs);
+        smartBookEntity.setLastModifiedTimeMillis(createdDateTimeMs);
+
         long bookId = smartBooksDao.insertSmartBook(smartBookEntity);
         smartBookEntity.setBookId(bookId);
 
         return smartBookEntity;
     }
 
-    private SmartBookPage newSmartBookPage(SmartBookEntity smartBookEntity, AtomicNoteEntity atomicNoteEntity) {
+    public SmartBookPage newSmartBookPage(SmartBookEntity smartBookEntity,
+                                          AtomicNoteEntity atomicNoteEntity,
+                                          int pageOrder) {
 
         SmartBookPage smartBookPage = new SmartBookPage(smartBookEntity.getBookId(),
-                atomicNoteEntity.getNoteId());
-        long id = smartBookPagesDao.insertSmartBook(smartBookPage);
+                atomicNoteEntity.getNoteId(),
+                pageOrder);
+        long id = smartBookPagesDao.insertSmartBookPage(smartBookPage);
         smartBookPage.setId(id);
 
         return smartBookPage;
     }
 
-    private static String msToDateTime(long createdTimeMillis) {
-        Instant instant = Instant.ofEpochMilli(createdTimeMillis);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                .withZone(ZoneId.systemDefault());
 
-        return formatter.format(instant);
-    }
 }
 
 

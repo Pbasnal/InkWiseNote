@@ -20,6 +20,13 @@ public class SmartBookEntity {
 
     @ColumnInfo(name = "title")
     private String title;
+
+
+    @ColumnInfo(name = "created_time_ms")
+    private long createdTimeMillis;
+
+    @ColumnInfo(name = "last_modified_time_ms")
+    private long lastModifiedTimeMillis;
 }
 
 

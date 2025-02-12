@@ -30,6 +30,9 @@ public class DrawingView extends View {
 
     private RuledPageBackground ruledPageBackground;
 
+    public int currentWidth;
+    public int currentHeight;
+
     private Paint paint;
     private WriteablePath path;
     private List<WriteablePath> paths;
@@ -67,6 +70,7 @@ public class DrawingView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
+        if (oldh * oldw > 100) return; // bitmap has been already initialized
         if (w == 0 || h == 0) return;
 
         sizeChangeUserDrawingBitmap(w, h, oldw, oldh);
@@ -80,6 +84,9 @@ public class DrawingView extends View {
             userDrawingBitmap = newBitmap;
             userDrwaingCanvas = newCanvas;
         }
+
+        currentWidth = w;
+        currentHeight = h;
 
         ruledPageBackground.onSizeChanged(w, h, oldw, oldh);
         pageTemplateBitmap = ruledPageBackground.drawTemplate();

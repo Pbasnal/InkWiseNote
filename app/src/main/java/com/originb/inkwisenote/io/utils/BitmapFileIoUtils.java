@@ -2,6 +2,7 @@ package com.originb.inkwisenote.io.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import java.io.*;
 import java.util.Optional;
@@ -55,24 +56,26 @@ public class BitmapFileIoUtils {
 
         int reqHeight = (int) (height * scale);
         int reqWidth = (int) (width * scale);
-
-        if (reqHeight * reqWidth == 0) {
-            reqHeight = height / 2;
-            reqWidth = width / 2;
-        }
-
-        // requested size is smaller than the bitmap size
-        if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
+        try {
+            if (reqHeight * reqWidth == 0) {
+                reqHeight = height / 2;
+                reqWidth = width / 2;
             }
-        }
 
+            // requested size is smaller than the bitmap size
+            if (height > reqHeight || width > reqWidth) {
+                final int halfHeight = height / 2;
+                final int halfWidth = width / 2;
+
+                // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+                // height and width larger than the requested height and width.
+                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                    inSampleSize *= 2;
+                }
+            }
+        } catch (Exception ex) {
+            Log.e("Sampling error", ex.getMessage());
+        }
         return inSampleSize;
     }
 }

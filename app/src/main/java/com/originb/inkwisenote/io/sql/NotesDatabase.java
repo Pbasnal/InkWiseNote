@@ -15,7 +15,7 @@ import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;
         AtomicNoteEntity.class,
         SmartBookEntity.class,
         SmartBookPage.class
-}, version = 4)
+}, version = 6)
 @TypeConverters({
         TypeConvertersForDb.class
 })

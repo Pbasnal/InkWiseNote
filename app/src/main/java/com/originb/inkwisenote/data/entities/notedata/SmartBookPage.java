@@ -32,8 +32,12 @@ public class SmartBookPage {
     @ColumnInfo(name = "note_id")
     private long noteId;
 
-    public SmartBookPage(long bookId, long noteId) {
+    @ColumnInfo(name = "page_order")
+    private int pageOrder;
+
+    public SmartBookPage(long bookId, long noteId, int pageOrder) {
         this.bookId = bookId;
         this.noteId = noteId;
+        this.pageOrder = pageOrder;
     }
 }

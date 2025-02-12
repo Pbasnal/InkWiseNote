@@ -1,107 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/card_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="10dp"
-        card_view:cardCornerRadius="10dp"
-        card_view:cardElevation="4dp"
+        android:layout_height="match_parent"
         android:backgroundTint="@color/white"
-        tools:context=".ux.activities.NoteActivity">
+        tools:context=".ux.activities.smartnotebook.SmartNotebookActivity"
+        android:orientation="vertical">
+
 
     <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_height="wrap_content"
+            android:background="@color/black"
+            android:paddingTop="4dp"
+            android:orientation="horizontal">
 
-        <EditText
-                android:id="@+id/note_title"
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
-                android:textColor="@color/black"
-                android:textStyle="bold"
-                android:textSize="20dp"
-                android:textColorHint="@color/light_gray"
-                android:textAlignment="center"
-                android:layout_gravity="center"
-                android:background="@drawable/edit_text_bottom_border"
-                android:hint="Title"/>
-        <TextView
-                android:id="@+id/note_created_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/light_gray"
-                android:layout_gravity="center"
-                android:text="Timestamp"/>
-
+        <!--        Title and timestamp-->
         <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_gravity="center">
+                android:paddingStart="10dp"
+                android:orientation="vertical">
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab_prev_note"
+            <TextView
+                    android:id="@+id/note_created_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:scaleX="0.5"
-                    android:scaleY="0.5"
-                    android:backgroundTint="@color/yellow"
-                    android:contentDescription="previous note"
-                    android:src="@drawable/ic_arrow_back"
-                    android:layout_gravity="center"/>
+                    android:textColor="@color/white"
+                    android:text="Timestamp"/>
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab_add_note"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:scaleX="0.5"
-                    android:scaleY="0.5"
-                    android:contentDescription="Add Note"
-                    android:src="@drawable/ic_add"
-                    android:layout_gravity="center"/>
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                    android:id="@+id/fab_next_note"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:scaleX="-0.5"
-                    android:scaleY="0.5"
-                    android:backgroundTint="@color/green"
-                    android:contentDescription="Add Note"
-                    android:visibility="visible"
-                    android:src="@drawable/ic_arrow_back"
-                    android:layout_gravity="center"/>
+            <EditText
+                    android:id="@+id/smart_note_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:textSize="20dp"
+                    android:textColorHint="@color/light_gray"
+                    android:background="@drawable/edit_text_bottom_border"
+                    android:hint="Title"/>
 
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/smart_note_page_view"
-                android:layout_width="match_parent"
+        <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="0.8"
                 android:layout_height="match_parent"
-                android:padding="16dp"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-                app:spanCount="1"
+                android:gravity="center"
+                android:orientation="vertical">
 
-                />
-<!--        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"-->
+            <TextView
+                    android:id="@+id/page_num_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="0.3"
+                    android:textColor="@color/white"
+                    android:gravity="center"
+                    android:text="Page number"/>
 
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_weight="1"
+                    android:layout_height="0dp"
 
-        <!--        <com.originb.inkwisenote.ux.views.DrawingView-->
-<!--                android:id="@+id/drawing_view"-->
-<!--                android:layout_width="match_parent"-->
-<!--                android:layout_height="0dp"-->
-<!--                android:background="@android:color/white"-->
-<!--                android:layout_weight="5"-->
-<!--                android:padding="50dp"/>-->
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_prev_note"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleX="0.5"
+                        android:scaleY="0.5"
+                        android:backgroundTint="@color/yellow"
+                        android:contentDescription="previous note"
+                        android:src="@drawable/ic_arrow_back"
+                        android:layout_gravity="center"/>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_add_note"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleX="0.5"
+                        android:scaleY="0.5"
+                        android:contentDescription="Add Note"
+                        android:src="@drawable/ic_add"
+                        android:layout_gravity="center"/>
+
+                <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_next_note"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:scaleX="-0.5"
+                        android:scaleY="0.5"
+                        android:backgroundTint="@color/green"
+                        android:contentDescription="Add Note"
+                        android:visibility="visible"
+                        android:src="@drawable/ic_arrow_back"
+                        android:layout_gravity="center"/>
+
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
+    <!--    android:layout_weight="1"-->
+    <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/smart_note_page_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/light_gray"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="1"
 
-</androidx.cardview.widget.CardView>
+            />
+
+
+</LinearLayout>

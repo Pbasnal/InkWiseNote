@@ -34,4 +34,14 @@ public class SmartNotebook {
         this.smartBookPages = smartBookPages;
         this.atomicNotes = atomicNoteEntities;
     }
+
+    public void insertAtomicNoteAndPage(int position, AtomicNoteEntity atomicNote, SmartBookPage newPage) {
+        atomicNotes.add(position, atomicNote);
+        smartBookPages.add(position, newPage);
+        int pageOrder = 0;
+        for (SmartBookPage smartBookPage : smartBookPages) {
+            smartBookPage.setPageOrder(pageOrder);
+            pageOrder++;
+        }
+    }
 }

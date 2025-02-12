@@ -1,7 +1,6 @@
 package com.originb.inkwisenote.data.dao;
 
 import androidx.room.*;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
 
 import java.util.List;
@@ -22,11 +21,14 @@ public interface SmartBookPagesDao {
     List<SmartBookPage> getSmartBooksPages(Set<Long> bookIds);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    long insertSmartBook(SmartBookPage smartBookEntity);
+    long insertSmartBookPage(SmartBookPage smartBookEntity);
 
     @Update
-    int updateSmartBook(SmartBookPage smartBookEntity);
+    int updateSmartBookPage(SmartBookPage smartBookEntity);
+
+    @Update
+    int updateSmartBookPage(List<SmartBookPage> smartBookEntity);
 
     @Query("DELETE FROM smart_book_pages WHERE book_id = :bookId")
-    void deleteSmartBook(long bookId);
+    void deleteSmartBookPages(long bookId);
 }

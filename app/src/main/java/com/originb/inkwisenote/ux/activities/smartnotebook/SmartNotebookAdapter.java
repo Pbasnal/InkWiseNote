@@ -10,9 +10,11 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -23,8 +25,9 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
     private final ComponentActivity parentActivity;
 
-    private final SmartNotebook smartNotebook;
-private final SmartNotebookRepository smartNotebookRepository;
+    @Setter
+    private SmartNotebook smartNotebook;
+    private final SmartNotebookRepository smartNotebookRepository;
 
     // noteId to card mapping
     private final Map<Long, NoteHolder> noteCards = new HashMap<>();
@@ -55,5 +58,36 @@ private final SmartNotebookRepository smartNotebookRepository;
     @Override
     public int getItemCount() {
         return smartNotebook.atomicNotes.size();
+    }
+
+    public void saveNote(String noteTitle) {
+        if (smartNotebook == null) return;
+
+        for (NoteHolder noteHolder : noteCards.values()) {
+            noteHolder.saveNote();
+        }
+
+        // update title
+        smartNotebook.getSmartBook().setTitle(noteTitle);
+        //update pages
+        //smartNotebook.getSmartBookPages().
+
+        BackgroundOps.execute(() -> {
+            smartNotebookRepository.updateNotebook(smartNotebook);
+        });
+    }
+
+
+    // this function assumes that either the smartNotebook has updated
+    // notes and pages or
+    // all new notes or pages are inserted after current index so that
+    // the note and page at this index is not affected.
+    public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
+        if(!noteCards.containsKey(atomicNote.getNoteId())) {
+            return;
+        }
+
+        NoteHolder noteHolder = noteCards.get(atomicNote.getNoteId());
+        noteHolder.saveNote();
     }
 }

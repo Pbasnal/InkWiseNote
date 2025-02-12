@@ -13,6 +13,7 @@ import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
 import com.originb.inkwisenote.data.dao.NoteTaskStatusDao;
+import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskName;
 import com.originb.inkwisenote.data.entities.tasks.TfIdfRelationTasks;
@@ -24,6 +25,8 @@ import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.modules.commonutils.Strings;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.modules.repositories.Repositories;
+import com.originb.inkwisenote.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
@@ -36,6 +39,8 @@ import java.util.Optional;
 public class TextParsingWorker extends Worker {
     private final NoteBitmapFiles bitmapRepository;
 
+    private SmartNotebookRepository smartNotebookRepository;
+
     private final AppSecrets appSecrets;
     private final NoteTaskStatusDao noteTaskStatusDao;
     private final NoteOcrTextDao noteOcrTextDao;
@@ -46,6 +51,7 @@ public class TextParsingWorker extends Worker {
     public TextParsingWorker(@NotNull Context context, @NotNull WorkerParameters workerParams) {
         super(context, workerParams);
         this.bitmapRepository = Repositories.getInstance().getBitmapRepository();
+        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
 
         noteTaskStatusDao = Repositories.getInstance().getNotesDb().noteTaskStatusDao();
         noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
@@ -56,15 +62,26 @@ public class TextParsingWorker extends Worker {
     @NotNull
     @Override
     public Result doWork() {
-        return parseText();
+        Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), debugContext).get();
+        noteIdOpt.ifPresent(this::parseTextForNoteId);
+
+
+        Optional<Long> bookIdOpt = Try.to(() -> getInputData().getLong("book_id", -1), debugContext).get();
+        bookIdOpt.ifPresent(this::parseTextForNotebook);
+
+        return Result.success();
     }
 
-    public Result parseText() {
-        Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), debugContext).get();
+    public void parseTextForNotebook(long bookId) {
+        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebook(bookId);
+        if(!smartBookOpt.isPresent()) return;
+        SmartNotebook smartNotebook = smartBookOpt.get();
 
-        if (!noteIdOpt.isPresent()) return null;
-        Long noteId = noteIdOpt.get();
+        smartNotebook.getAtomicNotes().stream().map(AtomicNoteEntity::getNoteId)
+                .map(this::parseTextForNoteId);
+    }
 
+    public Result parseTextForNoteId(long noteId) {
         if (!isNoteIdGreaterThan0(noteId) || !validateJobStatus(noteId)) return onFailure(noteId);
 
         Optional<Bitmap> bitmapOpt = bitmapRepository.getFullBitmap(noteId);
@@ -73,7 +90,7 @@ public class TextParsingWorker extends Worker {
 
         Optional<AzureOcrResult> azureResultOpt = applyAzureOcr(noteBitmap);
         if (!azureResultOpt.isPresent()) return onFailure(noteId);
-        NoteOcrText noteOcrText = new NoteOcrText(noteIdOpt.get(), azureResultOpt.get().readResult.content);
+        NoteOcrText noteOcrText = new NoteOcrText(noteId, azureResultOpt.get().readResult.content);
 
         List<NoteOcrText> noteOcrTexts = noteOcrTextDao.readTextFromDb(noteOcrText.getNoteId());
         if (CollectionUtils.isEmpty(noteOcrTexts)) {
@@ -83,10 +100,10 @@ public class TextParsingWorker extends Worker {
         }
 
         if (!Strings.isNullOrWhitespace(noteOcrText.getExtractedText())) {
-            noteTaskStatusDao.updateNoteTask(TfIdfRelationTasks.tokenizationTask(noteIdOpt.get()));
-            AppState.getInstance().setNoteStatus(noteIdOpt.get(), NoteTaskStage.TOKENIZATION);
+            noteTaskStatusDao.updateNoteTask(TfIdfRelationTasks.tokenizationTask(noteId));
+            AppState.getInstance().setNoteStatus(noteId, NoteTaskStage.TOKENIZATION);
 
-            WorkManagerBus.scheduleWorkForTextProcessing(getApplicationContext(), noteIdOpt.get());
+            WorkManagerBus.scheduleWorkForTextProcessing(getApplicationContext(), noteId);
         }
 
         return Result.success();
