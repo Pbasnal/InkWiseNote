@@ -2,9 +2,9 @@ package com.originb.inkwisenote.modules.repositories;
 
 import android.graphics.Bitmap;
 import android.util.Log;
-import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
-import com.originb.inkwisenote.data.dao.NoteRelationDao;
-import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
+import com.originb.inkwisenote.data.dao.noterelation.NoteRelationDao;
+import com.originb.inkwisenote.data.dao.noteocr.NoteTermFrequencyDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
 import com.originb.inkwisenote.data.notedata.PageTemplate;

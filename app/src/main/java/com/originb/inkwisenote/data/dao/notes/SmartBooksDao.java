@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.dao;
+package com.originb.inkwisenote.data.dao.notes;
 
 import androidx.room.*;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;

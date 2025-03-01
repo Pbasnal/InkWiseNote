@@ -1,10 +1,9 @@
 package com.originb.inkwisenote.modules.repositories;
 
-import android.util.Log;
 import com.originb.inkwisenote.commonutils.DateTimeUtils;
-import com.originb.inkwisenote.data.dao.AtomicNoteEntitiesDao;
-import com.originb.inkwisenote.data.dao.SmartBookPagesDao;
-import com.originb.inkwisenote.data.dao.SmartBooksDao;
+import com.originb.inkwisenote.data.dao.notes.AtomicNoteEntitiesDao;
+import com.originb.inkwisenote.data.dao.notes.SmartBookPagesDao;
+import com.originb.inkwisenote.data.dao.notes.SmartBooksDao;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;

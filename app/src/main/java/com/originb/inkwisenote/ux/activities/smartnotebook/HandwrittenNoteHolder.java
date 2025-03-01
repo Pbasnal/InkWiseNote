@@ -8,6 +8,7 @@ import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.PageTemplate;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.HandwrittenNoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
@@ -21,6 +22,8 @@ public class HandwrittenNoteHolder extends NoteHolder {
     private final DrawingView drawingView;
     private AtomicNoteEntity atomicNote;
 
+    private long bookId;
+
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private ConfigReader configReader;
 
@@ -33,29 +36,48 @@ public class HandwrittenNoteHolder extends NoteHolder {
     }
 
     @Override
-    public void setNote(AtomicNoteEntity atomicNote) {
+    public void setNote(long bookId, AtomicNoteEntity atomicNote) {
+        this.bookId = bookId;
         this.atomicNote = atomicNote;
-        Optional<Bitmap> bitmapOpt = handwrittenNoteRepository.getNoteImage(atomicNote, true);
-        Optional<PageTemplate> pageTemplateOpt = handwrittenNoteRepository.getPageTemplate(atomicNote);
-        if (pageTemplateOpt.isPresent()) {
-            pageTemplateOpt.ifPresent(drawingView::setPageTemplate);
-        } else {
-            PageTemplate pageTemplate = configReader.getAppConfig().getPageTemplates().get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name());
-            handwrittenNoteRepository.saveHandwrittenNotePageTemplate(atomicNote, pageTemplate);
+        BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, true).noteImage,
+                (bitmapOpt) -> {
+                    if (bitmapOpt.isPresent()) {
+                        bitmapOpt.ifPresent(drawingView::setBitmap);
+                        return;
+                    }
+                    Bitmap newBitmap;
+                    if (useDefaultBitmap()) {
+                        newBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+                    } else {
+                        newBitmap = Bitmap.createBitmap(drawingView.currentWidth, drawingView.currentHeight, Bitmap.Config.ARGB_8888);
+                    }
+                    BackgroundOps.execute(() -> handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap));
+                    drawingView.setBitmap(newBitmap);
+                });
 
-            drawingView.setPageTemplate(pageTemplate);
-        }
-        if (bitmapOpt.isPresent()) {
-            bitmapOpt.ifPresent(drawingView::setBitmap);
-        } else {
-            Bitmap newBitmap = Bitmap.createBitmap(drawingView.currentWidth, drawingView.currentHeight, Bitmap.Config.ARGB_8888);
-            handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap);
-            drawingView.setBitmap(newBitmap);
-        }
+        BackgroundOps.execute(() -> handwrittenNoteRepository.getPageTemplate(atomicNote),
+                pageTemplateOpt -> {
+                    if (pageTemplateOpt.isPresent()) {
+                        pageTemplateOpt.ifPresent(drawingView::setPageTemplate);
+                        return;
+                    }
+                    PageTemplate pageTemplate = configReader.getAppConfig().getPageTemplates()
+                            .get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name());
+                    BackgroundOps.execute(() -> handwrittenNoteRepository.saveHandwrittenNotePageTemplate(atomicNote, pageTemplate));
+
+                    drawingView.setPageTemplate(pageTemplate);
+                });
     }
 
     @Override
     public void saveNote() {
-        handwrittenNoteRepository.saveHandwrittenNotes(atomicNote, drawingView.getBitmap(), drawingView.getPageTemplate());
+        handwrittenNoteRepository.saveHandwrittenNotes(bookId,
+                atomicNote,
+                drawingView.getBitmap(),
+                drawingView.getPageTemplate());
+    }
+
+    public boolean useDefaultBitmap() {
+        return drawingView.currentWidth * drawingView.currentHeight == 0;
     }
 }

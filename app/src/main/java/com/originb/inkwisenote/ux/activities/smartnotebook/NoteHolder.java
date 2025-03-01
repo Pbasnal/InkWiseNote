@@ -16,7 +16,7 @@ public abstract class NoteHolder extends RecyclerView.ViewHolder {
         this.smartNotebookRepository = smartNotebookRepository;
     }
 
-    public abstract void setNote(AtomicNoteEntity atomicNote);
+    public abstract void setNote(long bookId, AtomicNoteEntity atomicNote);
 
     public abstract void saveNote();
 }

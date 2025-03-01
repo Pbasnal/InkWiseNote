@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
+import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -51,7 +52,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     @Override
     public void onBindViewHolder(@NonNull @NotNull NoteHolder noteHolder, int position) {
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
-        noteHolder.setNote(atomicNote);
+        noteHolder.setNote(smartNotebook.getSmartBook().getBookId(), atomicNote);
         noteCards.put(atomicNote.getNoteId(), noteHolder);
     }
 

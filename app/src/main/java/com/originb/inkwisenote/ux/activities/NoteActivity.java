@@ -1,7 +1,6 @@
 package com.originb.inkwisenote.ux.activities;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.EditText;
 
 import android.widget.TextView;
@@ -9,20 +8,13 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
-import com.originb.inkwisenote.data.config.AppState;
-import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
-import com.originb.inkwisenote.data.dao.NoteTaskStatusDao;
-import com.originb.inkwisenote.data.entities.tasks.NoteTaskName;
-import com.originb.inkwisenote.data.entities.tasks.TfIdfRelationTasks;
+import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
+import com.originb.inkwisenote.data.dao.tasks.NoteTaskStatusDao;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteMeta;
-import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;
-import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
-import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
-import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.ux.utils.NoteStack;
 import com.originb.inkwisenote.modules.repositories.NoteRepository;
@@ -39,7 +31,7 @@ import java.util.*;
 
 public class NoteActivity extends AppCompatActivity {
 
-    private DebugContext debugContext;
+    private Logger logger;
 
     private NoteRepository noteRepository;
     //    private TesseractsOcr tesseractsOcr;
@@ -84,7 +76,7 @@ public class NoteActivity extends AppCompatActivity {
         noteRepository = new NoteRepository();
         appSecrets = ConfigReader.fromContext(this).getAppConfig().getAppSecrets();
         noteStack = new NoteStack(noteRepository);
-        debugContext = new DebugContext("NoteActivity");
+        logger = new Logger("NoteActivity");
         noteOperations = new NoteOperations(this);
 
         noteTitleField = findViewById(R.id.note_title);
@@ -102,7 +94,7 @@ public class NoteActivity extends AppCompatActivity {
         });
 
         if (!noteEntityOpt.isPresent()) {
-            Log.e(debugContext.getDebugInfo(), "Failed to load/initialize note");
+            logger.error("Failed to load/initialize note");
             Toast.makeText(this, "Failed to load note or initialize note", Toast.LENGTH_SHORT).show();
             finish();
         }
@@ -204,7 +196,7 @@ public class NoteActivity extends AppCompatActivity {
 //                            .ifPresent(ocrResult::setText);
 
                     return noteEntity;
-                }, debugContext)
+                }, logger)
                 .logIfError("Failed to load note " + noteEntity.getNoteId())
                 .get();
     }

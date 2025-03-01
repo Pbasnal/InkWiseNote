@@ -1,9 +1,8 @@
-package com.originb.inkwisenote.data.dao;
+package com.originb.inkwisenote.data.dao.noteocr;
 
-import androidx.lifecycle.LiveData;
 import androidx.room.*;
-import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
-import com.originb.inkwisenote.data.entities.notedata.TermOccurrence;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteTermFrequency;
+import com.originb.inkwisenote.data.entities.noteocrdata.TermOccurrence;
 
 import java.util.List;
 import java.util.Set;

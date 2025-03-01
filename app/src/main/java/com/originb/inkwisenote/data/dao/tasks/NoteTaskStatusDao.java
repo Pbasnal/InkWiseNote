@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.dao;
+package com.originb.inkwisenote.data.dao.tasks;
 
 import androidx.room.*;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;

@@ -10,14 +10,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.google.android.material.tabs.TabLayout;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.data.dao.*;
+import com.originb.inkwisenote.data.dao.notes.AtomicNoteEntitiesDao;
+import com.originb.inkwisenote.data.dao.notes.SmartBookPagesDao;
+import com.originb.inkwisenote.data.dao.notes.SmartBooksDao;
+import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
+import com.originb.inkwisenote.data.dao.noteocr.NoteTermFrequencyDao;
 import com.originb.inkwisenote.data.entities.notedata.*;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteOcrText;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteTermFrequency;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 public class AdminActivity extends AppCompatActivity {

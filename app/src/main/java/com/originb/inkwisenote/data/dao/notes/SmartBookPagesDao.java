@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.dao;
+package com.originb.inkwisenote.data.dao.notes;
 
 import androidx.room.*;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
@@ -10,6 +10,9 @@ import java.util.Set;
 public interface SmartBookPagesDao {
     @Query("SELECT * FROM smart_book_pages WHERE note_id = :noteId")
     List<SmartBookPage> getSmartBookPagesOfNote(long noteId);
+
+    @Query("SELECT * FROM smart_book_pages WHERE note_id In (:noteIds)")
+    List<SmartBookPage> getSmartBookPagesOfNote(Set<Long> noteIds);
 
     @Query("SELECT * FROM smart_book_pages WHERE book_id = :bookId")
     List<SmartBookPage> getSmartBookPages(long bookId);

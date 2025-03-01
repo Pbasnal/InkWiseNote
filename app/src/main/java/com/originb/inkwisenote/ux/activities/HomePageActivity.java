@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.animation.AnticipateInterpolator;
 import android.view.animation.OvershootInterpolator;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
@@ -16,14 +15,13 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.adapters.smartnotes.SmartNoteGridAdapter;
-import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.ux.views.HomePageSidebarUiComponent;
-import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -50,6 +48,8 @@ public class HomePageActivity extends AppCompatActivity {
     private HomePageSidebarUiComponent homePageSidebarUiComponent;
 
     private SmartNotebookRepository smartNotebookRepository;
+
+    private Logger logger = new Logger("HomePageActivity");
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -132,7 +132,10 @@ public class HomePageActivity extends AppCompatActivity {
 
 //        noteGridAdapter.setNoteIds(noteIds);
         BackgroundOps.execute(() -> smartNotebookRepository.getAllSmartNotebooks(),
-                smartNotebooks -> smartNoteGridAdapter.setSmartNoteBooks(smartNotebooks)
+                smartNotebooks -> {
+                    logger.debug("Setting smartNotebooks", smartNotebooks);
+                    smartNoteGridAdapter.setSmartNoteBooks(smartNotebooks);
+                }
         );
 
 //        AppState.getInstance().observeNoteStateChange(this, noteStateMap -> {

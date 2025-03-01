@@ -3,7 +3,7 @@ package com.originb.inkwisenote.io;
 import android.graphics.Bitmap;
 import android.util.Log;
 import com.google.android.gms.common.util.Strings;
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.constants.Returns;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
@@ -167,7 +167,7 @@ public class NoteBitmapFiles {
                         return Long.parseLong(noteNameWithoutExtension.split("_")[1]);
                     }
                     return null;
-                }, new DebugContext("NoteBitmapFiles"))
+                }, new Logger("NoteBitmapFiles"))
                 .logIfError("Failed to parse bitmap id from file name: " + noteNameWithoutExtension)
                 .get();
 

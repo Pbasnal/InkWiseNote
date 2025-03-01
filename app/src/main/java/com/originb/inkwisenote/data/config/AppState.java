@@ -1,14 +1,13 @@
 package com.originb.inkwisenote.data.config;
 
 import android.os.Looper;
-import android.util.Log;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
-import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
+import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
 import com.originb.inkwisenote.modules.commonutils.Maps;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 
@@ -27,20 +26,20 @@ public class AppState {
         return instance;
     }
 
-    DebugContext debugContext = new DebugContext("AppState");
+    Logger logger = new Logger("AppState");
 
     private final MutableLiveData<Boolean> isAzureOcrRunning = new MutableLiveData<>(false);
     private final MutableLiveData<Map<Long, NoteTaskStage>> noteState = new MutableLiveData<>(new HashMap<>());
     private MutableLiveData<Map<Long, List<NoteRelation>>> liveNoteRelationshipMap = new MutableLiveData<>(new HashMap<>());
 
     public void updateState() {
-        Optional<ConfigReader> configReaderOptional = Try.to(ConfigReader::getInstance, debugContext)
+        Optional<ConfigReader> configReaderOptional = Try.to(ConfigReader::getInstance, logger)
                 .get();
 
         configReaderOptional.ifPresent(this::loadConfiguredState);
 
         if (!configReaderOptional.isPresent()) {
-            Log.e(debugContext.getDebugInfo(), "Failed to get configs");
+            logger.error("Failed to get configs");
         }
     }
 

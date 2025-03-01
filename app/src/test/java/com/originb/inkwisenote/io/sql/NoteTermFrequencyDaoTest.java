@@ -1,9 +1,9 @@
 package com.originb.inkwisenote.io.sql;
 
 import androidx.room.Room;
-import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
-import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
-import com.originb.inkwisenote.data.entities.notedata.TermOccurrence;
+import com.originb.inkwisenote.data.dao.noteocr.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteTermFrequency;
+import com.originb.inkwisenote.data.entities.noteocrdata.TermOccurrence;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

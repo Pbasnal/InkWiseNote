@@ -25,6 +25,9 @@ public class AtomicNoteEntity {
     @ColumnInfo(name = "note_type")
     private String noteType; // for handwritten and text
 
+    @ColumnInfo(name = "page_template_id")
+    private long pageTemplateId;
+
     @ColumnInfo(name = "created_time_ms")
     private long createdTimeMillis;
 

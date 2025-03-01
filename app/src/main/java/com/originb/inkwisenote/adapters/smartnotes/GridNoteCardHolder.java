@@ -1,8 +1,6 @@
 package com.originb.inkwisenote.adapters.smartnotes;
 
 import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -12,16 +10,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.commonutils.DateTimeUtils;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
-import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
-import com.originb.inkwisenote.modules.repositories.HandwrittenNoteRepository;
-import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote.modules.repositories.*;
 import com.originb.inkwisenote.ux.utils.Routing;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Optional;
 
 public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -33,6 +28,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private final TextView noteTitle;
     private final ImageButton deleteBtn;
     private final ImageView noteStatusImg;
+    private final ImageView relationViewBtn;
     private SmartNotebook smartNotebook;
 
 
@@ -48,10 +44,13 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         noteImage = itemView.findViewById(R.id.card_image);
         noteTitle = itemView.findViewById(R.id.card_name);
         deleteBtn = itemView.findViewById(R.id.btn_dlt_note);
+        relationViewBtn = itemView.findViewById(R.id.btn_relation_view);
         noteStatusImg = itemView.findViewById(R.id.img_note_status);
 
         noteImage.setOnClickListener(view -> onClick(itemView));
         deleteBtn.setOnClickListener(view -> onClickDelete());
+        relationViewBtn.setVisibility(View.GONE);
+
 
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
@@ -64,14 +63,24 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         if (numberOfNotes == 1 && smartNotebook.getAtomicNotes().get(0).getNoteType().equals("handwritten_png")) {
             AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(0);
 
-            handwrittenNoteRepository.getNoteImage(atomicNote, false)
-                    .ifPresent(noteImage::setImageBitmap);
+            BackgroundOps.execute(() ->
+                            handwrittenNoteRepository.getNoteImage(atomicNote, false),
+                    (handwrittenNoteWithImage) ->
+                            handwrittenNoteWithImage.noteImage.ifPresent(noteImage::setImageBitmap));
         }
 
         String noteTitle = Optional.ofNullable(smartNotebook.getSmartBook().getTitle())
                 .filter(title -> !title.trim().isEmpty())
                 .orElse(DateTimeUtils.msToDateTime(smartNotebook.getSmartBook().getLastModifiedTimeMillis()));
         this.noteTitle.setText(noteTitle);
+    }
+
+    public void updateNoteRelation(List<NoteRelation> updatedRelations) {
+        if (updatedRelations.isEmpty()) {
+            relationViewBtn.setVisibility(View.GONE);
+        } else {
+            relationViewBtn.setVisibility(View.VISIBLE);
+        }
     }
 
     private void onClickDelete() {
@@ -89,4 +98,6 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
                 parentActivity.getFilesDir().getPath(),
                 smartNotebook.getSmartBook().getBookId());
     }
+
+
 }

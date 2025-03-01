@@ -1,14 +1,14 @@
-package com.originb.inkwisenote.data.dao;
+package com.originb.inkwisenote.data.dao.noteocr;
 
 import androidx.room.*;
-import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteOcrText;
 
 import java.util.List;
 
 @Dao
 public interface NoteOcrTextDao {
     @Query("SELECT * FROM note_text WHERE note_id = :noteId")
-    List<NoteOcrText> readTextFromDb(Long noteId);
+    NoteOcrText readTextFromDb(Long noteId);
 
     @Query("SELECT * FROM note_text")
     List<NoteOcrText> getAllNoteText();

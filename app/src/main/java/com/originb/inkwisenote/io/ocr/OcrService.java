@@ -3,7 +3,7 @@ package com.originb.inkwisenote.io.ocr;
 import android.os.AsyncTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.gms.common.util.Strings;
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 
@@ -52,7 +52,7 @@ public class OcrService {
             }
 
             return Try.to(() -> runOcr(params[0])
-                            , new DebugContext("Azure Ocr Service"))
+                            , new Logger("Azure Ocr Service"))
                     .logIfError("Error running OCR")
                     .get()
                     .orElseGet(null);

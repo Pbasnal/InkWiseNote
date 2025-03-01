@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.data.entities.notedata;
+package com.originb.inkwisenote.data.entities.noteocrdata;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;

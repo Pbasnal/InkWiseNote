@@ -1,6 +1,6 @@
 package com.originb.inkwisenote.modules.commonutils;
 
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 
 import java.util.Objects;
@@ -22,7 +22,7 @@ public class Strings {
         return Try.to(() -> {
                     Integer.parseInt(string);
                     return true;
-                }, new DebugContext("Checking If String is Number"))
+                }, new Logger("Checking If String is Number"))
                 .get().orElse(false);
     }
 }

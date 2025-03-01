@@ -14,8 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.data.config.AppState;
-import com.originb.inkwisenote.data.dao.NoteRelationDao;
-import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
+import com.originb.inkwisenote.data.dao.noterelation.NoteRelationDao;
+import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
 import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
 import com.originb.inkwisenote.ux.utils.Routing;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
@@ -70,6 +70,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         }
 
         notifyDataSetChanged();
+        // todo: below code should go to bootstrap to load data in memory
         if (!noteIdsThatDontHaveRelationship.isEmpty()) {
             NoteRelationDao noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
 
@@ -139,7 +140,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
             noteImage = itemView.findViewById(R.id.card_image);
             noteTitle = itemView.findViewById(R.id.card_name);
             deleteBtn = itemView.findViewById(R.id.btn_dlt_note);
-            graphButton = itemView.findViewById(R.id.btn_graph_view);
+            graphButton = itemView.findViewById(R.id.btn_relation_view);
             noteStatusImg = itemView.findViewById(R.id.img_note_status);
 
             rotateAnimation = AnimationUtils.loadAnimation(parentActivity, R.anim.anim_rotate);
