@@ -7,9 +7,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.adapters.NoteGridAdapter;
-import com.originb.inkwisenote.data.dao.NoteOcrTextDao;
-import com.originb.inkwisenote.data.entities.notedata.NoteOcrText;
+import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteOcrText;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.ArrayList;
@@ -26,7 +25,6 @@ public class NoteSearchActivity extends AppCompatActivity {
     private NoteOcrTextDao noteOcrTextDao;
 
     private RecyclerView recyclerView;
-    private NoteGridAdapter noteGridAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,9 +53,9 @@ public class NoteSearchActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
 
-        recyclerView.setAdapter(noteGridAdapter);
+
+//        recyclerView.setAdapter(noteGridAdapter);
         recyclerView.setHasFixedSize(true);
     }
 
@@ -72,7 +70,7 @@ public class NoteSearchActivity extends AppCompatActivity {
         List<Long> filteredResults = searchInDb(query);
 
         resultsList.addAll(filteredResults);
-        noteGridAdapter.setNoteIds(resultsList);
+//        noteGridAdapter.setNoteIds(resultsList);
     }
 
     private List<Long> searchInDb(String searchTerm) {

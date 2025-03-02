@@ -1,10 +1,9 @@
 package com.originb.inkwisenote.modules.tfidf;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import androidx.room.Room;
-import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
-import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
+import com.originb.inkwisenote.data.dao.noteocr.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteTermFrequency;
 import com.originb.inkwisenote.io.sql.NotesDatabase;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import org.junit.*;

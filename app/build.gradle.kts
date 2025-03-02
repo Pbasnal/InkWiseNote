@@ -46,6 +46,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    testOptions {
+        animationsDisabled = false
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+    }
 }
 
 dependencies {
@@ -75,4 +79,12 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     testImplementation("org.robolectric:robolectric:4.9")
+
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.2.0")
+    androidTestUtil("androidx.test:orchestrator:1.4.2")
 }

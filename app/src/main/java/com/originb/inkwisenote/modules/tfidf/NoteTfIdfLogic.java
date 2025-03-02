@@ -2,16 +2,18 @@ package com.originb.inkwisenote.modules.tfidf;
 
 import android.util.Log;
 import com.google.android.gms.common.util.CollectionUtils;
-import com.originb.inkwisenote.data.dao.NoteTermFrequencyDao;
-import com.originb.inkwisenote.data.entities.notedata.NoteTermFrequency;
-import com.originb.inkwisenote.data.entities.notedata.TermOccurrence;
+import com.originb.inkwisenote.Logger;
+import com.originb.inkwisenote.data.dao.noteocr.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.noteocrdata.NoteTermFrequency;
+import com.originb.inkwisenote.data.entities.noteocrdata.TermOccurrence;
 import com.originb.inkwisenote.modules.commonutils.Maps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class NoteTfIdfLogic {
+
+    private Logger logger = new Logger("NoteTfIdfLogic");
 
     private NoteTermFrequencyDao noteTermFrequencyDao;
 
@@ -23,8 +25,10 @@ public class NoteTfIdfLogic {
         Map<String, Integer> termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId));
 
         if (termFrequenciesOfNote.isEmpty()) {
+            logger.debug("Insert document terms for noteId: " + noteId, termsList);
             insertDocument(noteId, termsList);
         } else {
+            logger.debug("Update document terms for noteId: " + noteId, termsList);
             updateDocument(noteId, termFrequenciesOfNote, termsList);
         }
     }

@@ -8,10 +8,10 @@ public enum BitmapScale {
     FULL_SIZE(1f),
     THUMBNAIL(0.2f);
 
-    private final float result;
+    private final float value;
 
-    BitmapScale(float result) {
-        this.result = result;
+    BitmapScale(float value) {
+        this.value = value;
     }
 
 }

@@ -1,17 +1,18 @@
 package com.originb.inkwisenote.data.config;
 
 import android.os.Looper;
-import android.util.Log;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
-import com.originb.inkwisenote.DebugContext;
+import com.google.android.gms.common.util.CollectionUtils;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
-import com.originb.inkwisenote.data.entities.notedata.NoteRelation;
+import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
 import com.originb.inkwisenote.modules.commonutils.Maps;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 
+import java.sql.Array;
 import java.util.*;
 
 public class AppState {
@@ -27,20 +28,21 @@ public class AppState {
         return instance;
     }
 
-    DebugContext debugContext = new DebugContext("AppState");
+    Logger logger = new Logger("AppState");
 
     private final MutableLiveData<Boolean> isAzureOcrRunning = new MutableLiveData<>(false);
     private final MutableLiveData<Map<Long, NoteTaskStage>> noteState = new MutableLiveData<>(new HashMap<>());
-    private MutableLiveData<Map<Long, List<NoteRelation>>> liveNoteRelationshipMap = new MutableLiveData<>(new HashMap<>());
+    //    private MutableLiveData<Map<Long, List<NoteRelation>>> liveNoteRelationshipMap = new MutableLiveData<>(new HashMap<>());
+    private MutableLiveData<Set<NoteRelation>> liveNoteRelationshipMap = new MutableLiveData<>(new HashSet<>());
 
     public void updateState() {
-        Optional<ConfigReader> configReaderOptional = Try.to(ConfigReader::getInstance, debugContext)
+        Optional<ConfigReader> configReaderOptional = Try.to(ConfigReader::getInstance, logger)
                 .get();
 
         configReaderOptional.ifPresent(this::loadConfiguredState);
 
         if (!configReaderOptional.isPresent()) {
-            Log.e(debugContext.getDebugInfo(), "Failed to get configs");
+            logger.error("Failed to get configs");
         }
     }
 
@@ -65,7 +67,11 @@ public class AppState {
         isAzureOcrRunning.observe(owner, observer);
     }
 
-    public void observeNoteRelationships(LifecycleOwner owner, Observer<Map<Long, List<NoteRelation>>> observer) {
+//    public void observeNoteRelationships(LifecycleOwner owner, Observer<Map<Long, List<NoteRelation>>> observer) {
+//        liveNoteRelationshipMap.observe(owner, observer);
+//    }
+
+    public void observeNoteRelationships(LifecycleOwner owner, Observer<Set<NoteRelation>> observer) {
         liveNoteRelationshipMap.observe(owner, observer);
     }
 
@@ -79,22 +85,35 @@ public class AppState {
         }
     }
 
-    public void updatedRelatedNotes(Long noteId, List<NoteRelation> relatedNotes) {
-        Map<Long, List<NoteRelation>> noteRelationshipMap = liveNoteRelationshipMap.getValue();
-        if (Maps.isEmpty(noteRelationshipMap)) {
-            noteRelationshipMap = new HashMap<>();
-        }
+//    public void updatedRelatedNotes(Long noteId, List<NoteRelation> relatedNotes) {
+//        Map<Long, List<NoteRelation>> noteRelationshipMap = liveNoteRelationshipMap.getValue();
+//        if (Maps.isEmpty(noteRelationshipMap)) {
+//            noteRelationshipMap = new HashMap<>();
+//        }
+//
+//        noteRelationshipMap.put(noteId, relatedNotes);
+//        liveNoteRelationshipMap.setValue(noteRelationshipMap);
+//    }
 
-        noteRelationshipMap.put(noteId, relatedNotes);
-        liveNoteRelationshipMap.setValue(noteRelationshipMap);
+//    public void updatedRelatedNotes(Map<Long, List<NoteRelation>> relatedNotes) {
+//        Map<Long, List<NoteRelation>> noteRelationshipMap = liveNoteRelationshipMap.getValue();
+//        if (Maps.isEmpty(noteRelationshipMap)) {
+//            noteRelationshipMap = new HashMap<>();
+//        }
+//        noteRelationshipMap.putAll(relatedNotes);
+//        liveNoteRelationshipMap.setValue(noteRelationshipMap);
+//    }
+
+    public void updatedRelatedNotes(List<NoteRelation> relatedNotes) {
+        updatedRelatedNotes(new HashSet<>(relatedNotes));
     }
 
-    public void updatedRelatedNotes(Map<Long, List<NoteRelation>> relatedNotes) {
-        Map<Long, List<NoteRelation>> noteRelationshipMap = liveNoteRelationshipMap.getValue();
-        if (Maps.isEmpty(noteRelationshipMap)) {
-            noteRelationshipMap = new HashMap<>();
+    public void updatedRelatedNotes(Set<NoteRelation> relatedNotes) {
+        Set<NoteRelation> noteRelationshipMap = liveNoteRelationshipMap.getValue();
+        if (CollectionUtils.isEmpty(noteRelationshipMap)) {
+            noteRelationshipMap = new HashSet<>();
         }
-        noteRelationshipMap.putAll(relatedNotes);
+        noteRelationshipMap.addAll(relatedNotes);
         liveNoteRelationshipMap.setValue(noteRelationshipMap);
     }
 }

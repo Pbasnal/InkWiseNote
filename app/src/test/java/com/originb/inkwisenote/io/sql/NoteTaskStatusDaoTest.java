@@ -1,7 +1,7 @@
 package com.originb.inkwisenote.io.sql;
 
 import androidx.room.Room;
-import com.originb.inkwisenote.data.dao.NoteTaskStatusDao;
+import com.originb.inkwisenote.data.dao.tasks.NoteTaskStatusDao;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskName;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;

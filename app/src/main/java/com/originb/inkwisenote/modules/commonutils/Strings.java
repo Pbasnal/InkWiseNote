@@ -1,6 +1,6 @@
 package com.originb.inkwisenote.modules.commonutils;
 
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 
 import java.util.Objects;
@@ -19,10 +19,22 @@ public class Strings {
     }
 
     public static boolean isNumber(String string) {
-        return Try.to(() -> {
-                    Integer.parseInt(string);
-                    return true;
-                }, new DebugContext("Checking If String is Number"))
-                .get().orElse(false);
+        try{
+            Integer.parseInt(string);
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public static boolean isLong(String string) {
+        try{
+            Long.parseLong(string);
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
     }
 }

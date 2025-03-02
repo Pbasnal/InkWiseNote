@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+                                   xmlns:card_view="http://schemas.android.com/apk/res-auto"
+                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                   android:id="@+id/smart_note_drawing_view"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="match_parent"
+                                   android:layout_margin="8dp"
+                                   card_view:cardCornerRadius="8dp"
+                                   card_view:cardElevation="4dp"
+                                   android:backgroundTint="@color/white">
+
+    <com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView
+            android:id="@+id/smart_drawing_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/white"
+
+            android:padding="50dp"/>
+</androidx.cardview.widget.CardView>
+<!--<androidx.constraintlayout.widget.ConstraintLayout-->
+<!--        xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--        xmlns:card_view="http://schemas.android.com/apk/res-auto"-->
+<!--        xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent">-->
+
+<!--    <com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView-->
+<!--            android:id="@+id/smart_drawing_view"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:background="@android:color/white"-->
+
+<!--            android:padding="50dp"/>-->
+<!--</androidx.constraintlayout.widget.ConstraintLayout>-->

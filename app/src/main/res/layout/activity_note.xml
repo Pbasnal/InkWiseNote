@@ -78,7 +78,7 @@
 
         </LinearLayout>
 
-        <com.originb.inkwisenote.ux.views.DrawingView
+        <com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView
                 android:id="@+id/drawing_view"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"

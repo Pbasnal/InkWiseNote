@@ -1,35 +1,34 @@
 package com.originb.inkwisenote.modules.functionalUtils;
 
-import android.util.Log;
-import com.originb.inkwisenote.DebugContext;
+import com.originb.inkwisenote.Logger;
 
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
 public class Try<T> {
 
-    private DebugContext debugContext;
+    private Logger logger;
     private Callable<T> callable;
     private Exception exception;
 
     private String exceptionMessage = "Failed to execute callable";
 
-    private Try(Callable<T> callable, DebugContext debugContext) {
+    private Try(Callable<T> callable, Logger logger) {
         this.callable = callable;
-        this.debugContext = debugContext;
+        this.logger = logger;
     }
 
 
-    public static <T> Try<T> to(Callable<T> callable, DebugContext debugContext) {
-        return new Try<T>(callable, debugContext);
+    public static <T> Try<T> to(Callable<T> callable, Logger logger) {
+        return new Try<T>(callable, logger);
     }
 
-    public static <T> Try<T> to(Runnable runnable, DebugContext debugContext) {
+    public static <T> Try<T> to(Runnable runnable, Logger logger) {
         Callable<T> callable = () -> {
             runnable.run();
             return null;
         };
-        return new Try<T>(callable, debugContext);
+        return new Try<T>(callable, logger);
     }
 
     public Try<T> logIfError(String exceptionMessage) {
@@ -42,7 +41,7 @@ public class Try<T> {
             return Optional.ofNullable(callable.call());
         } catch (Exception e) {
             exception = e;
-            Log.e(debugContext.getDebugInfo(), exceptionMessage, exception);
+            logger.exception( exceptionMessage, exception);
         }
 
         return Optional.empty();
