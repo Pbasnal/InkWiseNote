@@ -71,10 +71,11 @@ public class HandwrittenNoteHolder extends NoteHolder {
 
     @Override
     public void saveNote() {
-        handwrittenNoteRepository.saveHandwrittenNotes(bookId,
-                atomicNote,
-                drawingView.getBitmap(),
-                drawingView.getPageTemplate());
+        BackgroundOps.execute(() ->
+                handwrittenNoteRepository.saveHandwrittenNotes(bookId,
+                        atomicNote,
+                        drawingView.getBitmap(),
+                        drawingView.getPageTemplate()));
     }
 
     public boolean useDefaultBitmap() {
