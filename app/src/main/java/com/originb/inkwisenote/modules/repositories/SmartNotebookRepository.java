@@ -17,23 +17,11 @@ import java.util.stream.Collectors;
 
 public class SmartNotebookRepository {
 
-    //    private NoteMetaFiles noteMetaFiles;
-
-//    private NoteOcrTextDao noteOcrTextDao;
-//    private NoteTermFrequencyDao noteTermFrequencyDao;
-//
-//    private NoteRelationDao noteRelationDao;
-
     private final AtomicNoteEntitiesDao atomicNoteEntitiesDao;
     private final SmartBooksDao smartBooksDao;
     private final SmartBookPagesDao smartBookPagesDao;
 
     public SmartNotebookRepository() {
-//        this.noteMetaFiles = Repositories.getInstance().getNoteMetaRepository();
-
-//        this.noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
-//        this.noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
-//        this.noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
 
         this.atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
         this.smartBooksDao = Repositories.getInstance().getNotesDb().smartBooksDao();

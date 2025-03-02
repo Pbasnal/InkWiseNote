@@ -6,11 +6,13 @@ import android.view.ViewGroup;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
+import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
@@ -23,6 +25,8 @@ import java.util.Map;
 import java.util.Optional;
 
 public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
+
+    private Logger logger = new Logger("SmartNotebookAdapter");
 
     private final ComponentActivity parentActivity;
 
@@ -63,18 +67,20 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
     public void saveNote(String noteTitle) {
         if (smartNotebook == null) return;
-
-        for (NoteHolder noteHolder : noteCards.values()) {
-            noteHolder.saveNote();
-        }
-
-        // update title
-        smartNotebook.getSmartBook().setTitle(noteTitle);
-        //update pages
-        //smartNotebook.getSmartBookPages().
-
         BackgroundOps.execute(() -> {
+            boolean noteUpdated = true;
+            for (NoteHolder noteHolder : noteCards.values()) {
+                noteUpdated &= noteHolder.saveNote();
+            }
+
+            // update title
+            smartNotebook.getSmartBook().setTitle(noteTitle);
             smartNotebookRepository.updateNotebook(smartNotebook);
+            return noteUpdated;
+        }, noteUpdated -> {
+            long bookId = smartNotebook.getSmartBook().getBookId();
+            logger.debug("Scheduling text parsing work for bookId: " + bookId);
+            WorkManagerBus.scheduleWorkForTextParsingForBook(parentActivity, bookId);
         });
     }
 
@@ -84,7 +90,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     // all new notes or pages are inserted after current index so that
     // the note and page at this index is not affected.
     public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
-        if(!noteCards.containsKey(atomicNote.getNoteId())) {
+        if (!noteCards.containsKey(atomicNote.getNoteId())) {
             return;
         }
 

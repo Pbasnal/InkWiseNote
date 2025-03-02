@@ -9,6 +9,8 @@ import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @Getter
 @Setter
 @Entity(tableName = "note_relation",
@@ -57,5 +59,23 @@ public class NoteRelation {
         this.relatedBookId = relatedBookId;
 
         this.relationType = relationType;
+    }
+
+    // Custom equals that compares only 'id'
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true; // Reference equality
+        if (obj == null || getClass() != obj.getClass()) return false; // Type check
+        NoteRelation that = (NoteRelation) obj;
+        return Objects.equals(noteId, that.noteId)
+                && Objects.equals(relatedNoteId, that.relatedNoteId)
+                && Objects.equals(bookId, that.bookId)
+                && Objects.equals(relatedBookId, that.relatedBookId);
+    }
+
+    // Custom hashCode that considers only 'id'
+    @Override
+    public int hashCode() {
+        return Objects.hash(noteId, relatedNoteId, bookId, relatedBookId); // Hash based on 'id'
     }
 }

@@ -41,7 +41,6 @@ public class NoteRelationWorker extends Worker {
     private final Handler mainHandler;
 
     private final Integer TF_IDF_RELATION = 1;
-    private final Integer CREATED_TOGETHER_RELATION = 2;
 
     private final Logger logger = new Logger("NoteRelationWorker");
 
@@ -91,40 +90,49 @@ public class NoteRelationWorker extends Worker {
         }
     }
 
-    public void findRelatedNotes(long bookId, AtomicNoteEntity atomicNote) {
-        Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(atomicNote.getNoteId());
+    public void findRelatedNotes(long bookId, AtomicNoteEntity noteEntity) {
 
-        noteEntityOpt.map(noteEntity -> {
+        Set<Long> relatedNoteIds = getNoteIdsRelatedByTfIdf(noteEntity.getNoteId());
+        relatedNoteIds.remove(noteEntity.getNoteId());
+        if (relatedNoteIds.isEmpty()) {
+            noteRelationDao.deleteByNoteId(noteEntity.getNoteId());
+            return;
+        }
 
-            Set<Long> relatedNoteIds = getNoteIdsRelatedByTfIdf(noteEntity);
-            Map<Long, Long> noteToBookMap = smartBookPagesDao.getSmartBookPagesOfNote(relatedNoteIds).stream()
-                    .collect((Collectors.toMap(SmartBookPage::getNoteId, SmartBookPage::getBookId)));
+        Map<Long, Long> noteToBookMap = smartBookPagesDao.getSmartBookPagesOfNote(relatedNoteIds).stream()
+                .collect((Collectors.toMap(SmartBookPage::getNoteId, SmartBookPage::getBookId)));
 
-            logger.debug("Related noteIds of bookId: " + bookId, ListUtils.listOf(noteEntity, relatedNoteIds));
+        logger.debug("Related noteIds of bookId: " + bookId, ListUtils.listOf(noteEntity, relatedNoteIds));
 
-            List<NoteRelation> noteRelations = relatedNoteIds.stream()
-                    .filter(noteToBookMap::containsKey)
-                    .map(relatedNoteId ->
-                            new NoteRelation(noteEntity.getNoteId(), relatedNoteId, bookId, noteToBookMap.get(relatedNoteId), TF_IDF_RELATION)
-                    )
-                    .collect(Collectors.toList());
+        Set<NoteRelation> noteRelations = relatedNoteIds.stream()
+                .filter(noteId -> noteId > 0)
+                .filter(noteToBookMap::containsKey)
+                .map(relatedNoteId ->
+                        new NoteRelation(noteEntity.getNoteId(),
+                                relatedNoteId,
+                                bookId,
+                                noteToBookMap.get(relatedNoteId),
+                                TF_IDF_RELATION)
+                )
+                .collect(Collectors.toSet());
 
-            noteRelationDao.deleteByNoteId(noteRelations.stream()
-                    .map(NoteRelation::getNoteId).collect(Collectors.toList()));
+        noteRelationDao.deleteByNoteId(noteRelations.stream()
+                .map(NoteRelation::getNoteId)
+                .collect(Collectors.toList()));
 
-            noteRelationDao.deleteByNoteId(noteRelations.stream()
-                    .map(NoteRelation::getRelatedNoteId).collect(Collectors.toList()));
+        noteRelationDao.deleteByNoteId(noteRelations.stream()
+                .map(NoteRelation::getRelatedNoteId)
+                .collect(Collectors.toList()));
 
-            noteRelationDao.insertNoteRelatedNotes(noteRelations);
+        noteRelationDao.insertNoteRelatedNotes(noteRelations);
 
-            if (CollectionUtils.isEmpty(noteRelations)) return noteRelations;
+        if (CollectionUtils.isEmpty(noteRelations)) return;
 
-            mainHandler.post(() -> {
-                // Code to be executed on the main thread
-                AppState.getInstance().updatedRelatedNotes(noteEntity.getNoteId(), noteRelations);
-            });
-            return noteRelations;
-        }).orElse(new ArrayList<>());
+        mainHandler.post(() -> {
+            // Code to be executed on the main thread
+            AppState.getInstance().updatedRelatedNotes(noteRelations);
+        });
+
     }
 
     public Result findRelatedNotes(long noteId) {
@@ -136,26 +144,26 @@ public class NoteRelationWorker extends Worker {
         final Integer CREATED_TOGETHER_RELATION = 2;
 
         noteEntityOpt.map(noteEntity -> {
-            List<NoteRelation> noteRelations = getNoteIdsRelatedByTfIdf(noteEntity).stream().map(relatedNoteId ->
+            Set<NoteRelation> noteRelations = getNoteIdsRelatedByTfIdf(noteEntity.getNoteId()).stream().map(relatedNoteId ->
                             new NoteRelation(noteEntity.getNoteId(), relatedNoteId, -1L, -1L, TF_IDF_RELATION))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
             noteRelations.addAll(getNotesRelatedByCreation(noteEntity).stream().map(relatedNoteId ->
                             new NoteRelation(noteEntity.getNoteId(), relatedNoteId, -1L, -1L, CREATED_TOGETHER_RELATION))
-                    .collect(Collectors.toList()));
+                    .collect(Collectors.toSet()));
 
             noteRelationDao.insertNoteRelatedNotes(noteRelations);
             mainHandler.post(() -> {
                 // Code to be executed on the main thread
-                AppState.getInstance().updatedRelatedNotes(noteEntity.getNoteId(), noteRelations);
+//                AppState.getInstance().updatedRelatedNotes(noteEntity.getNoteId(), noteRelations);
             });
             return noteRelations;
-        }).orElse(new ArrayList<>());
+        }).orElse(new HashSet<>());
 
         return null;
     }
 
-    private Set<Long> getNoteIdsRelatedByTfIdf(NoteEntity noteEntity) {
-        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(noteEntity.getNoteId());
+    private Set<Long> getNoteIdsRelatedByTfIdf(long noteId) {
+        Map<String, Double> tfIdfScores = noteTfIdfLogic.getTfIdf(noteId);
         Set<String> filteredTerms = new HashSet<>();
         for (String key : tfIdfScores.keySet()) {
             if (tfIdfScores.get(key) > 0.1) {

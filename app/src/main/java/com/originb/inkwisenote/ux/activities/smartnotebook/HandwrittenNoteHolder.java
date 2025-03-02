@@ -3,11 +3,14 @@ package com.originb.inkwisenote.ux.activities.smartnotebook;
 import android.graphics.Bitmap;
 import android.view.View;
 import androidx.activity.ComponentActivity;
+import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.PageTemplate;
+import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.HandwrittenNoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -39,7 +42,7 @@ public class HandwrittenNoteHolder extends NoteHolder {
     public void setNote(long bookId, AtomicNoteEntity atomicNote) {
         this.bookId = bookId;
         this.atomicNote = atomicNote;
-        BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, true).noteImage,
+        BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
                 (bitmapOpt) -> {
                     if (bitmapOpt.isPresent()) {
                         bitmapOpt.ifPresent(drawingView::setBitmap);
@@ -70,12 +73,13 @@ public class HandwrittenNoteHolder extends NoteHolder {
     }
 
     @Override
-    public void saveNote() {
-        BackgroundOps.execute(() ->
-                handwrittenNoteRepository.saveHandwrittenNotes(bookId,
-                        atomicNote,
-                        drawingView.getBitmap(),
-                        drawingView.getPageTemplate()));
+    public boolean saveNote() {
+        // Todo: need to reload note images on home page once this is done
+
+        return handwrittenNoteRepository.saveHandwrittenNotes(bookId,
+                atomicNote,
+                drawingView.getBitmap(),
+                drawingView.getPageTemplate());
     }
 
     public boolean useDefaultBitmap() {

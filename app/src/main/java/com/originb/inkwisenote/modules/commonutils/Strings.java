@@ -19,10 +19,22 @@ public class Strings {
     }
 
     public static boolean isNumber(String string) {
-        return Try.to(() -> {
-                    Integer.parseInt(string);
-                    return true;
-                }, new Logger("Checking If String is Number"))
-                .get().orElse(false);
+        try{
+            Integer.parseInt(string);
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
+    }
+
+    public static boolean isLong(String string) {
+        try{
+            Long.parseLong(string);
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
     }
 }

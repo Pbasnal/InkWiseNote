@@ -18,6 +18,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.adapters.smartnotes.SmartNoteGridAdapter;
 import com.originb.inkwisenote.data.config.AppState;
+import com.originb.inkwisenote.data.dao.noterelation.NoteRelationDao;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote.ux.utils.Routing;
@@ -48,6 +49,7 @@ public class HomePageActivity extends AppCompatActivity {
     private HomePageSidebarUiComponent homePageSidebarUiComponent;
 
     private SmartNotebookRepository smartNotebookRepository;
+    private NoteRelationDao noteRelationDao;
 
     private Logger logger = new Logger("HomePageActivity");
 
@@ -59,6 +61,7 @@ public class HomePageActivity extends AppCompatActivity {
         configReader = ConfigReader.fromContext(this);
 
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
 
         createSidebarIfEnabled();
         createGridLayoutToShowNotes();
@@ -110,7 +113,11 @@ public class HomePageActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(gridLayoutManager);
 
         smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
-//        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
+
+        BackgroundOps.execute(() -> noteRelationDao.getAllNoteRelations(),
+                noteRelations -> {
+                    AppState.getInstance().updatedRelatedNotes(noteRelations);
+                });
 
         recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
@@ -134,7 +141,7 @@ public class HomePageActivity extends AppCompatActivity {
         BackgroundOps.execute(() -> smartNotebookRepository.getAllSmartNotebooks(),
                 smartNotebooks -> {
                     logger.debug("Setting smartNotebooks", smartNotebooks);
-                    smartNoteGridAdapter.setSmartNoteBooks(smartNotebooks);
+                    smartNoteGridAdapter.setSmartNotebooks(smartNotebooks);
                 }
         );
 

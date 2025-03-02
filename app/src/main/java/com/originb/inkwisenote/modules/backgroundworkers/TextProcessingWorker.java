@@ -23,6 +23,7 @@ import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote.modules.tfidf.NoteTfIdfLogic;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class TextProcessingWorker extends Worker {
 
         AppState.getInstance().setNoteStatus(bookId, NoteTaskStage.NOTE_READY);
 
-        WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), bookId);
+        WorkManagerBus.scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId);
     }
 
     private void processTextForHandwrittenNote(AtomicNoteEntity atomicNote) {
@@ -188,6 +189,7 @@ public class TextProcessingWorker extends Worker {
         return documentTerms.documentId;
     }
 
+    @Getter
     private static class DocumentTerms {
         protected Long documentId;
         protected List<String> terms;

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.commonutils.DateTimeUtils;
+import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
@@ -34,6 +35,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final SmartNotebookRepository smartNotebookRepository;
+    private final NoteRelationRepository noteRelationRepository;
 
     public GridNoteCardHolder(SmartNoteGridAdapter smartNoteGridAdapter, @NonNull @NotNull View itemView,
                               ComponentActivity parentActivity) {
@@ -54,6 +56,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
     }
 
     public void setNote(SmartNotebook smartNotebook) {
@@ -64,7 +67,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
             AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(0);
 
             BackgroundOps.execute(() ->
-                            handwrittenNoteRepository.getNoteImage(atomicNote, false),
+                            handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.THUMBNAIL),
                     (handwrittenNoteWithImage) ->
                             handwrittenNoteWithImage.noteImage.ifPresent(noteImage::setImageBitmap));
         }
@@ -75,18 +78,23 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         this.noteTitle.setText(noteTitle);
     }
 
-    public void updateNoteRelation(List<NoteRelation> updatedRelations) {
-        if (updatedRelations.isEmpty()) {
+    public int updateNoteRelation(boolean isRelated) {
+        if (!isRelated) {
             relationViewBtn.setVisibility(View.GONE);
         } else {
             relationViewBtn.setVisibility(View.VISIBLE);
         }
+        return getAdapterPosition();
     }
 
     private void onClickDelete() {
         BackgroundOps.execute(() -> {
-            smartNotebook.atomicNotes.forEach(handwrittenNoteRepository::deleteHandwrittenNote);
+            smartNotebook.atomicNotes.forEach(note -> {
+                handwrittenNoteRepository.deleteHandwrittenNote(note);
+                noteRelationRepository.deleteNoteRelationData(note);
+            });
             smartNotebookRepository.deleteSmartNotebook(smartNotebook);
+
         });
 
         smartNoteGridAdapter.removeSmartNotebook(getAdapterPosition());

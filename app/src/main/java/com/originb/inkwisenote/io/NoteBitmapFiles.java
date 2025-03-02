@@ -2,10 +2,10 @@ package com.originb.inkwisenote.io;
 
 import android.graphics.Bitmap;
 import android.util.Log;
-import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.constants.Returns;
+import com.originb.inkwisenote.modules.commonutils.Strings;
 import com.originb.inkwisenote.modules.functionalUtils.Try;
 import com.originb.inkwisenote.io.utils.BitmapFileIoUtils;
 import lombok.AllArgsConstructor;
@@ -35,7 +35,7 @@ public class NoteBitmapFiles {
 
         public BitmapInfo withBitmap(Bitmap bitmap) {
             Log.i("NoteBitmapFiles", "Updating bitmap mutable: " + bitmap.isMutable());
-            return new BitmapInfo(bitmapPath, bitmap );
+            return new BitmapInfo(bitmapPath, bitmap);
         }
     }
 
@@ -59,13 +59,13 @@ public class NoteBitmapFiles {
         for (int i = 0; i < bitmapFiles.length; i++) {
             String bitmapName = bitmapFiles[i].getName();
             Bitmap bitmap = BitmapFileIoUtils.readBitmapFromFile(bitmapFiles[i].getAbsolutePath(),
-                            BitmapScale.THUMBNAIL.getResult())
+                            BitmapScale.THUMBNAIL.getValue())
                     .orElse(null);
             if (Objects.isNull(bitmap)) continue;
 
             String bitmapNameWithoutExtension = bitmapName.replace(".png", "");
             Optional<Long> bitmapId = parseBitmapIdFromFileName(bitmapNameWithoutExtension);
-            if(!bitmapId.isPresent()) continue;
+            if (!bitmapId.isPresent()) continue;
 
             thumbnails.put(bitmapId.get(), new BitmapInfo(bitmapFiles[i].getPath(), bitmap));
         }
@@ -93,7 +93,7 @@ public class NoteBitmapFiles {
         if (thumbnails.containsKey(bitmapId)) {
             BitmapInfo bitmapInfo = thumbnails.get(bitmapId);
             return BitmapFileIoUtils.readBitmapFromFile(bitmapInfo.getBitmapPath(),
-                    BitmapScale.THUMBNAIL.getResult());
+                    BitmapScale.THUMBNAIL.getValue());
         }
 
         return Optional.empty();
@@ -111,7 +111,7 @@ public class NoteBitmapFiles {
         } else if (thumbnails.containsKey(bitmapId)) {
             BitmapInfo bitmapInfo = thumbnails.get(bitmapId);
             BitmapFileIoUtils.readBitmapFromFile(bitmapInfo.getBitmapPath(),
-                            BitmapScale.FULL_SIZE.getResult())
+                            BitmapScale.FULL_SIZE.getValue())
                     .ifPresent(bitmap -> fullImages.put(bitmapId, bitmapInfo.withBitmap(bitmap)));
 
             return Optional.ofNullable(fullImages.get(bitmapId))
@@ -142,7 +142,7 @@ public class NoteBitmapFiles {
 
     public Returns saveBitmap(Long bitmapId, String path, String filename, Bitmap bitmap) {
         if (Objects.isNull(bitmapId)
-                || Strings.isEmptyOrWhitespace(path)
+                || Strings.isNullOrWhitespace(path)
                 || Objects.isNull(bitmap)) {
             return Returns.INVALID_ARGUMENTS;
         }

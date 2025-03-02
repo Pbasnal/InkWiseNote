@@ -23,6 +23,7 @@ public class Repositories {
     private NoteRepository noteRepository;
     private SmartNotebookRepository smartNotebookRepository;
     private HandwrittenNoteRepository handwrittenNoteRepository;
+    private NoteRelationRepository noteRelationRepository;
     // private TesseractsOcr TesseractsOcr;
 
     private NotesDatabase notesDb;
@@ -58,6 +59,7 @@ public class Repositories {
         noteRepository = new NoteRepository();
         smartNotebookRepository = new SmartNotebookRepository();
         handwrittenNoteRepository = new HandwrittenNoteRepository();
+        noteRelationRepository = new NoteRelationRepository();
     }
 
     public static void initRepositories() {

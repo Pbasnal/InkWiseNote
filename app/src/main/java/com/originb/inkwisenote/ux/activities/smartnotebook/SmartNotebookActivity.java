@@ -66,17 +66,17 @@ public class SmartNotebookActivity extends AppCompatActivity {
             if (smartNotebook.getAtomicNotes().size() > 1) {
                 nextButton.setVisibility(View.VISIBLE);
             }
+            createPageNumberText(smartNotebook);
         });
 
         createNextNoteButton();
         createPrevNoteButton();
         createNewNoteButton();
-        createPageNumberText();
     }
 
-    private void createPageNumberText() {
+    private void createPageNumberText(SmartNotebook smartNotebook) {
         pageNumText = findViewById(R.id.page_num_text);
-        pageNumText.setText("1/1");
+        pageNumText.setText("1/" + smartNotebook.atomicNotes.size());
     }
 
     private void createNoteTitleEditText() {
@@ -186,7 +186,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
                 // Scroll to the next item
                 scrollLayout.setScrollRequested(true);
                 recyclerView.smoothScrollToPosition(prevPosition);
-                pageNumText.setText(prevPosition + "/" + smartNotebook.getAtomicNotes().size());
+                pageNumText.setText((prevPosition + 1) + "/" + smartNotebook.getAtomicNotes().size());
             }
             if (prevPosition <= 0) {
                 prevButton.setVisibility(View.INVISIBLE);
@@ -224,8 +224,6 @@ public class SmartNotebookActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         smartNotebookAdapter.saveNote(noteTitleText.getText().toString());
-        logger.debug("Scheduling text parsing work for bookId: " + smartNotebook.getSmartBook().getBookId());
-        WorkManagerBus.scheduleWorkForTextParsingForBook(this, smartNotebook.getSmartBook().getBookId());
     }
 
     @Override

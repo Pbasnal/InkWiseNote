@@ -18,5 +18,5 @@ public abstract class NoteHolder extends RecyclerView.ViewHolder {
 
     public abstract void setNote(long bookId, AtomicNoteEntity atomicNote);
 
-    public abstract void saveNote();
+    public abstract boolean saveNote();
 }

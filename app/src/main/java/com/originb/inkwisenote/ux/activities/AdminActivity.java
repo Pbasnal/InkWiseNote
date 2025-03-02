@@ -10,11 +10,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.google.android.material.tabs.TabLayout;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.data.dao.handwrittennotes.HandwrittenNotesDao;
 import com.originb.inkwisenote.data.dao.notes.AtomicNoteEntitiesDao;
 import com.originb.inkwisenote.data.dao.notes.SmartBookPagesDao;
 import com.originb.inkwisenote.data.dao.notes.SmartBooksDao;
 import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
 import com.originb.inkwisenote.data.dao.noteocr.NoteTermFrequencyDao;
+import com.originb.inkwisenote.data.entities.handwrittennotedata.HandwrittenNoteEntity;
 import com.originb.inkwisenote.data.entities.notedata.*;
 import com.originb.inkwisenote.data.entities.noteocrdata.NoteOcrText;
 import com.originb.inkwisenote.data.entities.noteocrdata.NoteTermFrequency;
@@ -32,6 +34,7 @@ public class AdminActivity extends AppCompatActivity {
     private AtomicNoteEntitiesDao atomicNoteEntitiesDao;
     private SmartBooksDao smartBooksDao;
     private SmartBookPagesDao smartBookPagesDao;
+    private HandwrittenNotesDao handwrittenNotesDao;
 
     private EditText editText;
     private Button filterQueryBtn;
@@ -53,12 +56,14 @@ public class AdminActivity extends AppCompatActivity {
         atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
         smartBooksDao = Repositories.getInstance().getNotesDb().smartBooksDao();
         smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
+        handwrittenNotesDao = Repositories.getInstance().getNotesDb().handwrittenNotesDao();
 
         tablePopulators.put("Term Frequencies", this::showTermFrequencyData);
         tablePopulators.put("Note Text", this::showNoteTextData);
         tablePopulators.put("Atomic Notes", this::showNoteAtomicNotes);
         tablePopulators.put("Smart Books", this::showSmartBooks);
         tablePopulators.put("Smart Book Pages", this::showSmartBookPages);
+        tablePopulators.put("Handwritten Notes", this::showHandWrittenNotes);
 
         TabLayout tabLayout = findViewById(R.id.table_selector_tabs);
         tabLayout.addOnTabSelectedListener(new TableSelector() {
@@ -76,6 +81,30 @@ public class AdminActivity extends AppCompatActivity {
         filterQueryBtn.setOnClickListener((btn) -> {
             Long noteId = Long.parseLong(editText.getText().toString());
             tablePopulators.get(selectedTab).accept(noteId);
+        });
+    }
+
+    private void showHandWrittenNotes(Long noteId) {
+        tableLayout.removeAllViews();
+
+        // Add header
+        TableRow headerRow = new TableRow(this);
+        addHeaderCell(headerRow, "Note ID");
+        addHeaderCell(headerRow, "Book ID");
+        addHeaderCell(headerRow, "Bitmap");
+        addHeaderCell(headerRow, "PageT");
+        tableLayout.addView(headerRow);
+
+        // Add data rows
+        BackgroundOps.execute(() -> handwrittenNotesDao.getAllHandwrittenNotes(), entries -> {
+            for (HandwrittenNoteEntity entry : entries) {
+                TableRow row = new TableRow(this);
+                addCell(row, String.valueOf(entry.getNoteId()));
+                addCell(row, String.valueOf(entry.getBookId()));
+                addCell(row, entry.getBitmapFilePath());
+                addCell(row, entry.getPageTemplateFilePath());
+                tableLayout.addView(row);
+            }
         });
     }
 

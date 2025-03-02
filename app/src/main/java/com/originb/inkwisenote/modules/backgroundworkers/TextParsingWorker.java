@@ -10,6 +10,7 @@ import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.config.AppSecrets;
 import com.originb.inkwisenote.config.ConfigReader;
+import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
 import com.originb.inkwisenote.data.dao.tasks.NoteTaskStatusDao;
@@ -98,7 +99,7 @@ public class TextParsingWorker extends Worker {
     }
 
     public void parseTextForHandwrittenNote(AtomicNoteEntity atomicNote) {
-        HandwrittenNoteWithImage handwrittenNoteWithImage = handwrittenNoteRepository.getNoteImage(atomicNote, true);
+        HandwrittenNoteWithImage handwrittenNoteWithImage = handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE);
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNoteWithImage.handwrittenNoteEntity;
         Optional<Bitmap> bitmapOpt = handwrittenNoteWithImage.noteImage;
         if (!bitmapOpt.isPresent()) {

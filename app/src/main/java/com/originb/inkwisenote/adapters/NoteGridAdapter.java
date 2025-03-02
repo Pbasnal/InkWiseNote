@@ -43,7 +43,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
         this.noteIds = noteIds;
         noteOperations = new NoteOperations(parentActivity);
 
-        AppState.getInstance().observeNoteRelationships(parentActivity, this::updateNoteRelations);
+//        AppState.getInstance().observeNoteRelationships(parentActivity, this::updateNoteRelations);
     }
 
     public void updateNoteRelations(Map<Long, List<NoteRelation>> updatedNoteRelationMap) {
@@ -81,7 +81,7 @@ public class NoteGridAdapter extends RecyclerView.Adapter<NoteGridAdapter.NoteCa
 
                         allNoteRelationMap.putAll(allNoteRelations.stream()
                                 .collect(Collectors.groupingBy(NoteRelation::getRelatedNoteId)));
-                        AppState.getInstance().updatedRelatedNotes(allNoteRelationMap);
+//                        AppState.getInstance().updatedRelatedNotes(allNoteRelationMap);
                     });
         }
     }

@@ -31,7 +31,12 @@ public class HandwrittenNoteRepository {
         }
 
         String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
+        String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
+
+        Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
+
         BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
+        BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
     }
 
     public void saveHandwrittenNotePageTemplate(AtomicNoteEntity atomicNote, PageTemplate pageTemplate) {
@@ -44,9 +49,11 @@ public class HandwrittenNoteRepository {
         BytesFileIoUtils.writeDataToDisk(fullPath, pageTemplate);
     }
 
-    public void saveHandwrittenNotes(long bookId, AtomicNoteEntity atomicNote, Bitmap bitmap, PageTemplate pageTemplate) {
+    public boolean saveHandwrittenNotes(long bookId, AtomicNoteEntity atomicNote, Bitmap bitmap, PageTemplate pageTemplate) {
         String bitmapHash = getBitmapHash(bitmap);
         String pageTemplateHash = getPageTemplateHash(pageTemplate);
+
+        boolean noteUpdated = false;
 
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNotesDao
                 .getHandwrittenNoteForNote(atomicNote.getNoteId());
@@ -63,11 +70,13 @@ public class HandwrittenNoteRepository {
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
             saveHandwrittenNoteImage(atomicNote, bitmap);
             handwrittenNotesDao.insertHandwrittenNote(handwrittenNoteEntity);
+            noteUpdated = true;
         } else if (bitmapHash != null && !bitmapHash.equals(handwrittenNoteEntity.getBitmapHash())) {
             handwrittenNoteEntity.setBitmapHash(bitmapHash);
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
             saveHandwrittenNoteImage(atomicNote, bitmap);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
+            noteUpdated = true;
         }
 
         if (handwrittenNoteEntity.getPageTemplateHash() == null
@@ -82,21 +91,23 @@ public class HandwrittenNoteRepository {
             saveHandwrittenNotePageTemplate(atomicNote, pageTemplate);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
         }
+
+        return noteUpdated;
     }
 
-    public HandwrittenNoteWithImage getNoteImage(AtomicNoteEntity atomicNote, boolean loadFullImage) {
+    public HandwrittenNoteWithImage getNoteImage(AtomicNoteEntity atomicNote, BitmapScale imageScale) {
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNotesDao.getHandwrittenNoteForNote(atomicNote.getNoteId());
         HandwrittenNoteWithImage handwrittenNoteWithImage = new HandwrittenNoteWithImage();
 
         handwrittenNoteWithImage.handwrittenNoteEntity = handwrittenNoteEntity;
 
-        String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
-        if (loadFullImage) {
-            handwrittenNoteWithImage.noteImage = BitmapFileIoUtils.readBitmapFromFile(fullPath, BitmapScale.FULL_SIZE.getResult());
+        String fullPath;
+        if (BitmapScale.FULL_SIZE.equals(imageScale)) {
+            fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
+        } else {
+            fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
         }
-
-        handwrittenNoteWithImage.noteImage = BitmapFileIoUtils.readBitmapFromFile(fullPath, BitmapScale.THUMBNAIL.getResult());
-
+        handwrittenNoteWithImage.noteImage = BitmapFileIoUtils.readBitmapFromFile(fullPath, BitmapScale.FULL_SIZE.getValue());
         return handwrittenNoteWithImage;
     }
 
@@ -108,6 +119,8 @@ public class HandwrittenNoteRepository {
     public void deleteHandwrittenNote(AtomicNoteEntity atomicNote) {
         String bitmapPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
         BitmapFileIoUtils.deleteBitmap(bitmapPath);
+        String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
+        BitmapFileIoUtils.deleteBitmap(thumbnailPath);
 
         String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".pt";
         File noteFile = new File(fullPath);

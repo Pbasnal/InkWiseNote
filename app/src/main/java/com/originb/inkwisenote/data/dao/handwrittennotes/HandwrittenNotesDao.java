@@ -8,6 +8,11 @@ import java.util.Set;
 
 @Dao
 public interface HandwrittenNotesDao {
+
+    @Query("SELECT * FROM handwritten_notes")
+    List<HandwrittenNoteEntity> getAllHandwrittenNotes();
+
+
     @Query("SELECT * FROM handwritten_notes WHERE note_id = :noteId")
     HandwrittenNoteEntity getHandwrittenNoteForNote(Long noteId);
 
