@@ -1,8 +1,6 @@
 package com.originb.inkwisenote.modules.backgroundworkers;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -14,7 +12,6 @@ import com.originb.inkwisenote.data.dao.tasks.NoteTaskStatusDao;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.noteocrdata.NoteOcrText;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskName;
-import com.originb.inkwisenote.data.entities.tasks.NoteTaskStatus;
 import com.originb.inkwisenote.data.entities.tasks.NoteTaskStage;
 import com.originb.inkwisenote.modules.functionalUtils.Either;
 import com.originb.inkwisenote.modules.commonutils.Strings;
@@ -36,7 +33,6 @@ public class TextProcessingWorker extends Worker {
     private NoteTfIdfLogic noteTfIdfLogic;
     private NoteTaskStatusDao noteTaskStatusDao;
     private NoteOcrTextDao noteOcrTextDao;
-    private Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Logger logger = new Logger("TextProcessingWorker");
 
     private final SmartNotebookRepository smartNotebookRepository;
@@ -53,19 +49,10 @@ public class TextProcessingWorker extends Worker {
     @NotNull
     @Override
     public Result doWork() {
-
-        Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), logger)
-                .get();
-        noteIdOpt.ifPresent(noteId -> {
-            if (isNoteIdGreaterThan0(noteId) && validateJobStatus(noteId)) processText(noteId);
-        });
-
-
-        Optional<Long> bookIdOpt = Try.to(() -> getInputData().getLong("book_id", -1), logger)
-                .get();
-        bookIdOpt.ifPresent(bookId -> {
-            if (isNoteIdGreaterThan0(bookId)) processTextForNotebook(bookId);
-        });
+        Try.to(() -> getInputData().getLong("book_id", -1), logger)
+                .get()
+                .filter(this::isNoteIdGreaterThan0)
+                .ifPresent(this::processTextForNotebook);
 
         return Result.success();
     }
@@ -96,39 +83,11 @@ public class TextProcessingWorker extends Worker {
         deleteTextJob(eitherDocId);
     }
 
-    private Result processText(long noteId) {
-        logger.debug("Processing text of note (old flow). noteId: " + noteId);
-        Optional<Long> noteIdOpt = Try.to(() -> getInputData().getLong("note_id", -1), logger).get();
-        NoteOcrText noteOcrTexts = noteOcrTextDao.readTextFromDb(noteId);
-
-        Either<Exception, DocumentTerms> eitherTerms = handleException(this::extractTermsFromNote, noteOcrTexts);
-        Either<Exception, Long> eitherDocId = handleException(
-                (docTerms) -> createBiRelationalGraph(noteId, docTerms), eitherTerms.result);
-        deleteTextJob(eitherDocId);
-
-        AppState.getInstance().setNoteStatus(noteIdOpt.get(), NoteTaskStage.NOTE_READY);
-
-        WorkManagerBus.scheduleWorkForFindingRelatedNotes(getApplicationContext(), noteIdOpt.get());
-
-        return Result.success();
-    }
-
     private boolean isNoteIdGreaterThan0(long noteId) {
         if (noteId == -1) {
             logger.error("Got incorrect note id (-1) as input");
             return false;
         }
-        return true;
-    }
-
-    private boolean validateJobStatus(Long noteId) {
-        NoteTaskStatus jobStatus = noteTaskStatusDao.getNoteStatus(noteId, NoteTaskName.TF_IDF_RELATION);
-        if (Objects.isNull(jobStatus)) return false;
-        if (NoteTaskStage.TOKENIZATION != jobStatus.getStage()) {
-            logger.error("Note is not in TEXT_PARSING stage. " + jobStatus);
-            return false;
-        }
-
         return true;
     }
 

@@ -11,13 +11,11 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.commonutils.DateTimeUtils;
 import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.*;
-import com.originb.inkwisenote.ux.utils.Routing;
+import com.originb.inkwisenote.ux.Routing;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Optional;
 
 public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -83,6 +81,9 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
             relationViewBtn.setVisibility(View.GONE);
         } else {
             relationViewBtn.setVisibility(View.VISIBLE);
+            relationViewBtn.setOnClickListener(v ->
+                    Routing.RelatedNotesActivity
+                            .openRelatedNotesIntent(parentActivity, smartNotebook.getSmartBook().getBookId()));
         }
         return getAdapterPosition();
     }

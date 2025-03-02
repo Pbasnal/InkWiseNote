@@ -8,10 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.adapters.NoteGridAdapter;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
-import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -22,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 

@@ -9,23 +9,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.adapters.NoteGridAdapter;
+import com.originb.inkwisenote.adapters.smartnotes.SmartNoteGridAdapter;
+import com.originb.inkwisenote.commonutils.DateTimeUtils;
+import com.originb.inkwisenote.constants.BitmapScale;
+import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.noterelation.NoteRelationDao;
+import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
+import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
 import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
-import com.originb.inkwisenote.modules.noteoperations.NoteOperations;
-import com.originb.inkwisenote.modules.repositories.NoteRepository;
-import com.originb.inkwisenote.modules.repositories.Repositories;
-import com.originb.inkwisenote.ux.utils.Routing;
+import com.originb.inkwisenote.modules.messaging.BackgroundOps;
+import com.originb.inkwisenote.modules.repositories.*;
+import com.originb.inkwisenote.ux.Routing;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RelatedNotesActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
-    private NoteGridAdapter noteGridAdapter;
-    private NoteOperations noteOperations;
+    private SmartNoteGridAdapter smartNoteGridAdapter;
 
-    private NoteRepository noteRepository;
+    private SmartNotebookRepository smartNotebookRepository;
+    private HandwrittenNoteRepository handwrittenNoteRepository;
+    private NoteRelationRepository noteRelationRepository;
 
     private NoteRelationDao noteRelationDao;
 
@@ -34,36 +42,52 @@ public class RelatedNotesActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_related_notes);
 
-        noteRepository = Repositories.getInstance().getNoteRepository();
+        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+        noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
         noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
-        noteOperations = new NoteOperations(this);
 
-        Long rootNoteId = getIntent().getLongExtra("noteId", 0);
-        NoteEntity noteEntity = getRootNote(rootNoteId);
-        setRootNote(noteEntity);
+        Long rootBookId = getIntent().getLongExtra("book_id", 0);
+
+        BackgroundOps.execute(() -> {
+                    SmartNotebook smartNotebook = getRootBook(rootBookId);
+                    Set<Long> noteIds = smartNotebook.atomicNotes.stream().map(AtomicNoteEntity::getNoteId).collect(Collectors.toSet());
+                    List<NoteRelation> noteRelations = noteRelationDao.getRelatedNotesOf(noteIds);
+                    Set<Long> allBookIds = noteRelations.stream()
+                            .map(NoteRelation::getBookId).collect(Collectors.toSet());
+                    allBookIds.addAll(noteRelations.stream()
+                            .map(NoteRelation::getRelatedBookId).collect(Collectors.toSet()));
+                    allBookIds.remove(smartNotebook.getSmartBook().getBookId());
+                    List<SmartNotebook> allBooks = allBookIds.stream().map(smartNotebookRepository::getSmartNotebook)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .collect(Collectors.toList());
+
+                    AtomicNoteEntity firstNote = smartNotebook.getAtomicNotes().get(0);
+                    HandwrittenNoteWithImage handwrittenNoteWithImage = handwrittenNoteRepository.getNoteImage(firstNote, BitmapScale.THUMBNAIL);
+
+                    NotesDataOfFirstNote notesDataOfFirstNote = new NotesDataOfFirstNote();
+                    notesDataOfFirstNote.setSmartNotebook(smartNotebook);
+                    notesDataOfFirstNote.setHandwrittenNoteWithImage(handwrittenNoteWithImage);
+                    notesDataOfFirstNote.setNoteRelations(new HashSet<>(noteRelations));
+                    notesDataOfFirstNote.setAllBooksToShow(allBooks);
+                    return notesDataOfFirstNote;
+                },
+                notesDataOfFirstNote -> {
+                    setRootNote(notesDataOfFirstNote);
+                    smartNoteGridAdapter.updateNoteRelations(notesDataOfFirstNote.getNoteRelations());
+                    smartNoteGridAdapter.setSmartNotebooks(notesDataOfFirstNote.getAllBooksToShow());
+                });
 
         createGridLayoutToShowNotes();
-
-        noteRelationDao.getRelatedNotesOf(noteEntity.getNoteId())
-                .observe(this, noteRelations -> {
-
-                    Set<Long> relatedNoteIds = new HashSet<>();
-                    for (NoteRelation noteRelation : noteRelations) {
-                        relatedNoteIds.add(noteRelation.getNoteId());
-                        relatedNoteIds.add(noteRelation.getRelatedNoteId());
-                    }
-
-                    relatedNoteIds.remove(rootNoteId);
-                    noteGridAdapter.setNoteIds(relatedNoteIds);
-                });
     }
 
-    private NoteEntity getRootNote(Long rootNoteId) {
-        Optional<NoteEntity> noteEntityOpt = noteRepository.getNoteEntity(rootNoteId);
+    private SmartNotebook getRootBook(Long bookId) {
+        Optional<SmartNotebook> noteEntityOpt = smartNotebookRepository.getSmartNotebook(bookId);
         return noteEntityOpt.get();
     }
 
-    private void setRootNote(NoteEntity noteEntity) {
+    private void setRootNote(NotesDataOfFirstNote notesDataOfFirstNote) {
         View includedCard = findViewById(R.id.main_note_card);
 
         // Then access its child views
@@ -71,20 +95,27 @@ public class RelatedNotesActivity extends AppCompatActivity {
         TextView cardTitle = includedCard.findViewById(R.id.card_name);
         ImageButton deleteButton = includedCard.findViewById(R.id.btn_dlt_note);
 
-
-        noteRepository.getThumbnail(noteEntity.getNoteId())
+        notesDataOfFirstNote.getHandwrittenNoteWithImage().noteImage
                 .ifPresent(cardImage::setImageBitmap);
+        SmartBookEntity smartBook = notesDataOfFirstNote.smartNotebook.getSmartBook();
 
-        String noteTitle = Optional.ofNullable(noteEntity.getNoteMeta().getNoteTitle())
+        String noteTitle = Optional.ofNullable(smartBook.getTitle())
                 .filter(title -> !title.trim().isEmpty())
-                .orElse(noteEntity.getNoteMeta().getCreateDateTimeString());
+                .orElse(DateTimeUtils.msToDateTime(smartBook.getLastModifiedTimeMillis()));
         cardTitle.setText(noteTitle);
 
-        cardImage.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
-        cardTitle.setOnClickListener(v -> Routing.NoteActivity.openNoteIntent(this, getFilesDir().getPath(), noteEntity.getNoteId()));
+        cardImage.setOnClickListener(v -> Routing.SmartNotebookActivity
+                .openNotebookIntent(this, getFilesDir().getPath(), smartBook.getBookId()));
+        cardTitle.setOnClickListener(v -> Routing.SmartNotebookActivity
+                .openNotebookIntent(this, getFilesDir().getPath(), smartBook.getBookId()));
 
         deleteButton.setOnClickListener(v -> {
-            noteOperations.deleteNote(noteEntity.getNoteId());
+            notesDataOfFirstNote.smartNotebook.atomicNotes.forEach(note -> {
+                handwrittenNoteRepository.deleteHandwrittenNote(note);
+                noteRelationRepository.deleteNoteRelationData(note);
+            });
+            smartNotebookRepository.deleteSmartNotebook(notesDataOfFirstNote.smartNotebook);
+
             Routing.HomePageActivity.openHomePageAndStartFresh(this);
         });
     }
@@ -94,9 +125,18 @@ public class RelatedNotesActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        noteGridAdapter = new NoteGridAdapter(this, new ArrayList<>());
+        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
 
-        recyclerView.setAdapter(noteGridAdapter);
+        recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
+    }
+
+    @Getter
+    @Setter
+    public static class NotesDataOfFirstNote {
+        private SmartNotebook smartNotebook;
+        private HandwrittenNoteWithImage handwrittenNoteWithImage;
+        private Set<NoteRelation> noteRelations;
+        private List<SmartNotebook> allBooksToShow;
     }
 } 

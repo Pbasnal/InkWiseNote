@@ -3,22 +3,16 @@ package com.originb.inkwisenote.ux.activities.smartnotebook;
 import android.graphics.Bitmap;
 import android.view.View;
 import androidx.activity.ComponentActivity;
-import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.constants.BitmapScale;
 import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.notedata.NoteEntity;
 import com.originb.inkwisenote.data.notedata.PageTemplate;
-import com.originb.inkwisenote.modules.backgroundworkers.WorkManagerBus;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.HandwrittenNoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote.ux.views.DrawingView;
-import com.originb.inkwisenote.ux.views.PageBackgroundType;
-
-import java.util.Optional;
+import com.originb.inkwisenote.ux.activities.PageBackgroundType;
 
 public class HandwrittenNoteHolder extends NoteHolder {
 

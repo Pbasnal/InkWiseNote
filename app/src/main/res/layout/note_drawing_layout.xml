@@ -10,7 +10,7 @@
                                    card_view:cardElevation="4dp"
                                    android:backgroundTint="@color/white">
 
-    <com.originb.inkwisenote.ux.views.DrawingView
+    <com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView
             android:id="@+id/smart_drawing_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -25,7 +25,7 @@
 <!--        android:layout_width="match_parent"-->
 <!--        android:layout_height="match_parent">-->
 
-<!--    <com.originb.inkwisenote.ux.views.DrawingView-->
+<!--    <com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView-->
 <!--            android:id="@+id/smart_drawing_view"-->
 <!--            android:layout_width="match_parent"-->
 <!--            android:layout_height="match_parent"-->

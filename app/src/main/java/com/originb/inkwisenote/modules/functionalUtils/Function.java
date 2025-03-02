@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.modules;
+package com.originb.inkwisenote.modules.functionalUtils;
 
 @FunctionalInterface
 public interface Function<A, B, C, R> {

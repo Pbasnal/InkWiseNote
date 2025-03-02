@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.ux.views;
+package com.originb.inkwisenote.ux.activities;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

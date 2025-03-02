@@ -9,12 +9,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.Logger;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.data.config.AppState;
-import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
 import com.originb.inkwisenote.data.entities.noterelationdata.NoteRelation;
-import com.originb.inkwisenote.modules.repositories.NoteRelationRepository;
-import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

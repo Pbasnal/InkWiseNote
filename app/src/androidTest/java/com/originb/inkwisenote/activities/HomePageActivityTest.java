@@ -25,7 +25,7 @@ import com.originb.inkwisenote.utils.DrawingTestUtils;
 import com.originb.inkwisenote.ux.activities.AppMainActivity;
 import com.originb.inkwisenote.ux.activities.HomePageActivity;
 
-import com.originb.inkwisenote.ux.views.DrawingView;
+import com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;

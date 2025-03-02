@@ -1,4 +1,4 @@
-package com.originb.inkwisenote.ux.views;
+package com.originb.inkwisenote.ux.activities;
 
 public enum PageBackgroundType {
     BASIC_RULED_PAGE_TEMPLATE("BASIC_RULED_PAGE_TEMPLATE");

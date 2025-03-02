@@ -21,32 +21,25 @@ import com.originb.inkwisenote.data.config.AppState;
 import com.originb.inkwisenote.data.dao.noterelation.NoteRelationDao;
 import com.originb.inkwisenote.modules.messaging.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote.ux.utils.Routing;
-import com.originb.inkwisenote.ux.views.HomePageSidebarUiComponent;
+import com.originb.inkwisenote.ux.Routing;
 import com.originb.inkwisenote.config.Feature;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.R;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class HomePageActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
-    //    private NoteGridAdapter noteGridAdapter;
     private SmartNoteGridAdapter smartNoteGridAdapter;
 
     private ImageButton noteSearchButton;
 
     private ConfigReader configReader;
 
-    private ImageButton settingsMenuBtn;
-
     private LinearLayout fabMenuContainer;
     private FloatingActionButton mainFab;
     private boolean isFabMenuOpen = false;
-
-    private HomePageSidebarUiComponent homePageSidebarUiComponent;
 
     private SmartNotebookRepository smartNotebookRepository;
     private NoteRelationDao noteRelationDao;
@@ -63,14 +56,13 @@ public class HomePageActivity extends AppCompatActivity {
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
 
-        createSidebarIfEnabled();
         createGridLayoutToShowNotes();
         if (configReader.isFeatureEnabled(Feature.MARKDOWN_EDITOR) || configReader.isFeatureEnabled(Feature.CAMERA_NOTE)) {
             setupFabMenu();
         } else {
             createNewNoteButton();
         }
-        createSettingsBtn();
+
         createSearchBtn();
 
         observeAppState();
@@ -96,17 +88,6 @@ public class HomePageActivity extends AppCompatActivity {
         });
     }
 
-    private void createSidebarIfEnabled() {
-        if (!configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) return;
-        homePageSidebarUiComponent = new HomePageSidebarUiComponent(this, configReader);
-        homePageSidebarUiComponent.createSidebarIfEnabled();
-    }
-
-    private void createSettingsBtn() {
-        settingsMenuBtn = findViewById(R.id.main_settings_menu_btn);
-        settingsMenuBtn.setOnClickListener(v -> MainSettingsActivity.getIntent(this));
-    }
-
     public void createGridLayoutToShowNotes() {
         recyclerView = findViewById(R.id.note_card_grid_view);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
@@ -115,9 +96,9 @@ public class HomePageActivity extends AppCompatActivity {
         smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
 
         BackgroundOps.execute(() -> noteRelationDao.getAllNoteRelations(),
-                noteRelations -> {
-                    AppState.getInstance().updatedRelatedNotes(noteRelations);
-                });
+                noteRelations ->
+                        AppState.getInstance().updatedRelatedNotes(noteRelations)
+        );
 
         recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
@@ -125,32 +106,20 @@ public class HomePageActivity extends AppCompatActivity {
 
     public void createNewNoteButton() {
         FloatingActionButton fab = findViewById(R.id.fab_add_note);
-        fab.setOnClickListener(onNewNoteTapCallback);
+        fab.setOnClickListener(v ->
+                Routing.SmartNotebookActivity.newNoteIntent(this, getFilesDir().getPath())
+        );
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        // Refresh the note list on resume
-        Repositories.initRepositories();
-        Set<Long> noteIds = Arrays.stream(Repositories.getInstance().getNoteMetaRepository().getAllNoteIds())
-                .collect(Collectors.toSet());
-
-//        noteGridAdapter.setNoteIds(noteIds);
         BackgroundOps.execute(() -> smartNotebookRepository.getAllSmartNotebooks(),
                 smartNotebooks -> {
                     logger.debug("Setting smartNotebooks", smartNotebooks);
                     smartNoteGridAdapter.setSmartNotebooks(smartNotebooks);
                 }
         );
-
-//        AppState.getInstance().observeNoteStateChange(this, noteStateMap -> {
-//            for (Long noteId : noteStateMap.keySet()) {
-//                NoteTaskStage noteState = noteStateMap.getOrDefault(noteId, NoteTaskStage.NOTE_READY);
-//                noteGridAdapter.updateCardStatus(noteId, noteState);
-//            }
-//        });
     }
 
     @Override
@@ -158,14 +127,9 @@ public class HomePageActivity extends AppCompatActivity {
         if (isFabMenuOpen) {
             closeFabMenu();
         }
-        homePageSidebarUiComponent.onBackPressed();
+
         super.onBackPressed();
     }
-
-    public View.OnClickListener onNewNoteTapCallback = v -> {
-        // Start NoteActivity to create a new note
-        Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
-    };
 
     private void setupFabMenu() {
         fabMenuContainer = findViewById(R.id.fab_menu_container);
@@ -186,7 +150,7 @@ public class HomePageActivity extends AppCompatActivity {
         fabHandwritten.setOnClickListener(v -> {
             toggleFabMenu();
             // Handle handwritten note creation
-            Routing.NoteActivity.newNoteIntent(this, getFilesDir().getPath());
+            Routing.SmartNotebookActivity.newNoteIntent(this, getFilesDir().getPath());
         });
 
         if (configReader.isFeatureEnabled(Feature.CAMERA_NOTE)) {

@@ -1,23 +1,10 @@
-package com.originb.inkwisenote.ux.utils;
+package com.originb.inkwisenote.ux;
 
 import android.content.Context;
 import android.content.Intent;
 
 public class Routing {
     public static class NoteActivity {
-        public static void newNoteIntent(Context packageContext, String currentDirectoryPath) {
-            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.NoteActivity.class);
-            intent.putExtra("workingNotePath", currentDirectoryPath);
-            packageContext.startActivity(intent);
-        }
-
-        public static void openNoteIntent(Context packageContext, String currentDirectoryPath, Long noteId) {
-            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.NoteActivity.class);
-            intent.putExtra("workingNotePath", currentDirectoryPath);
-            intent.putExtra("noteId", noteId);
-            packageContext.startActivity(intent);
-        }
-
         public static void newMarkdownNoteIntent(Context packageContext, String currentDirectoryPath) {
             Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.MarkdownNoteActivity.class);
             intent.putExtra("workingNotePath", currentDirectoryPath);
@@ -39,19 +26,12 @@ public class Routing {
             intent.putExtra("bookId", bookId);
             packageContext.startActivity(intent);
         }
-
-        public static void openNoteIntent(Context packageContext, String currentDirectoryPath, Long noteId) {
-            Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.smartnotebook.SmartNotebookActivity.class);
-            intent.putExtra("workingNotePath", currentDirectoryPath);
-            intent.putExtra("noteId", noteId);
-            packageContext.startActivity(intent);
-        }
     }
 
     public static class RelatedNotesActivity {
-        public static void openRelatedNotesIntent(Context packageContext, Long noteId) {
+        public static void openRelatedNotesIntent(Context packageContext, Long bookId) {
             Intent intent = new Intent(packageContext, com.originb.inkwisenote.ux.activities.RelatedNotesActivity.class);
-            intent.putExtra("noteId", noteId);
+            intent.putExtra("book_id", bookId);
             packageContext.startActivity(intent);
 
             if (packageContext.getClass() == com.originb.inkwisenote.ux.activities.RelatedNotesActivity.class) {
