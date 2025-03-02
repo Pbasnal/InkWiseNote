@@ -15,8 +15,6 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.InkWiseNote">
 
-        <activity android:name=".ux.activities.MainSettingsActivity"/>
-        <activity android:name=".ux.activities.NoteActivity"/>
         <activity android:name=".ux.activities.NoteSearchActivity"/>
         <activity android:name=".ux.activities.HomePageActivity"/>
         <activity android:name=".ux.activities.MarkdownNoteActivity"/>
