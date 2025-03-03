@@ -1,6 +1,8 @@
 package com.originb.inkwisenote.modules.smartnotes.ui;
 
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -31,9 +33,10 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private final ImageButton deleteBtn;
     private final ImageView noteStatusImg;
     private final ImageView relationViewBtn;
+    private final Animation rotateAnimation;
+
+    private boolean isAnimationRunning = false;
     private SmartNotebook smartNotebook;
-
-
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final SmartNotebookRepository smartNotebookRepository;
     private final NoteRelationRepository noteRelationRepository;
@@ -49,11 +52,11 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         deleteBtn = itemView.findViewById(R.id.btn_dlt_note);
         relationViewBtn = itemView.findViewById(R.id.btn_relation_view);
         noteStatusImg = itemView.findViewById(R.id.img_note_status);
+        rotateAnimation = AnimationUtils.loadAnimation(parentActivity, R.anim.anim_rotate);
 
         noteImage.setOnClickListener(view -> onClick(itemView));
         deleteBtn.setOnClickListener(view -> onClickDelete());
         relationViewBtn.setVisibility(View.GONE);
-
 
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
@@ -82,7 +85,22 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     public void updateNoteStatus(Events.NoteStatus noteStatus) {
+        return;
 
+//        if ("NOTE_READY" != noteStatus.status) {
+//            if (!isAnimationRunning) {
+////                noteStatusImg.clearAnimation();
+//                noteStatusImg.setImageResource(R.drawable.ic_in_process);
+//                noteStatusImg.post(() -> {
+//                    noteStatusImg.startAnimation(rotateAnimation);
+//                });
+//                isAnimationRunning = true;
+//            }
+//        } else {
+//            noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
+//            noteStatusImg.clearAnimation();
+//            isAnimationRunning = false;
+//        }
     }
 
     public int updateNoteRelation(boolean isRelated) {
