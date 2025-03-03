@@ -3,8 +3,8 @@ package com.originb.inkwisenote.modules.repositories;
 
 import android.content.Context;
 import androidx.room.Room;
-import com.originb.inkwisenote.data.notedata.PageSettings;
-import com.originb.inkwisenote.io.sql.NotesDatabase;
+import com.originb.inkwisenote.common.NotesDatabase;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,8 +19,6 @@ public class Repositories {
 
     private NotesDatabase notesDb;
 
-    private PageSettings pageSettings;
-
     private Repositories() {
     }
 
@@ -31,8 +29,11 @@ public class Repositories {
         return instance;
     }
 
-    public static void registerRepositories(Context appContext) {
-        getInstance().registerRepositoriesInternal(appContext);
+    public static Repositories registerRepositories(Context appContext) {
+        Repositories instance = getInstance();
+        instance.registerRepositoriesInternal(appContext);
+
+        return instance;
     }
 
     private void registerRepositoriesInternal(Context appContext) {
@@ -40,8 +41,6 @@ public class Repositories {
                         NotesDatabase.class, "NoteText.db")
                 .fallbackToDestructiveMigration()
                 .build();
-
-        pageSettings = new PageSettings();
 
         smartNotebookRepository = new SmartNotebookRepository();
         handwrittenNoteRepository = new HandwrittenNoteRepository();

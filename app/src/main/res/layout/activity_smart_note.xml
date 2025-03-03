@@ -7,7 +7,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:backgroundTint="@color/white"
-        tools:context=".ux.activities.smartnotebook.SmartNotebookActivity"
+        tools:context=".modules.smartnotes.ui.SmartNotebookActivity"
         android:orientation="vertical">
 
 
@@ -102,7 +102,6 @@
                         android:visibility="visible"
                         android:src="@drawable/ic_arrow_back"
                         android:layout_gravity="center"/>
-
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -119,7 +118,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:spanCount="1"
-
             />
 
 

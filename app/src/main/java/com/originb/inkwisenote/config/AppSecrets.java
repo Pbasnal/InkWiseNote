@@ -3,7 +3,7 @@ package com.originb.inkwisenote.config;
 import android.util.Log;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.originb.inkwisenote.BuildConfig;
-import com.originb.inkwisenote.modules.commonutils.Strings;
+import com.originb.inkwisenote.common.Strings;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 

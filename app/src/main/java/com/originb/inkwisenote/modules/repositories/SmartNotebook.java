@@ -1,8 +1,8 @@
 package com.originb.inkwisenote.modules.repositories;
 
-import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -43,5 +43,10 @@ public class SmartNotebook {
             smartBookPage.setPageOrder(pageOrder);
             pageOrder++;
         }
+    }
+
+    public void removeNote(long noteId) {
+        smartBookPages.removeIf(p -> p.getNoteId() == noteId);
+        atomicNotes.removeIf(p -> p.getNoteId() == noteId);
     }
 }

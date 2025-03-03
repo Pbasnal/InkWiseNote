@@ -1,8 +1,9 @@
 package com.originb.inkwisenote.io.sql;
 
 import androidx.room.Room;
-import com.originb.inkwisenote.data.dao.noteocr.NoteOcrTextDao;
-import com.originb.inkwisenote.data.entities.noteocrdata.NoteOcrText;
+import com.originb.inkwisenote.common.NotesDatabase;
+import com.originb.inkwisenote.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote.modules.ocr.data.NoteOcrText;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

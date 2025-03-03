@@ -1,13 +1,13 @@
 package com.originb.inkwisenote.modules.repositories;
 
-import com.originb.inkwisenote.commonutils.DateTimeUtils;
-import com.originb.inkwisenote.data.dao.notes.AtomicNoteEntitiesDao;
-import com.originb.inkwisenote.data.dao.notes.SmartBookPagesDao;
-import com.originb.inkwisenote.data.dao.notes.SmartBooksDao;
-import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
-import com.originb.inkwisenote.modules.commonutils.Strings;
+import com.originb.inkwisenote.common.DateTimeUtils;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntitiesDao;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPagesDao;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBooksDao;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
+import com.originb.inkwisenote.common.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +52,18 @@ public class SmartNotebookRepository {
         smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+    }
+
+    public void deleteNoteFromBook(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+        // will pages allow this to be deleted first?
+        atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
+        smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
+
+        SmartNotebook updatedSmartNotebook = getSmartNotebook(smartNotebook.getSmartBook().getBookId()).get();
+        if(updatedSmartNotebook.atomicNotes.isEmpty()) {
+            smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
+            smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+        }
     }
 
     public void updateNotebook(SmartNotebook smartNotebook) {

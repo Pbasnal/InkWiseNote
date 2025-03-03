@@ -66,6 +66,7 @@ dependencies {
     implementation("androidx.work:work-runtime:2.9.0")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("io.noties.markwon:core:4.6.2")
+    implementation("org.greenrobot:eventbus:3.3.1")
 
     implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")

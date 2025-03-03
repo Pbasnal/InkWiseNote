@@ -11,13 +11,15 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.constants.BitmapScale;
-import com.originb.inkwisenote.data.entities.handwrittennotedata.HandwrittenNoteEntity;
-import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
+import com.originb.inkwisenote.common.BitmapScale;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteWithImage;
 import com.originb.inkwisenote.modules.repositories.*;
 import com.originb.inkwisenote.utils.DrawingTestUtils;
-import com.originb.inkwisenote.ux.activities.AppMainActivity;
-import com.originb.inkwisenote.ux.activities.smartnotebook.SmartNotebookActivity;
+import com.originb.inkwisenote.AppMainActivity;
+import com.originb.inkwisenote.modules.smartnotes.ui.SmartNotebookActivity;
 import com.originb.inkwisenote.testutils.HandwritingStrokeHelper;
 
 import org.junit.Rule;
@@ -25,7 +27,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -88,14 +89,12 @@ public class SmartNotebookActivityTest {
         showTestStep("Writing 'Hello World!'");
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Repositories.registerRepositories(context);
-        Repositories.initRepositories();
 
         List<List<HandwritingStrokeHelper.Point>> allStrokes = HandwritingStrokeHelper.getHelloWorldStrokes(0, 0);
 
         for (List<HandwritingStrokeHelper.Point> stroke : allStrokes) {
             onView(withId(R.id.smart_drawing_view))
                     .perform(DrawingTestUtils.drawStroke("Writing stroke", stroke));
-//            waitFor(0); // Small delay between strokes
         }
 
         pressBack();

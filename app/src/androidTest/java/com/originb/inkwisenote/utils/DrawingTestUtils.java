@@ -7,7 +7,7 @@ import android.view.View;
 import androidx.test.espresso.UiController;
 import androidx.test.espresso.ViewAction;
 import com.originb.inkwisenote.testutils.HandwritingStrokeHelper;
-import com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView;
+import com.originb.inkwisenote.modules.handwrittennotes.ui.DrawingView;
 import org.hamcrest.Matcher;
 
 import java.util.ArrayList;

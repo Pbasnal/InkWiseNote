@@ -2,9 +2,9 @@ package com.originb.inkwisenote.config;
 
 import android.content.Context;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.originb.inkwisenote.Logger;
+import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.R;
-import com.originb.inkwisenote.modules.functionalUtils.Try;
+import com.originb.inkwisenote.functionalUtils.Try;
 import lombok.Getter;
 
 import java.io.InputStream;
