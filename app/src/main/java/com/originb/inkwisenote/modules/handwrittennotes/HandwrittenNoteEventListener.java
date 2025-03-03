@@ -1,6 +1,5 @@
 package com.originb.inkwisenote.modules.handwrittennotes;
 
-import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
 import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -9,23 +8,21 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-public class HandwrittenNoteEventListner {
+public class HandwrittenNoteEventListener {
 
     private HandwrittenNoteRepository handwrittenNoteRepository;
 
-    public HandwrittenNoteEventListner() {
+    public HandwrittenNoteEventListener() {
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         EventBus.getDefault().register(this);
     }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onNotebookDelete(Events.NotebookDeleted notebookToDelete) {
-//        BackgroundOps.execute(() -> {
         SmartNotebook smartNotebook = notebookToDelete.smartNotebook;
         smartNotebook.atomicNotes.forEach(note ->
                 handwrittenNoteRepository.deleteHandwrittenNote(note)
         );
-//        });
     }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)

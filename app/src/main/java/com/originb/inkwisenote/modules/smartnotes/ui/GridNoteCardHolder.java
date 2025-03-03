@@ -81,6 +81,10 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
                         handwrittenNoteWithImage.noteImage.ifPresent(noteImage::setImageBitmap));
     }
 
+    public void updateNoteStatus(Events.NoteStatus noteStatus) {
+
+    }
+
     public int updateNoteRelation(boolean isRelated) {
         if (!isRelated) {
             relationViewBtn.setVisibility(View.GONE);
@@ -112,4 +116,6 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
                 parentActivity.getFilesDir().getPath(),
                 smartNotebook.getSmartBook().getBookId());
     }
+
+
 }

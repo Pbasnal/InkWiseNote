@@ -65,19 +65,13 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     public void saveNote(String noteTitle) {
         if (smartNotebook == null) return;
         BackgroundOps.execute(() -> {
-            boolean noteUpdated = true;
             for (NoteHolder noteHolder : noteCards.values()) {
-                noteUpdated &= noteHolder.saveNote();
+                noteHolder.saveNote();
             }
 
             // update title
             smartNotebook.getSmartBook().setTitle(noteTitle);
             smartNotebookRepository.updateNotebook(smartNotebook);
-            return noteUpdated;
-        }, noteUpdated -> {
-            long bookId = smartNotebook.getSmartBook().getBookId();
-            logger.debug("Scheduling text parsing work for bookId: " + bookId);
-            WorkManagerBus.scheduleWorkForTextParsingForBook(parentActivity, bookId);
         });
     }
 

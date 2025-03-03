@@ -8,11 +8,13 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.common.Routing;
 import com.originb.inkwisenote.config.AppState;
 import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
 import com.originb.inkwisenote.modules.noterelation.data.NoteRelation;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
+import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,17 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
         this.smartNotebooks = smartNotebooks;
 
         AppState.observeNoteRelationships(parentActivity, this::updateNoteRelations);
+        EventBus.getDefault().register(this);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNoteStatusChange(Events.NoteStatus noteStatus) {
+        long bookId = noteStatus.smartNotebook.getSmartBook().getBookId();
+
+        if(bookCards.containsKey(bookId)) {
+            GridNoteCardHolder holder = bookCards.get(bookId);
+            holder.updateNoteStatus(noteStatus);
+        }
     }
 
     public void updateNoteRelations(Set<NoteRelation> updatedNoteRelationMap) {

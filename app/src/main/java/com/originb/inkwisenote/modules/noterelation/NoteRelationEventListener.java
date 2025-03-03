@@ -1,21 +1,18 @@
 package com.originb.inkwisenote.modules.noterelation;
 
-import androidx.lifecycle.LifecycleOwner;
 import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
-import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote.modules.repositories.NoteRelationRepository;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-public class NoteRelationEventListner {
+public class NoteRelationEventListener {
     private NoteRelationRepository noteRelationRepository;
 
-    public NoteRelationEventListner() {
+    public NoteRelationEventListener() {
         noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
         EventBus.getDefault().register(this);
     }

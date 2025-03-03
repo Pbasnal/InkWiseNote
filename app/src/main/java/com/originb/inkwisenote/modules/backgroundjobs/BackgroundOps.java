@@ -30,6 +30,16 @@ public class BackgroundOps {
 
     }
 
+    public static void execute(Runnable runnable, Runnable continueOnMainThread) {
+        try {
+            getInstance().executor.execute(runnable);
+            getInstance().mainThreadHandler.post(continueOnMainThread::run);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static <T> void execute(Callable<T> callable, Consumer<T> resultOnMainThread) {
         try {
             Future<T> callFuture = getInstance().executor.submit(callable);

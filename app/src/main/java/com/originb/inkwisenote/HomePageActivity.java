@@ -21,6 +21,7 @@ import com.originb.inkwisenote.config.AppState;
 import com.originb.inkwisenote.modules.noterelation.data.NoteRelationDao;
 import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote.modules.sidebar.HomePageSidebarUiComponent;
 import com.originb.inkwisenote.modules.smartnotes.ui.SmartNoteGridAdapter;
 import com.originb.inkwisenote.common.Routing;
 import com.originb.inkwisenote.config.Feature;
@@ -43,6 +44,8 @@ public class HomePageActivity extends AppCompatActivity {
 
     private SmartNotebookRepository smartNotebookRepository;
     private NoteRelationDao noteRelationDao;
+
+    private HomePageSidebarUiComponent homePageSidebarUiComponent;
 
     private Repositories repositories;
 
@@ -67,7 +70,7 @@ public class HomePageActivity extends AppCompatActivity {
         }
 
         createSearchBtn();
-
+        createSidebarIfEnabled();
         observeAppState();
     }
 
@@ -89,6 +92,12 @@ public class HomePageActivity extends AppCompatActivity {
             Intent intent = new Intent(HomePageActivity.this, NoteSearchActivity.class);
             startActivity(intent);
         });
+    }
+
+    private void createSidebarIfEnabled() {
+        if (!configReader.isFeatureEnabled(Feature.HOME_PAGE_NAVIGATION_SIDEBAR)) return;
+        homePageSidebarUiComponent = new HomePageSidebarUiComponent(this, configReader);
+        homePageSidebarUiComponent.createSidebarIfEnabled();
     }
 
     public void createGridLayoutToShowNotes() {
@@ -129,7 +138,7 @@ public class HomePageActivity extends AppCompatActivity {
         if (isFabMenuOpen) {
             closeFabMenu();
         }
-
+        homePageSidebarUiComponent.onBackPressed();
         super.onBackPressed();
     }
 

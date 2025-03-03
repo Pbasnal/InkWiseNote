@@ -8,10 +8,10 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-public class SmartNotebookEventListner {
+public class SmartNotebookEventListener {
     private SmartNotebookRepository smartNotebookRepository;
 
-    public SmartNotebookEventListner() {
+    public SmartNotebookEventListener() {
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         EventBus.getDefault().register(this);
     }

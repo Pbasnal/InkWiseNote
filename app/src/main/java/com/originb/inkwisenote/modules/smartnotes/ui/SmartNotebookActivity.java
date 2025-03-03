@@ -10,6 +10,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.common.DateTimeUtils;
+import com.originb.inkwisenote.common.Routing;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
@@ -81,6 +82,12 @@ public class SmartNotebookActivity extends AppCompatActivity {
     public void onNoteDelete(Events.NoteDeleted noteDeleted) {
         long noteId = noteDeleted.atomicNote.getNoteId();
         smartNotebook.removeNote(noteId);
+
+        if (smartNotebook.atomicNotes.isEmpty()) {
+            BackgroundOps.execute(() -> smartNotebookRepository.deleteSmartNotebook(smartNotebook),
+                    () -> Routing.HomePageActivity.openHomePageAndStartFresh(this));
+        }
+
         smartNotebookAdapter.removeNoteCard(noteId);
         updatePageNumberText(smartNotebook);
     }
@@ -234,6 +241,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         smartNotebookAdapter.saveNote(noteTitleText.getText().toString());
+        EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, this));
     }
 
     @Override
