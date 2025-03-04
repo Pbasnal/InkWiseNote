@@ -7,6 +7,7 @@ import com.originb.inkwisenote.config.ConfigKeys;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.config.AppState;
 import com.originb.inkwisenote.modules.handwrittennotes.HandwrittenNoteEventListener;
+import com.originb.inkwisenote.modules.textnote.TextNoteListener;
 import com.originb.inkwisenote.modules.noterelation.NoteRelationEventListener;
 import com.originb.inkwisenote.modules.ocr.worker.NoteOcrEventListener;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -18,6 +19,7 @@ public class AppMainActivity extends AppCompatActivity {
     private HandwrittenNoteEventListener handwrittenNoteEventListener;
     private NoteRelationEventListener noteRelationEventListener;
     private NoteOcrEventListener noteOcrEventListener;
+    private TextNoteListener textNoteListener;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,5 +45,6 @@ public class AppMainActivity extends AppCompatActivity {
         handwrittenNoteEventListener = new HandwrittenNoteEventListener();
         noteRelationEventListener = new NoteRelationEventListener();
         noteOcrEventListener = new NoteOcrEventListener();
+        textNoteListener = new TextNoteListener();
     }
 }

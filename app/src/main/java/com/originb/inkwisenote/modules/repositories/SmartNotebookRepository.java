@@ -2,12 +2,7 @@ package com.originb.inkwisenote.modules.repositories;
 
 import com.originb.inkwisenote.common.DateTimeUtils;
 import com.originb.inkwisenote.common.ListUtils;
-import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntitiesDao;
-import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPagesDao;
-import com.originb.inkwisenote.modules.smartnotes.data.SmartBooksDao;
-import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote.modules.smartnotes.data.SmartBookEntity;
-import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
+import com.originb.inkwisenote.modules.smartnotes.data.*;
 import com.originb.inkwisenote.common.Strings;
 
 import java.util.*;
@@ -28,9 +23,10 @@ public class SmartNotebookRepository {
 
     // Create the data and return the notebook entity
     public Optional<SmartNotebook> initializeNewSmartNotebook(String title,
-                                                              String directoryPath) {
+                                                              String directoryPath,
+                                                              NoteType noteType) {
 
-        AtomicNoteEntity atomicNoteEntity = newHandwrittenNote("", directoryPath);
+        AtomicNoteEntity atomicNoteEntity = newAtomicNote("", directoryPath, noteType);
         SmartBookEntity smartBookEntity = newSmartBook(title, atomicNoteEntity.getCreatedTimeMillis());
         SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity, 0);
         SmartNotebook smartNotebook = new SmartNotebook(smartBookEntity, smartBookPage, atomicNoteEntity);
@@ -187,7 +183,7 @@ public class SmartNotebookRepository {
         return smartNotebooks;
     }
 
-    public AtomicNoteEntity newHandwrittenNote(String filename, String filepath) {
+    public AtomicNoteEntity newAtomicNote(String filename, String filepath, NoteType noteType) {
         long createdTimeMillis = System.currentTimeMillis();
         AtomicNoteEntity atomicNoteEntity = new AtomicNoteEntity();
         atomicNoteEntity.setCreatedTimeMillis(createdTimeMillis);
@@ -203,7 +199,7 @@ public class SmartNotebookRepository {
             atomicNoteEntity.setFilepath(filepath);
         }
 
-        atomicNoteEntity.setNoteType("handwritten_png");
+        atomicNoteEntity.setNoteType(noteType.toString());
 
         long noteId = atomicNoteEntitiesDao.insertAtomicNote(atomicNoteEntity);
         atomicNoteEntity.setNoteId(noteId);

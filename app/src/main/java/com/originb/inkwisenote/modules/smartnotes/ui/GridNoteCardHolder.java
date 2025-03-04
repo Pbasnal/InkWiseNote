@@ -19,6 +19,8 @@ import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote.modules.repositories.*;
 import com.originb.inkwisenote.common.Routing;
+import com.originb.inkwisenote.modules.smartnotes.data.NoteType;
+import com.originb.inkwisenote.modules.textnote.data.TextNotesDao;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +36,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private ComponentActivity parentActivity;
 
     private final ImageView noteImage;
+    private final TextView textPreview;
     private final TextView noteTitle;
     private final ImageButton deleteBtn;
     private final ImageView noteStatusImg;
@@ -43,6 +46,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private boolean isAnimationRunning = false;
     private SmartNotebook smartNotebook;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
+    private final TextNotesDao textNotesDao;
     private final SmartNotebookRepository smartNotebookRepository;
     private final NoteRelationRepository noteRelationRepository;
 
@@ -55,6 +59,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         this.parentActivity = parentActivity;
 
         noteImage = itemView.findViewById(R.id.card_image);
+        textPreview = itemView.findViewById(R.id.note_text_preview);
         noteTitle = itemView.findViewById(R.id.card_name);
         deleteBtn = itemView.findViewById(R.id.btn_dlt_note);
         relationViewBtn = itemView.findViewById(R.id.btn_relation_view);
@@ -62,10 +67,12 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         rotateAnimation = AnimationUtils.loadAnimation(parentActivity, R.anim.anim_rotate);
 
         noteImage.setOnClickListener(view -> onClick(itemView));
+        textPreview.setOnClickListener(view -> onClick(itemView));
         deleteBtn.setOnClickListener(view -> onClickDelete());
         relationViewBtn.setVisibility(View.GONE);
 
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+        textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
 
@@ -83,14 +90,20 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         if (numberOfNotes == 0) return;
         AtomicNoteEntity firstNote = smartNotebook.getAtomicNotes().get(0);
 
-        if (!firstNote.getNoteType().equals("handwritten_png")) {
-            return;
+        if (NoteType.TEXT_NOTE.equals(firstNote.getNoteType())) {
+            BackgroundOps.execute(() ->
+                            textNotesDao.getTextNoteForBook(smartNotebook.getSmartBook().getBookId()),
+                    (textNote) -> {
+                        noteImage.setVisibility(View.GONE);
+                        textPreview.setVisibility(View.VISIBLE);
+                        textPreview.setText(textNote.getNoteText());
+                    });
+        } else {
+            BackgroundOps.execute(() ->
+                            handwrittenNoteRepository.getNoteImage(firstNote, BitmapScale.THUMBNAIL),
+                    (handwrittenNoteWithImage) ->
+                            handwrittenNoteWithImage.noteImage.ifPresent(noteImage::setImageBitmap));
         }
-
-        BackgroundOps.execute(() ->
-                        handwrittenNoteRepository.getNoteImage(firstNote, BitmapScale.THUMBNAIL),
-                (handwrittenNoteWithImage) ->
-                        handwrittenNoteWithImage.noteImage.ifPresent(noteImage::setImageBitmap));
     }
 
     public void updateNoteStatus(Events.NoteStatus noteStatus) {
@@ -159,9 +172,15 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 
     @Override
     public void onClick(View v) {
-        Routing.SmartNotebookActivity.openNotebookIntent(parentActivity,
-                parentActivity.getFilesDir().getPath(),
-                smartNotebook.getSmartBook().getBookId());
+        if (smartNotebook.getAtomicNotes().get(0).getNoteType().equals(NoteType.TEXT_NOTE.toString())) {
+            Routing.TextNoteActivity.openNotebookIntent(parentActivity,
+                    parentActivity.getFilesDir().getPath(),
+                    smartNotebook.getSmartBook().getBookId());
+        } else {
+            Routing.SmartNotebookActivity.openNotebookIntent(parentActivity,
+                    parentActivity.getFilesDir().getPath(),
+                    smartNotebook.getSmartBook().getBookId());
+        }
     }
 
     private void initializeAnimation() {
