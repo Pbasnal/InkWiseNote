@@ -38,7 +38,7 @@ public class HandwrittenNoteHolder extends NoteHolder {
         deleteNote.setOnClickListener(v -> {
             BackgroundOps.execute(() ->
                     EventBus.getDefault().post(new Events.NoteDeleted(
-                            smartNotebookRepository.getSmartNotebook(bookId).get(),
+                            smartNotebookRepository.getSmartNotebooks(bookId).get(),
                             atomicNote
                     )));
 

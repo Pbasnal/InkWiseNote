@@ -6,7 +6,7 @@ import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote.modules.ocr.data.NoteTermFrequency;
 import com.originb.inkwisenote.modules.ocr.data.TermOccurrence;
-import com.originb.inkwisenote.common.Maps;
+import com.originb.inkwisenote.common.MapsUtils;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 
 import java.util.*;
@@ -108,12 +108,12 @@ public class NoteTfIdfLogic {
         Map<String, Double> tfIdfScores = new HashMap<>();
 
         Map<String, Integer> termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId));
-        if (Maps.isEmpty(termFrequenciesOfNote)) return tfIdfScores;
+        if (MapsUtils.isEmpty(termFrequenciesOfNote)) return tfIdfScores;
 
         int N = noteTermFrequencyDao.getDistinctNoteIdCount();
         Map<String, Double> termIdfScores = calculateIdf(termFrequenciesOfNote.keySet(), N);
 
-        if (Maps.isEmpty(termIdfScores)) return tfIdfScores;
+        if (MapsUtils.isEmpty(termIdfScores)) return tfIdfScores;
 
         int totalTerms = termFrequenciesOfNote.values().stream().mapToInt(Integer::intValue).sum();
 
@@ -129,7 +129,7 @@ public class NoteTfIdfLogic {
 
     public Map<String, Set<Long>> getRelatedDocuments(Set<String> terms) {
         Map<String, Set<Long>> termNoteIds = toTermNoteIdsMap(noteTermFrequencyDao.getNoteIdsForTerms(terms));
-        if (Maps.isEmpty(termNoteIds)) return new HashMap<>();
+        if (MapsUtils.isEmpty(termNoteIds)) return new HashMap<>();
         return termNoteIds;
     }
 

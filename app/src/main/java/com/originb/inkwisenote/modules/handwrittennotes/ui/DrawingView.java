@@ -56,7 +56,7 @@ public class DrawingView extends View {
         userDrawingBitmap = getDefaultBitmap();
 
         userDrwaingCanvas = new Canvas(userDrawingBitmap);
-        ruledPageBackground = new RuledPageBackground(ConfigReader.fromContext(context),
+        ruledPageBackground = new RuledPageBackground(getContext(), ConfigReader.fromContext(context),
                 1000, 1000);
 
         pageTemplateBitmap = ruledPageBackground.drawTemplate();

@@ -54,7 +54,7 @@ public class TextProcessingWorker extends Worker {
 
     private void processTextForNotebook(long bookId) {
         logger.debug("Processing text of book (new flow). noteId: " + bookId);
-        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebook(bookId);
+        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
         if (!smartBookOpt.isPresent()) return;
         SmartNotebook smartNotebook = smartBookOpt.get();
 

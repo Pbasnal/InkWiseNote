@@ -66,7 +66,7 @@ public class NoteRelationWorker extends Worker {
     public void findRelatedNotesOfSmartBook(long bookId) {
         logger.debug("Find related notes for bookId (new flow): " + bookId);
 
-        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebook(bookId);
+        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
         if (!smartBookOpt.isPresent()) {
             logger.error("SmartNotebook doesn't exists for bookId: " + bookId);
             return;

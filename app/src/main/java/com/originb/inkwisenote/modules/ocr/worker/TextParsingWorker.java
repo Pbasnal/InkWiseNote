@@ -62,7 +62,7 @@ public class TextParsingWorker extends Worker {
     public void parseTextForNotebook(long bookId) {
         logger.debug("Parsing text from a notebook (new flow): " + bookId);
 
-        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebook(bookId);
+        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
         if (!smartBookOpt.isPresent()) return;
         SmartNotebook smartNotebook = smartBookOpt.get();
 

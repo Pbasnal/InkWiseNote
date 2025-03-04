@@ -4,14 +4,17 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.R;
+import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote.modules.ocr.data.NoteOcrText;
 import com.originb.inkwisenote.modules.repositories.Repositories;
+import com.originb.inkwisenote.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote.modules.smartnotes.ui.SmartNoteGridAdapter;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,9 +22,12 @@ import java.util.stream.Collectors;
 public class NoteSearchActivity extends AppCompatActivity {
     private EditText searchInput;
     private Button searchButton;
-    private Set<Long> resultsList;
+    private List<SmartNotebook> resultsList;
+
+    private SmartNoteGridAdapter smartNoteGridAdapter;
 
     private NoteOcrTextDao noteOcrTextDao;
+    private SmartNotebookRepository smartNotebookRepository;
 
     private RecyclerView recyclerView;
 
@@ -31,6 +37,7 @@ public class NoteSearchActivity extends AppCompatActivity {
         setContentView(R.layout.activity_search_results);
 
         noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
 
         searchInput = findViewById(R.id.searchInput);
         searchButton = findViewById(R.id.searchButton);
@@ -46,15 +53,12 @@ public class NoteSearchActivity extends AppCompatActivity {
     }
 
     public void createGridLayoutToShowNotes() {
-        resultsList = new HashSet<>();
+        resultsList = new ArrayList<>();
 
         recyclerView = findViewById(R.id.note_search_card_grid_view);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
-        recyclerView.setLayoutManager(gridLayoutManager);
+        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
 
-
-
-//        recyclerView.setAdapter(noteGridAdapter);
+        recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
     }
 
@@ -66,15 +70,21 @@ public class NoteSearchActivity extends AppCompatActivity {
         }
 
         resultsList.clear();
-        List<Long> filteredResults = searchInDb(query);
+        BackgroundOps.execute(() -> {
+                    Set<SmartNotebook> smartNotebooks = smartNotebookRepository.getSmartNotebooks(query);
+                    List<NoteOcrText> noteOcrs = noteOcrTextDao.searchTextFromDb(query);
+                    if(noteOcrs != null && !noteOcrs.isEmpty()) {
+                        Set<Long> noteIds = noteOcrs.stream()
+                                .map(NoteOcrText::getNoteId)
+                                .collect(Collectors.toSet());
+                        smartNotebooks.addAll(smartNotebookRepository.getSmartNotebooksForNoteIds(noteIds));
 
-        resultsList.addAll(filteredResults);
-//        noteGridAdapter.setNoteIds(resultsList);
-    }
-
-    private List<Long> searchInDb(String searchTerm) {
-        return noteOcrTextDao.searchTextFromDb(searchTerm).stream()
-                .map(NoteOcrText::getNoteId)
-                .collect(Collectors.toList());
+                    }
+                    return smartNotebooks;
+                },
+                smartNotebooks -> {
+                    resultsList.addAll(smartNotebooks);
+                    smartNoteGridAdapter.setSmartNotebooks(resultsList);
+                });
     }
 }

@@ -58,7 +58,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
                     allBookIds.addAll(noteRelations.stream()
                             .map(NoteRelation::getRelatedBookId).collect(Collectors.toSet()));
                     allBookIds.remove(smartNotebook.getSmartBook().getBookId());
-                    List<SmartNotebook> allBooks = allBookIds.stream().map(smartNotebookRepository::getSmartNotebook)
+                    List<SmartNotebook> allBooks = allBookIds.stream().map(smartNotebookRepository::getSmartNotebooks)
                             .filter(Optional::isPresent)
                             .map(Optional::get)
                             .collect(Collectors.toList());
@@ -83,7 +83,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
     }
 
     private SmartNotebook getRootBook(Long bookId) {
-        Optional<SmartNotebook> noteEntityOpt = smartNotebookRepository.getSmartNotebook(bookId);
+        Optional<SmartNotebook> noteEntityOpt = smartNotebookRepository.getSmartNotebooks(bookId);
         return noteEntityOpt.get();
     }
 

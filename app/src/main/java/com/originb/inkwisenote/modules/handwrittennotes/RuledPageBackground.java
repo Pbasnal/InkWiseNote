@@ -1,5 +1,6 @@
 package com.originb.inkwisenote.modules.handwrittennotes;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -16,11 +17,13 @@ public class RuledPageBackground {
     private PageTemplate pageTemplate;
     private Bitmap pageTemplateBitmap;
     private Canvas templateCanvas;
-
+    private final Context context;
 
     private ConfigReader configReader;
 
-    public RuledPageBackground(ConfigReader configReader, int width, int height) {
+    public RuledPageBackground(Context context, ConfigReader configReader, int width, int height) {
+        this.context = context;
+
         this.configReader = configReader;
 
         pageTemplateBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
@@ -37,14 +40,16 @@ public class RuledPageBackground {
     }
 
     public Bitmap drawTemplate() {
+        float density = context.getResources().getDisplayMetrics().density;
+
         int canvasWidth = templateCanvas.getWidth();
         int canvasHeight = templateCanvas.getHeight();
-        int lineSpacing = pageTemplate.getLineSpacing();  // Space between each line, you can change to your desired value
+        int lineSpacing = (int) (pageTemplate.getLineSpacing() * density);  // Space between each line, you can change to your desired value
 
         int color = Color.parseColor(pageTemplate.getLineColor());
-        Paint linePaint  = new Paint();
+        Paint linePaint = new Paint();
         linePaint.setColor(color);
-        linePaint.setStrokeWidth(pageTemplate.getLineWidth()); // You can change the thickness of the lines here
+        linePaint.setStrokeWidth(pageTemplate.getLineWidth() * density); // You can change the thickness of the lines here
 
         // Draw horizontal lines
         for (int y = lineSpacing; y < canvasHeight; y += lineSpacing) {

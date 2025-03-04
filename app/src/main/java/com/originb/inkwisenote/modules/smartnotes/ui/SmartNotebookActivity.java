@@ -222,7 +222,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
         workingNotePath = getIntent().getStringExtra("workingNotePath");
 
         if (bookIdToOpen != -1) {
-            return smartNotebookRepository.getSmartNotebook(bookIdToOpen);
+            return smartNotebookRepository.getSmartNotebooks(bookIdToOpen);
         }
         if (noteIdToOpen != -1) {
             return smartNotebookRepository.getSmartNotebookContainingNote(noteIdToOpen);

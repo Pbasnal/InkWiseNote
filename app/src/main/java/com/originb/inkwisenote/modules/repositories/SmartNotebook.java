@@ -1,5 +1,6 @@
 package com.originb.inkwisenote.modules.repositories;
 
+import com.originb.inkwisenote.modules.noterelation.data.NoteRelation;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
@@ -8,6 +9,7 @@ import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -48,5 +50,24 @@ public class SmartNotebook {
     public void removeNote(long noteId) {
         smartBookPages.removeIf(p -> p.getNoteId() == noteId);
         atomicNotes.removeIf(p -> p.getNoteId() == noteId);
+    }
+
+
+    // Custom equals that compares only 'id'
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true; // Reference equality
+        if (obj == null || getClass() != obj.getClass()) return false; // Type check
+        SmartNotebook that = (SmartNotebook) obj;
+
+        if (that.smartBook == null) return false;
+
+        return Objects.equals(smartBook.getBookId(), that.smartBook.getBookId());
+    }
+
+    // Custom hashCode that considers only 'id'
+    @Override
+    public int hashCode() {
+        return Objects.hash(smartBook.getBookId()); // Hash based on 'id'
     }
 }
