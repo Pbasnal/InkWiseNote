@@ -9,8 +9,10 @@ import androidx.work.WorkerParameters;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.config.AppState;
+import com.originb.inkwisenote.modules.backgroundjobs.Events;
 import com.originb.inkwisenote.modules.noterelation.data.NoteRelation;
 import com.originb.inkwisenote.modules.noterelation.data.NoteRelationDao;
+import com.originb.inkwisenote.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote.modules.noterelation.service.NoteTfIdfLogic;
 import com.originb.inkwisenote.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPagesDao;
@@ -22,6 +24,7 @@ import com.originb.inkwisenote.functionalUtils.Try;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
+import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -77,6 +80,8 @@ public class NoteRelationWorker extends Worker {
         for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
             findRelatedNotes(smartNotebook.getSmartBook().getBookId(), atomicNote);
         }
+
+        EventBus.getDefault().post(new Events.NoteStatus(smartNotebook, TextProcessingStage.NOTE_READY));
     }
 
     public void findRelatedNotes(long bookId, AtomicNoteEntity noteEntity) {

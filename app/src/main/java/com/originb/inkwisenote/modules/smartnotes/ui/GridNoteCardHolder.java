@@ -13,6 +13,7 @@ import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.common.DateTimeUtils;
 import com.originb.inkwisenote.common.BitmapScale;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
+import com.originb.inkwisenote.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
@@ -22,6 +23,10 @@ import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
+
+import android.view.animation.LinearInterpolator;
+import android.util.Log;
+import android.animation.ObjectAnimator;
 
 public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
@@ -33,13 +38,15 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private final ImageButton deleteBtn;
     private final ImageView noteStatusImg;
     private final ImageView relationViewBtn;
-    private final Animation rotateAnimation;
+    private Animation rotateAnimation;
 
     private boolean isAnimationRunning = false;
     private SmartNotebook smartNotebook;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final SmartNotebookRepository smartNotebookRepository;
     private final NoteRelationRepository noteRelationRepository;
+
+    private ObjectAnimator rotateAnimator;
 
     public GridNoteCardHolder(SmartNoteGridAdapter smartNoteGridAdapter, @NonNull @NotNull View itemView,
                               ComponentActivity parentActivity) {
@@ -61,6 +68,8 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
+
+        initializeAnimation();
     }
 
     public void setNote(SmartNotebook smartNotebook) {
@@ -85,22 +94,42 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     public void updateNoteStatus(Events.NoteStatus noteStatus) {
-        return;
+        if (!TextProcessingStage.NOTE_READY.equals(noteStatus.status)) {
+            noteStatusImg.setImageResource(R.drawable.ic_in_process);
 
-//        if ("NOTE_READY" != noteStatus.status) {
-//            if (!isAnimationRunning) {
-////                noteStatusImg.clearAnimation();
-//                noteStatusImg.setImageResource(R.drawable.ic_in_process);
-//                noteStatusImg.post(() -> {
-//                    noteStatusImg.startAnimation(rotateAnimation);
-//                });
-//                isAnimationRunning = true;
-//            }
-//        } else {
-//            noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
-//            noteStatusImg.clearAnimation();
-//            isAnimationRunning = false;
-//        }
+            // Create rotation animation programmatically
+            rotateAnimator = ObjectAnimator.ofFloat(
+                    noteStatusImg,
+                    "rotation",
+                    0f, 360f
+            );
+            rotateAnimator.setDuration(1000); // 1 second per rotation
+            rotateAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+            rotateAnimator.setInterpolator(new LinearInterpolator());
+
+            // Start animation
+            rotateAnimator.start();
+            isAnimationRunning = true;
+
+            Log.d("GridNoteCardHolder", "Starting rotation animation");
+        } else {
+            // Stop animation and show ready status
+            if (rotateAnimator != null) {
+                noteStatusImg.post(() -> {
+                    rotateAnimator.end();
+                    rotateAnimator.removeAllListeners();
+                    rotateAnimator.cancel();
+                    rotateAnimator = null;
+                    noteStatusImg.clearAnimation(); // Clear any remaining animations
+                    noteStatusImg.animate().cancel(); // Cancel any ongoing ViewPropertyAnimator
+                    noteStatusImg.setRotation(0f); // Reset rotation
+                    noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
+                    isAnimationRunning = false;
+                });
+            }
+
+            Log.d("GridNoteCardHolder", "Stopping rotation animation");
+        }
     }
 
     public int updateNoteRelation(boolean isRelated) {
@@ -133,6 +162,33 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         Routing.SmartNotebookActivity.openNotebookIntent(parentActivity,
                 parentActivity.getFilesDir().getPath(),
                 smartNotebook.getSmartBook().getBookId());
+    }
+
+    private void initializeAnimation() {
+        try {
+            rotateAnimation = AnimationUtils.loadAnimation(parentActivity, R.anim.anim_rotate);
+            if (rotateAnimation == null) {
+                Log.e("GridNoteCardHolder", "Failed to load rotation animation");
+                return;
+            }
+            rotateAnimation.setRepeatCount(Animation.INFINITE);
+            rotateAnimation.setInterpolator(new LinearInterpolator());
+            Log.d("GridNoteCardHolder", "Animation initialized successfully");
+        } catch (Exception e) {
+            Log.e("GridNoteCardHolder", "Error initializing animation", e);
+        }
+    }
+
+    public void onViewRecycled() {
+        if (rotateAnimator != null) {
+            rotateAnimator.end();
+            rotateAnimator.removeAllListeners();
+            rotateAnimator.cancel();
+            rotateAnimator = null;
+        }
+        noteStatusImg.clearAnimation();
+        noteStatusImg.animate().cancel();
+        noteStatusImg.setRotation(0f);
     }
 
 

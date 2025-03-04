@@ -3,6 +3,7 @@ package com.originb.inkwisenote.modules.ocr.worker;
 import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
 import com.originb.inkwisenote.modules.backgroundjobs.WorkManagerBus;
+import com.originb.inkwisenote.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
@@ -40,7 +41,7 @@ public class NoteOcrEventListener {
         logger.debug("Scheduling text parsing work for bookId: " + bookId);
         WorkManagerBus.scheduleWorkForTextParsingForBook(smartNotebookSaved.context, bookId);
 
-        EventBus.getDefault().post(new Events.NoteStatus(smartNotebookSaved.smartNotebook, "Parsing started"));
+        EventBus.getDefault().post(new Events.NoteStatus(smartNotebookSaved.smartNotebook, TextProcessingStage.TEXT_PARSING));
     }
 }
 
