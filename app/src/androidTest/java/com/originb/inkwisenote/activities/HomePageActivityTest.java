@@ -15,17 +15,19 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.config.ConfigReader;
 import com.originb.inkwisenote.config.Feature;
-import com.originb.inkwisenote.constants.BitmapScale;
-import com.originb.inkwisenote.data.entities.handwrittennotedata.HandwrittenNoteEntity;
-import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.io.utils.BitmapFileIoUtils;
+import com.originb.inkwisenote.common.BitmapScale;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote.common.BitmapFileIoUtils;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNoteWithImage;
 import com.originb.inkwisenote.modules.repositories.*;
 import com.originb.inkwisenote.testutils.HandwritingStrokeHelper;
 import com.originb.inkwisenote.utils.DrawingTestUtils;
-import com.originb.inkwisenote.ux.activities.AppMainActivity;
-import com.originb.inkwisenote.ux.activities.HomePageActivity;
+import com.originb.inkwisenote.AppMainActivity;
+import com.originb.inkwisenote.HomePageActivity;
 
-import com.originb.inkwisenote.ux.activities.smartnotebook.DrawingView;
+import com.originb.inkwisenote.modules.handwrittennotes.ui.DrawingView;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -102,7 +104,6 @@ public class HomePageActivityTest {
                 !configReader.isFeatureEnabled(Feature.CAMERA_NOTE)) return;
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Repositories.registerRepositories(context);
-        Repositories.initRepositories();
 
         openSmartNotebookActivity();
         drawHelloWorld(0, 0);
@@ -132,7 +133,6 @@ public class HomePageActivityTest {
 
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Repositories.registerRepositories(context);
-        Repositories.initRepositories();
 
         openSmartNotebookActivity();
         drawHelloWorld(0, 0);

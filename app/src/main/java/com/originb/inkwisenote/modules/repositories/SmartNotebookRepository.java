@@ -1,18 +1,16 @@
 package com.originb.inkwisenote.modules.repositories;
 
-import com.originb.inkwisenote.commonutils.DateTimeUtils;
-import com.originb.inkwisenote.data.dao.notes.AtomicNoteEntitiesDao;
-import com.originb.inkwisenote.data.dao.notes.SmartBookPagesDao;
-import com.originb.inkwisenote.data.dao.notes.SmartBooksDao;
-import com.originb.inkwisenote.data.entities.notedata.AtomicNoteEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookEntity;
-import com.originb.inkwisenote.data.entities.notedata.SmartBookPage;
-import com.originb.inkwisenote.modules.commonutils.Strings;
+import com.originb.inkwisenote.common.DateTimeUtils;
+import com.originb.inkwisenote.common.ListUtils;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntitiesDao;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPagesDao;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBooksDao;
+import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
+import com.originb.inkwisenote.common.Strings;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SmartNotebookRepository {
@@ -28,17 +26,13 @@ public class SmartNotebookRepository {
         this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
     }
 
-
     // Create the data and return the notebook entity
     public Optional<SmartNotebook> initializeNewSmartNotebook(String title,
                                                               String directoryPath) {
 
         AtomicNoteEntity atomicNoteEntity = newHandwrittenNote("", directoryPath);
-
         SmartBookEntity smartBookEntity = newSmartBook(title, atomicNoteEntity.getCreatedTimeMillis());
-
         SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity, 0);
-
         SmartNotebook smartNotebook = new SmartNotebook(smartBookEntity, smartBookPage, atomicNoteEntity);
         return Optional.ofNullable(smartNotebook);
     }
@@ -52,6 +46,18 @@ public class SmartNotebookRepository {
         smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+    }
+
+    public void deleteNoteFromBook(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+        // will pages allow this to be deleted first?
+        atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
+        smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
+
+        SmartNotebook updatedSmartNotebook = getSmartNotebooks(smartNotebook.getSmartBook().getBookId()).get();
+        if (updatedSmartNotebook.atomicNotes.isEmpty()) {
+            smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
+            smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+        }
     }
 
     public void updateNotebook(SmartNotebook smartNotebook) {
@@ -76,7 +82,7 @@ public class SmartNotebookRepository {
         // TODO: only get the first page for now. We will fetch more later
         long bookId = pagesOfNote.stream().findFirst().map(SmartBookPage::getBookId).get();
 
-        return getSmartNotebook(bookId);
+        return getSmartNotebooks(bookId);
     }
 
     public List<SmartNotebook> getAllSmartNotebooks() {
@@ -101,8 +107,37 @@ public class SmartNotebookRepository {
         return smartNotebooks;
     }
 
-    public Optional<SmartNotebook> getSmartNotebook(long bookId) {
-        SmartBookEntity smartBook = smartBooksDao.getSmartBook(bookId);
+    public Set<SmartNotebook> getSmartNotebooksForNoteIds(Set<Long> noteIds) {
+        List<SmartBookPage> smartBookPages = smartBookPagesDao.getSmartBookPagesOfNote(noteIds);
+        Map<Long, List<SmartBookPage>> bookIdToPageMap = ListUtils.groupBy(smartBookPages, SmartBookPage::getBookId);
+
+        List<SmartBookEntity> smartBooks = smartBooksDao.getSmartBooks(bookIdToPageMap.keySet());
+        if (smartBooks == null || smartBooks.isEmpty()) return new HashSet<>();
+
+        List<AtomicNoteEntity> atomicNotes = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+        Map<Long, List<AtomicNoteEntity>> noteIdToNotes = ListUtils.groupBy(atomicNotes, AtomicNoteEntity::getNoteId);
+
+        Set<Long> bookIdsToRemove = new HashSet<>();
+        Set<SmartNotebook> smartNotebooks = new HashSet<>();
+        for (SmartBookEntity smartBook : smartBooks) {
+            if (!bookIdToPageMap.containsKey(smartBook.getBookId())) {
+                bookIdsToRemove.add(smartBook.getBookId());
+                continue;
+            }
+            List<SmartBookPage> bookPages = bookIdToPageMap.get(smartBook.getBookId());
+            List<AtomicNoteEntity> bookNotes = bookPages.stream().map(SmartBookPage::getNoteId)
+                    .map(noteIdToNotes::get).filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+
+            smartNotebooks.add(new SmartNotebook(smartBook, smartBookPages, bookNotes));
+        }
+
+        return smartNotebooks;
+    }
+
+    public Optional<SmartNotebook> getSmartNotebooks(long bookId) {
+        SmartBookEntity smartBook = smartBooksDao.getSmartbooksWithMatchingTitle(bookId);
         if (smartBook == null) return Optional.empty();
 
         List<SmartBookPage> smartBookPages = smartBookPagesDao.getSmartBookPages(bookId);
@@ -117,6 +152,39 @@ public class SmartNotebookRepository {
         SmartNotebook smartNotebook = new SmartNotebook(smartBook, smartBookPages, atomicNoteEntities);
 
         return Optional.ofNullable(smartNotebook);
+    }
+
+    public Set<SmartNotebook> getSmartNotebooks(String title) {
+        if (title.length() < 3) return new HashSet<>();
+
+        List<SmartBookEntity> smartBooks = smartBooksDao.getSmartbooksWithMatchingTitle("%" + title + "%");
+        if (smartBooks == null || smartBooks.isEmpty()) return new HashSet<>();
+
+        Set<Long> bookIds = smartBooks.stream().map(SmartBookEntity::getBookId).collect(Collectors.toSet());
+        List<SmartBookPage> smartBookPages = smartBookPagesDao.getSmartBooksPages(bookIds);
+        Map<Long, List<SmartBookPage>> bookIdToPagesMap = ListUtils.groupBy(smartBookPages, SmartBookPage::getBookId);
+
+        Set<Long> noteIds = smartBookPages.stream().map(SmartBookPage::getNoteId).collect(Collectors.toSet());
+        List<AtomicNoteEntity> atomicNotes = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+        Map<Long, List<AtomicNoteEntity>> noteIdToNotes = ListUtils.groupBy(atomicNotes, AtomicNoteEntity::getNoteId);
+
+        Set<SmartNotebook> smartNotebooks = new HashSet<>();
+        Set<Long> bookIdsOfEmptyBooks = new HashSet<>();
+        for (SmartBookEntity smartBook : smartBooks) {
+            long bookId = smartBook.getBookId();
+            if (!bookIdToPagesMap.containsKey(bookId)) {
+                bookIdsOfEmptyBooks.add(bookId);
+                continue;
+            }
+            List<SmartBookPage> bookPages = bookIdToPagesMap.get(bookId);
+            List<AtomicNoteEntity> bookNotes = bookPages.stream().map(SmartBookPage::getNoteId)
+                    .map(noteIdToNotes::get).filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
+            smartNotebooks.add(new SmartNotebook(smartBook, bookPages, bookNotes));
+        }
+
+        return smartNotebooks;
     }
 
     public AtomicNoteEntity newHandwrittenNote(String filename, String filepath) {

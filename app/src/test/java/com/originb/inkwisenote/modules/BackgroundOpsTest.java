@@ -1,6 +1,6 @@
 package com.originb.inkwisenote.modules;
 
-import com.originb.inkwisenote.modules.messaging.BackgroundOps;
+import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;

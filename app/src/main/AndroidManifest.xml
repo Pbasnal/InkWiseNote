@@ -15,12 +15,14 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.InkWiseNote">
 
-        <activity android:name=".ux.activities.NoteSearchActivity"/>
-        <activity android:name=".ux.activities.HomePageActivity"/>
-        <activity android:name=".ux.activities.MarkdownNoteActivity"/>
-        <activity android:name=".ux.activities.smartnotebook.SmartNotebookActivity"/>
+        <activity android:name=".modules.notesearch.NoteSearchActivity"/>
+        <activity android:name=".HomePageActivity"/>
+        <activity android:name=".modules.markdowntext.MarkdownNoteActivity"/>
         <activity
-                android:name=".ux.activities.AppMainActivity"
+                android:name=".modules.smartnotes.ui.SmartNotebookActivity"
+                android:screenOrientation="portrait"/>
+        <activity
+                android:name=".AppMainActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -29,12 +31,12 @@
         </activity>
 
         <activity
-                android:name=".ux.activities.AdminActivity"
+                android:name=".modules.admin.AdminActivity"
                 android:exported="false">
         </activity>
 
         <activity
-                android:name=".ux.activities.RelatedNotesActivity"
+                android:name=".modules.noterelation.ui.RelatedNotesActivity"
                 android:label="Related Notes"
                 android:exported="true">
         </activity>
