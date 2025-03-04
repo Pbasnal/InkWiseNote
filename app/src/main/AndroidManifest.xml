@@ -17,7 +17,7 @@
 
         <activity android:name=".modules.notesearch.NoteSearchActivity"/>
         <activity android:name=".HomePageActivity"/>
-        <activity android:name=".modules.markdowntext.MarkdownNoteActivity"/>
+        <activity android:name=".modules.textnote.TextNoteActivity"/>
         <activity
                 android:name=".modules.smartnotes.ui.SmartNotebookActivity"
                 android:screenOrientation="portrait"/>

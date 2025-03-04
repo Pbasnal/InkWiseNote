@@ -1,6 +1,7 @@
 package com.originb.inkwisenote.modules.backgroundjobs;
 
 import android.content.Context;
+import com.originb.inkwisenote.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
 import lombok.AllArgsConstructor;
@@ -23,7 +24,7 @@ public class Events {
     @AllArgsConstructor
     public static class NoteStatus extends EventData {
         public SmartNotebook smartNotebook;
-        public String status;
+        public TextProcessingStage status;
     }
 
     @AllArgsConstructor

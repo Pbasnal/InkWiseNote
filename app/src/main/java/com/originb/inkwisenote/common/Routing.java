@@ -2,16 +2,8 @@ package com.originb.inkwisenote.common;
 
 import android.content.Context;
 import android.content.Intent;
-import com.originb.inkwisenote.modules.markdowntext.MarkdownNoteActivity;
 
 public class Routing {
-    public static class NoteActivity {
-        public static void newMarkdownNoteIntent(Context packageContext, String currentDirectoryPath) {
-            Intent intent = new Intent(packageContext, MarkdownNoteActivity.class);
-            intent.putExtra("workingNotePath", currentDirectoryPath);
-            packageContext.startActivity(intent);
-        }
-    }
 
     public static class SmartNotebookActivity {
         public static void newNoteIntent(Context packageContext, String currentDirectoryPath) {
@@ -23,6 +15,21 @@ public class Routing {
         public static void openNotebookIntent(Context packageContext, String currentDirectoryPath, Long bookId) {
 
             Intent intent = new Intent(packageContext, com.originb.inkwisenote.modules.smartnotes.ui.SmartNotebookActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            intent.putExtra("bookId", bookId);
+            packageContext.startActivity(intent);
+        }
+    }
+
+    public static class TextNoteActivity {
+        public static void newNoteIntent(Context packageContext, String currentDirectoryPath) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote.modules.textnote.TextNoteActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            packageContext.startActivity(intent);
+        }
+
+        public static void openNotebookIntent(Context packageContext, String currentDirectoryPath, Long bookId) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote.modules.textnote.TextNoteActivity.class);
             intent.putExtra("workingNotePath", currentDirectoryPath);
             intent.putExtra("bookId", bookId);
             packageContext.startActivity(intent);

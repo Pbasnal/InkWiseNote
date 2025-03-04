@@ -41,13 +41,22 @@ public class DrawingView extends View {
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        // Initialize paint
+        // Initialize paint with pencil-like properties
         paint = new Paint();
         paint.setColor(Color.BLACK);
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(5);
+        paint.setStrokeWidth(5f); // Thinner base stroke
         paint.setAntiAlias(true);
         paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND); // Smooth line joins
+//        paint.setAlpha(200); // Slight transparency
+
+
+        // Add shader for texture
+        paint.setShader(createPencilShader());
+
+        // Enable dithering for smoother gradients
+        paint.setDither(true);
 
         path = new WriteablePath();
         paths = new ArrayList<>();
@@ -60,6 +69,27 @@ public class DrawingView extends View {
                 1000, 1000);
 
         pageTemplateBitmap = ruledPageBackground.drawTemplate();
+    }
+
+    private Shader createPencilShader() {
+        // Create a subtle texture pattern
+        Bitmap textureBitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
+        Canvas textureCanvas = new Canvas(textureBitmap);
+        Paint texturePaint = new Paint();
+        texturePaint.setColor(Color.BLACK);
+
+        // Create a subtle noise pattern
+        for (int x = 0; x < 4; x++) {
+            for (int y = 0; y < 4; y++) {
+                if ((x + y) % 2 == 0) {
+                    textureBitmap.setPixel(x, y, Color.argb(200, 0, 0, 0));
+                } else {
+                    textureBitmap.setPixel(x, y, Color.argb(180, 0, 0, 0));
+                }
+            }
+        }
+
+        return new BitmapShader(textureBitmap, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
     }
 
     public static Bitmap getDefaultBitmap() {
@@ -132,9 +162,7 @@ public class DrawingView extends View {
         int toolType = event.getToolType(0);
 
         if (toolType != MotionEvent.TOOL_TYPE_STYLUS
-                && toolType != MotionEvent.TOOL_TYPE_FINGER
-        ) {
-            // Process only stylus input
+                && toolType != MotionEvent.TOOL_TYPE_FINGER) {
             return false;
         }
 

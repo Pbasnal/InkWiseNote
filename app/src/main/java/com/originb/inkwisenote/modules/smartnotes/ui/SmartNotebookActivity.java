@@ -13,6 +13,7 @@ import com.originb.inkwisenote.common.DateTimeUtils;
 import com.originb.inkwisenote.common.Routing;
 import com.originb.inkwisenote.modules.backgroundjobs.Events;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
 import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.repositories.Repositories;
@@ -122,7 +123,9 @@ public class SmartNotebookActivity extends AppCompatActivity {
         // Determine the position to insert the new item after the currently visible one
         int newPosition = currentVisibleItemIndex + 1;
         BackgroundOps.execute(() -> {
-                    AtomicNoteEntity newAtomicNote = smartNotebookRepository.newHandwrittenNote("", workingNotePath);
+                    AtomicNoteEntity newAtomicNote = smartNotebookRepository.newAtomicNote("",
+                            workingNotePath,
+                            NoteType.HANDWRITTEN_PNG);
                     SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(smartNotebook.smartBook,
                             newAtomicNote, newPosition);
                     smartNotebook.insertAtomicNoteAndPage(newPosition, newAtomicNote, newSmartPage);
@@ -215,21 +218,17 @@ public class SmartNotebookActivity extends AppCompatActivity {
         });
     }
 
-
     private Optional<SmartNotebook> getSmartNotebook() {
-        Long noteIdToOpen = getIntent().getLongExtra("noteId", -1);
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
         workingNotePath = getIntent().getStringExtra("workingNotePath");
 
         if (bookIdToOpen != -1) {
             return smartNotebookRepository.getSmartNotebooks(bookIdToOpen);
         }
-        if (noteIdToOpen != -1) {
-            return smartNotebookRepository.getSmartNotebookContainingNote(noteIdToOpen);
-        }
 
         return smartNotebookRepository.initializeNewSmartNotebook("",
-                workingNotePath);
+                workingNotePath,
+                NoteType.HANDWRITTEN_PNG);
     }
 
     @Override

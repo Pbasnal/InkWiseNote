@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:card_view="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
+              android:background="@color/black"
+              android:padding="16dp">
+
+    <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            card_view:cardCornerRadius="8dp"
+            card_view:cardElevation="4dp"
+            android:backgroundTint="@color/white">
+
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+            <EditText
+                    android:id="@+id/text_note_title"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="50dp"
+                    android:textColor="@color/black"
+                    android:textStyle="bold"
+                    android:textSize="20dp"
+                    android:textColorHint="@color/light_gray"
+                    android:background="@drawable/edit_text_bottom_border"
+                    android:hint="Title"/>
+
+            <ImageButton
+                    android:id="@+id/delete_note"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/red"
+                    android:contentDescription="Add Note"
+                    android:visibility="visible"
+                    android:src="@drawable/ic_delete"
+                    android:layout_gravity="end"/>
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="4dp"
+            card_view:cardCornerRadius="8dp"
+            card_view:cardElevation="4dp"
+            android:backgroundTint="@color/white">
+
+        <EditText
+                android:id="@+id/note_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:gravity="top"
+                android:hint="Start typing your note..."
+                android:inputType="textMultiLine|textCapSentences"
+                android:padding="8dp"
+                android:scrollbars="vertical"
+                android:textSize="16sp"/>
+    </androidx.cardview.widget.CardView>
+</LinearLayout>

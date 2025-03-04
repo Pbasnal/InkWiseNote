@@ -129,4 +129,10 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
         smartNotebooks.remove(adapterPosition);
         notifyItemRemoved(adapterPosition);
     }
+
+    @Override
+    public void onViewRecycled(@NonNull GridNoteCardHolder holder) {
+        super.onViewRecycled(holder);
+        holder.onViewRecycled();
+    }
 }

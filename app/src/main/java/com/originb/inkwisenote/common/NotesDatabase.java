@@ -3,6 +3,8 @@ package com.originb.inkwisenote.common;
 import androidx.room.Database;
 import androidx.room.RoomDatabase;
 import com.originb.inkwisenote.modules.handwrittennotes.data.HandwrittenNotesDao;
+import com.originb.inkwisenote.modules.textnote.data.TextNoteEntity;
+import com.originb.inkwisenote.modules.textnote.data.TextNotesDao;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntitiesDao;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPagesDao;
 import com.originb.inkwisenote.modules.smartnotes.data.SmartBooksDao;
@@ -24,8 +26,9 @@ import com.originb.inkwisenote.modules.smartnotes.data.SmartBookPage;
         AtomicNoteEntity.class,
         SmartBookEntity.class,
         SmartBookPage.class,
-        HandwrittenNoteEntity.class
-}, version = 8)
+        HandwrittenNoteEntity.class,
+        TextNoteEntity.class
+}, version = 9)
 public abstract class NotesDatabase extends RoomDatabase {
 
     public abstract NoteRelationDao noteRelationDao();
@@ -41,4 +44,6 @@ public abstract class NotesDatabase extends RoomDatabase {
     public abstract SmartBookPagesDao smartBookPagesDao();
 
     public abstract HandwrittenNotesDao handwrittenNotesDao();
+
+    public abstract TextNotesDao textNotesDao();
 }
