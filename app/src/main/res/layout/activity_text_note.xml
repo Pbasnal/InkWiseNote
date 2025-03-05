@@ -59,6 +59,7 @@
                 android:layout_height="match_parent"
                 android:background="@null"
                 android:gravity="top"
+                android:textColor="@color/black"
                 android:hint="Start typing your note..."
                 android:inputType="textMultiLine|textCapSentences"
                 android:padding="8dp"
