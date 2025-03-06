@@ -6,4 +6,6 @@
     <string name="close">close</string>
     <string name="delete_note">delete note</string>
     <string name="graph_view">graph view</string>
+    <string name="tap_to_text">Tap here to take text note</string>
+    <string name="tap_to_write">Touch here to take handwritten notes</string>
 </resources>

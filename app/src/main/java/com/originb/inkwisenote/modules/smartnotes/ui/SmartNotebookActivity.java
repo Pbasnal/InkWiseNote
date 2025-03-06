@@ -228,7 +228,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
         return smartNotebookRepository.initializeNewSmartNotebook("",
                 workingNotePath,
-                NoteType.HANDWRITTEN_PNG);
+                NoteType.NOT_SET);
     }
 
     @Override
