@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
@@ -29,11 +30,11 @@ public class BytesFileIoUtils {
 
     public static <T> Optional<T> readDataFromDisk(String filePath, Class<T> clazz) {
         byte[] bytes = readByteArrayFromFile(filePath);
+        if(bytes == null) return Optional.empty();
+
         Gson gson = new Gson();
         String json = readJsonFromFile(filePath);
         return Optional.ofNullable(gson.fromJson(json, clazz));
-
-//        return Optional.ofNullable(ByteSerializer.deserialize(bytes, clazz));
     }
 
     public static String readJsonFromFile(String filePath) {
@@ -51,8 +52,10 @@ public class BytesFileIoUtils {
 
     public static byte[] readByteArrayFromFile(String filePath) {
         try {
+            Path path = Paths.get(filePath);
+            if (!Files.exists(path)) return null;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                return Files.readAllBytes(Paths.get(filePath));
+                return Files.readAllBytes(path);
             }
         } catch (IOException e) {
             Log.e("JsonFileManager", "Failed to read byte array from file", e);
