@@ -21,7 +21,7 @@ import java.util.Optional;
 public class TextNoteActivity extends AppCompatActivity {
     private EditText noteEditText;
     private EditText noteTitle;
-    private ImageButton imageButton;
+    private ImageButton deleteBtn;
 
     private String workingNotePath;
     private SmartNotebookRepository smartNotebookRepository;
@@ -40,7 +40,7 @@ public class TextNoteActivity extends AppCompatActivity {
 
         noteEditText = findViewById(R.id.note_edit_text);
         noteTitle = findViewById(R.id.text_note_title);
-        imageButton = findViewById(R.id.delete_note);
+        deleteBtn = findViewById(R.id.delete_note);
 
         BackgroundOps.execute(this::getSmartNotebook,
                 smartNotebook -> {
@@ -48,7 +48,7 @@ public class TextNoteActivity extends AppCompatActivity {
                     noteEditText.setText(textNoteEntity.getNoteText());
                     noteTitle.setText(notebook.smartBook.getTitle());
 
-                    imageButton.setOnClickListener(view -> {
+                    deleteBtn.setOnClickListener(view -> {
                         EventBus.getDefault().post(new Events.NotebookDeleted(notebook));
                         Routing.HomePageActivity.openHomePageAndStartFresh(this);
                     });

@@ -2,7 +2,8 @@ package com.originb.inkwisenote.modules.smartnotes.data;
 
 public enum NoteType {
     HANDWRITTEN_PNG("handwritten_png"),
-    TEXT_NOTE("text_note");
+    TEXT_NOTE("text_note"),
+    NOT_SET("not_set");
 
     private final String noteType;
 

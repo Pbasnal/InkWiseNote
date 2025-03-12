@@ -9,12 +9,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote.common.Logger;
 import com.originb.inkwisenote.R;
 import com.originb.inkwisenote.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote.modules.backgroundjobs.WorkManagerBus;
 import com.originb.inkwisenote.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote.modules.handwrittennotes.ui.HandwrittenNoteHolder;
 import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote.modules.smartnotes.data.NoteType;
+import com.originb.inkwisenote.modules.textnote.TextNoteHolder;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,9 +46,24 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     @NotNull
     @Override
     public NoteHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int position) {
-        View itemView = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.note_drawing_layout, parent, false);
-        return new HandwrittenNoteHolder(itemView, parentActivity, smartNotebookRepository);
+        AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
+        View itemView;
+
+        if (NoteType.HANDWRITTEN_PNG.equals(atomicNote.getNoteType())) {
+            itemView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.note_drawing_layout, parent, false);
+
+            return new HandwrittenNoteHolder(itemView, parentActivity, smartNotebookRepository);
+        } else if (NoteType.TEXT_NOTE.equals(atomicNote.getNoteType())) {
+            itemView = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.note_text_layout, parent, false);
+            return new TextNoteHolder(itemView, parentActivity, smartNotebookRepository);
+        }
+
+        itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.note_init_layout, parent, false);
+
+        return new InitNoteHolder(itemView, parentActivity, smartNotebookRepository, this);
     }
 
     @Override
@@ -55,6 +71,11 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
         noteHolder.setNote(smartNotebook.getSmartBook().getBookId(), atomicNote);
         noteCards.put(atomicNote.getNoteId(), noteHolder);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position;
     }
 
     @Override
@@ -82,9 +103,9 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     }
 
     // this function assumes that either the smartNotebook has updated
-    // notes and pages or
-    // all new notes or pages are inserted after current index so that
-    // the note and page at this index is not affected.
+// notes and pages or
+// all new notes or pages are inserted after current index so that
+// the note and page at this index is not affected.
     public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
         if (!noteCards.containsKey(atomicNote.getNoteId())) {
             return;

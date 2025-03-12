@@ -95,7 +95,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
     private void updatePageNumberText(SmartNotebook smartNotebook) {
         pageNumText = findViewById(R.id.page_num_text);
-        pageNumText.setText("1/" + smartNotebook.atomicNotes.size());
+        setPageNum(0);
     }
 
     private void createNoteTitleEditText() {
@@ -125,7 +125,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
         BackgroundOps.execute(() -> {
                     AtomicNoteEntity newAtomicNote = smartNotebookRepository.newAtomicNote("",
                             workingNotePath,
-                            NoteType.HANDWRITTEN_PNG);
+                            NoteType.NOT_SET);
                     SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(smartNotebook.smartBook,
                             newAtomicNote, newPosition);
                     smartNotebook.insertAtomicNoteAndPage(newPosition, newAtomicNote, newSmartPage);
@@ -139,10 +139,10 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
                     scrollLayout.setScrollRequested(true);
                     // Optionally scroll to the new item
-                    recyclerView.post(() -> {
+                    recyclerView.postDelayed(() -> {
                         recyclerView.smoothScrollToPosition(newPosition);
-                        pageNumText.setText(newPosition + "/" + smartNotebook.getAtomicNotes().size());
-                    });
+                        setPageNum(newPosition);
+                    }, 1000);
 
                     int totalItemCount = recyclerView.getAdapter().getItemCount();
                     if (newPosition == totalItemCount - 1) {
@@ -175,7 +175,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
                 // Scroll to the next item
                 scrollLayout.setScrollRequested(true);
                 recyclerView.smoothScrollToPosition(nextPosition);
-                pageNumText.setText(nextPosition + "/" + smartNotebook.getAtomicNotes().size());
+                setPageNum(nextPosition);
             }
 
             // hide next button if this is the last visible note
@@ -207,7 +207,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
                 // Scroll to the next item
                 scrollLayout.setScrollRequested(true);
                 recyclerView.smoothScrollToPosition(prevPosition);
-                pageNumText.setText((prevPosition + 1) + "/" + smartNotebook.getAtomicNotes().size());
+                setPageNum(prevPosition);
             }
             if (prevPosition <= 0) {
                 prevButton.setVisibility(View.INVISIBLE);
@@ -228,7 +228,15 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
         return smartNotebookRepository.initializeNewSmartNotebook("",
                 workingNotePath,
-                NoteType.HANDWRITTEN_PNG);
+                NoteType.NOT_SET);
+    }
+
+    private void setPageNum(int position) {
+        pageNumText.setText(new StringBuilder()
+                .append(position + 1)
+                .append("/")
+                .append(smartNotebook.getAtomicNotes().size())
+                .toString());
     }
 
     @Override
