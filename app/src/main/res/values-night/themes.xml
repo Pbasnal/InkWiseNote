@@ -21,13 +21,13 @@
         <item name="colorOnBackground">@color/on_background_dark</item>
         
         <!-- Container colors -->
-        <item name="colorPrimaryContainer">@color/primary_dark</item>
-        <item name="colorOnPrimaryContainer">@color/white</item>
-        <item name="colorSecondaryContainer">@color/secondary_dark</item>
-        <item name="colorOnSecondaryContainer">@color/white</item>
+        <item name="colorPrimaryContainer">@color/primary_container_dark</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container_dark</item>
+        <item name="colorSecondaryContainer">@color/secondary_container_dark</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container_dark</item>
         
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor">@color/background_dark</item>
         
         <!-- Outline -->
         <item name="colorOutline">@color/card_stroke_dark</item>

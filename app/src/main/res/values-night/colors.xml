@@ -12,4 +12,10 @@
     <color name="light_gray">#757575</color>
     <color name="yellow">#E69100</color>
     <color name="green">#388E3C</color>
+    
+    <!-- Dark theme containers -->
+    <color name="primary_container_dark">#081063</color>
+    <color name="on_primary_container_dark">#E8EAF6</color>
+    <color name="secondary_container_dark">#006064</color>
+    <color name="on_secondary_container_dark">#B2EBF2</color>
 </resources> 

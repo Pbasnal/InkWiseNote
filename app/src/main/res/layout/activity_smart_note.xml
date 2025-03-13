@@ -6,7 +6,7 @@
         android:id="@+id/card_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:backgroundTint="@color/white"
+        android:background="?attr/colorSurface"
         tools:context=".modules.smartnotes.ui.SmartNotebookActivity"
         android:orientation="vertical">
 
@@ -14,8 +14,9 @@
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/black"
-            android:paddingTop="4dp"
+            android:background="?attr/colorPrimaryContainer"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:orientation="horizontal">
 
         <!--        Title and timestamp-->
@@ -23,85 +24,88 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:paddingStart="10dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
                 android:orientation="vertical">
 
             <TextView
                     android:id="@+id/note_created_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:alpha="0.7"
                     android:text="Timestamp"/>
 
             <EditText
                     android:id="@+id/smart_note_title"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:textColor="@color/white"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:textColor="?attr/colorOnPrimaryContainer"
                     android:textStyle="bold"
-                    android:textSize="20dp"
-                    android:textColorHint="@color/light_gray"
+                    android:textSize="20sp"
+                    android:textColorHint="?attr/colorOnPrimaryContainer"
+                    android:alpha="0.6"
                     android:background="@drawable/edit_text_bottom_border"
                     android:hint="Title"/>
 
         </LinearLayout>
 
         <LinearLayout
-                android:layout_width="0dp"
-                android:layout_weight="0.8"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center"
+                android:paddingEnd="16dp"
                 android:orientation="vertical">
 
             <TextView
                     android:id="@+id/page_num_text"
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="0.3"
-                    android:textColor="@color/white"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnPrimaryContainer"
                     android:gravity="center"
                     android:text="Page number"/>
 
             <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_weight="1"
-                    android:layout_height="0dp"
-
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center">
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab_prev_note"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:scaleX="0.5"
-                        android:scaleY="0.5"
-                        android:backgroundTint="@color/yellow"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="4dp"
+                        app:fabCustomSize="40dp"
                         android:contentDescription="previous note"
                         android:src="@drawable/ic_arrow_back"
-                        android:layout_gravity="center"/>
+                        app:tint="?attr/colorOnSecondaryContainer"
+                        app:backgroundTint="?attr/colorSecondaryContainer"/>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab_add_note"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:scaleX="0.5"
-                        android:scaleY="0.5"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="4dp"
+                        app:fabCustomSize="40dp"
                         android:contentDescription="Add Note"
                         android:src="@drawable/ic_add"
-                        android:layout_gravity="center"/>
+                        app:tint="?attr/colorOnPrimaryContainer"
+                        app:backgroundTint="?attr/colorPrimaryContainer"/>
 
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab_next_note"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:scaleX="-0.5"
-                        android:scaleY="0.5"
-                        android:backgroundTint="@color/green"
-                        android:contentDescription="Add Note"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_margin="4dp"
+                        app:fabCustomSize="40dp"
+                        android:scaleX="-1"
+                        android:contentDescription="Next Note"
                         android:visibility="visible"
                         android:src="@drawable/ic_arrow_back"
-                        android:layout_gravity="center"/>
+                        app:tint="?attr/colorOnSecondaryContainer"
+                        app:backgroundTint="?attr/colorSecondaryContainer"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -111,14 +115,11 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="@color/light_gray"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:background="?android:attr/colorBackground"
+            android:clipToPadding="false"
+            android:padding="8dp"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
-            app:spanCount="1"
-            />
+            app:spanCount="1"/>
 
 
 </LinearLayout>
