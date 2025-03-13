@@ -172,15 +172,15 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 
     @Override
     public void onClick(View v) {
-        if (smartNotebook.getAtomicNotes().get(0).getNoteType().equals(NoteType.TEXT_NOTE.toString())) {
-            Routing.TextNoteActivity.openNotebookIntent(parentActivity,
-                    parentActivity.getFilesDir().getPath(),
-                    smartNotebook.getSmartBook().getBookId());
-        } else {
+//        if (smartNotebook.getAtomicNotes().get(0).getNoteType().equals(NoteType.TEXT_NOTE.toString())) {
+//            Routing.TextNoteActivity.openNotebookIntent(parentActivity,
+//                    parentActivity.getFilesDir().getPath(),
+//                    smartNotebook.getSmartBook().getBookId());
+//        } else {
             Routing.SmartNotebookActivity.openNotebookIntent(parentActivity,
                     parentActivity.getFilesDir().getPath(),
                     smartNotebook.getSmartBook().getBookId());
-        }
+//        }
     }
 
     private void initializeAnimation() {

@@ -15,6 +15,7 @@ import com.originb.inkwisenote.modules.repositories.Repositories;
 import com.originb.inkwisenote.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote.modules.smartnotes.data.NoteType;
+import com.originb.inkwisenote.modules.textnote.TextNoteHolder;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,16 +48,22 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     public NoteHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int position) {
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
         View itemView;
+
         if (NoteType.HANDWRITTEN_PNG.equals(atomicNote.getNoteType())) {
             itemView = LayoutInflater.from(parent.getContext())
                     .inflate(R.layout.note_drawing_layout, parent, false);
 
             return new HandwrittenNoteHolder(itemView, parentActivity, smartNotebookRepository);
-        } else //if (NoteType.NOT_SET.equals(atomicNote.getNoteType())) {
+        } else if (NoteType.TEXT_NOTE.equals(atomicNote.getNoteType())) {
             itemView = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.note_init_layout, parent, false);
+                    .inflate(R.layout.note_text_layout, parent, false);
+            return new TextNoteHolder(itemView, parentActivity, smartNotebookRepository);
+        }
 
-        return new InitNoteHolder(itemView, parentActivity, smartNotebookRepository);
+        itemView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.note_init_layout, parent, false);
+
+        return new InitNoteHolder(itemView, parentActivity, smartNotebookRepository, this);
     }
 
     @Override
@@ -64,6 +71,11 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
         noteHolder.setNote(smartNotebook.getSmartBook().getBookId(), atomicNote);
         noteCards.put(atomicNote.getNoteId(), noteHolder);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        return position;
     }
 
     @Override

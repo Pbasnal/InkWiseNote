@@ -49,11 +49,13 @@ public class SmartNotebookRepository {
         atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
         smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
 
-        SmartNotebook updatedSmartNotebook = getSmartNotebooks(smartNotebook.getSmartBook().getBookId()).get();
-        if (updatedSmartNotebook.atomicNotes.isEmpty()) {
-            smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
-            smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
-        }
+        getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
+                .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
+                .ifPresent(updatedSmartNotebook -> {
+                    smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
+                    smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+                });
+
     }
 
     public void updateNotebook(SmartNotebook smartNotebook) {
