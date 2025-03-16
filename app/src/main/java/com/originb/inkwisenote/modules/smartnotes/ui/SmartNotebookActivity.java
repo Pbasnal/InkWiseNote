@@ -30,6 +30,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
     private Logger logger = new Logger("SmartNotebookActivity");
 
     private String workingNotePath;
+    private int indexOfCurrentPage;
 
     private SmartNotebook smartNotebook;
     private SmartNotebookRepository smartNotebookRepository;
@@ -53,6 +54,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
         createNoteTitleEditText();
         createNoteCreatedTimeText();
 
+        this.indexOfCurrentPage = 0;
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
 
         recyclerView = findViewById(R.id.smart_note_page_view);
@@ -95,7 +97,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
     private void updatePageNumberText(SmartNotebook smartNotebook) {
         pageNumText = findViewById(R.id.page_num_text);
-        setPageNum(0);
+        setPageNum(indexOfCurrentPage);
     }
 
     private void createNoteTitleEditText() {
@@ -118,40 +120,38 @@ public class SmartNotebookActivity extends AppCompatActivity {
     }
 
     private void onNewNotePageClick(View view) {
-        int currentVisibleItemIndex = scrollLayout.findLastVisibleItemPosition();
-
         // Determine the position to insert the new item after the currently visible one
-        int newPosition = currentVisibleItemIndex + 1;
+        int positionOfNewHolder = indexOfCurrentPage + 1;
         BackgroundOps.execute(() -> {
                     AtomicNoteEntity newAtomicNote = smartNotebookRepository.newAtomicNote("",
                             workingNotePath,
                             NoteType.NOT_SET);
                     SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(smartNotebook.smartBook,
-                            newAtomicNote, newPosition);
-                    smartNotebook.insertAtomicNoteAndPage(newPosition, newAtomicNote, newSmartPage);
+                            newAtomicNote, positionOfNewHolder - 1);
+                    smartNotebook.insertAtomicNoteAndPage(positionOfNewHolder - 1, newAtomicNote, newSmartPage);
 
-                    smartNotebookAdapter.saveNotebookPageAt(currentVisibleItemIndex, newAtomicNote);
+                    smartNotebookAdapter.saveNotebookPageAt(indexOfCurrentPage, newAtomicNote);
                     return smartNotebook;
                 },
                 atomicNoteEntity -> {
                     // Notify the adapter about the new item inserted
-                    smartNotebookAdapter.notifyItemInserted(newPosition);
-
-                    scrollLayout.setScrollRequested(true);
-                    // Optionally scroll to the new item
-                    recyclerView.postDelayed(() -> {
-                        recyclerView.smoothScrollToPosition(newPosition);
-                        setPageNum(newPosition);
-                    }, 1000);
-
+                    smartNotebookAdapter.notifyItemInserted(positionOfNewHolder);
                     int totalItemCount = recyclerView.getAdapter().getItemCount();
-                    if (newPosition == totalItemCount - 1) {
+                    if (positionOfNewHolder == totalItemCount) {
                         nextButton.setVisibility(View.INVISIBLE);
                     } else {
                         nextButton.setVisibility(View.VISIBLE);
                     }
 
                     prevButton.setVisibility(View.VISIBLE);
+
+                    scrollLayout.setScrollRequested(true);
+                    // Optionally scroll to the new item
+                    recyclerView.postDelayed(() -> {
+                        recyclerView.smoothScrollToPosition(positionOfNewHolder);
+                        setPageNum(positionOfNewHolder);
+                        indexOfCurrentPage = positionOfNewHolder;
+                    }, 10);
                 });
     }
 
@@ -163,28 +163,28 @@ public class SmartNotebookActivity extends AppCompatActivity {
             // Get the total number of items
             int totalItemCount = recyclerView.getAdapter().getItemCount();
 
-            // Get the last visible item position
-            int lastVisibleItemPosition = scrollLayout.findLastVisibleItemPosition();
+            smartNotebookAdapter.saveNotebookPageAt(indexOfCurrentPage,
+                    smartNotebook.getAtomicNotes().get(indexOfCurrentPage));
 
-            smartNotebookAdapter.saveNotebookPageAt(lastVisibleItemPosition,
-                    smartNotebook.getAtomicNotes().get(lastVisibleItemPosition));
-
-            int nextPosition = lastVisibleItemPosition + 1;
-            // Check if we can scroll to the next item
-            if (nextPosition < totalItemCount) {
-                // Scroll to the next item
-                scrollLayout.setScrollRequested(true);
-                recyclerView.smoothScrollToPosition(nextPosition);
-                setPageNum(nextPosition);
-            }
+            int pageIndex = indexOfCurrentPage + 1;
 
             // hide next button if this is the last visible note
-            if (nextPosition >= totalItemCount - 1) {
+            if (pageIndex >= totalItemCount - 1) {
                 nextButton.setVisibility(View.INVISIBLE);
             }
             if (totalItemCount > 1) {
                 prevButton.setVisibility(View.VISIBLE);
             }
+
+            // Check if we can scroll to the next item
+            if (pageIndex < totalItemCount) {
+                // Scroll to the next item
+                scrollLayout.setScrollRequested(true);
+                recyclerView.smoothScrollToPosition(pageIndex);
+                setPageNum(pageIndex);
+                indexOfCurrentPage = pageIndex;
+            }
+            // don't use currentPageIndex after this because it is getting modified above
         });
     }
 
@@ -195,26 +195,26 @@ public class SmartNotebookActivity extends AppCompatActivity {
             // Get the total number of items
             int totalItemCount = recyclerView.getAdapter().getItemCount();
 
-            // Get the last visible item position
-            int lastVisibleItemPosition = scrollLayout.findLastVisibleItemPosition();
+            smartNotebookAdapter.saveNotebookPageAt(indexOfCurrentPage,
+                    smartNotebook.getAtomicNotes().get(indexOfCurrentPage));
 
-            smartNotebookAdapter.saveNotebookPageAt(lastVisibleItemPosition,
-                    smartNotebook.getAtomicNotes().get(lastVisibleItemPosition));
+            int indexOfPrevPage = indexOfCurrentPage - 1;
 
-            int prevPosition = lastVisibleItemPosition - 1;
-            // Check if we can scroll to the next item
-            if (prevPosition >= 0) {
-                // Scroll to the next item
-                scrollLayout.setScrollRequested(true);
-                recyclerView.smoothScrollToPosition(prevPosition);
-                setPageNum(prevPosition);
-            }
-            if (prevPosition <= 0) {
+            if (indexOfPrevPage <= 0) {
                 prevButton.setVisibility(View.INVISIBLE);
             }
             if (totalItemCount > 1) {
                 nextButton.setVisibility(View.VISIBLE);
             }
+            // Check if we can scroll to the next item
+            if (indexOfPrevPage >= 0) {
+                // Scroll to the next item
+                scrollLayout.setScrollRequested(true);
+                recyclerView.smoothScrollToPosition(indexOfPrevPage);
+                setPageNum(indexOfPrevPage);
+                indexOfCurrentPage = indexOfPrevPage;
+            }
+            // don't use currentPageIndex after this because it is getting modified above
         });
     }
 

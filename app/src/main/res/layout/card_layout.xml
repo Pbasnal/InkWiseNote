@@ -8,7 +8,7 @@
                                    android:layout_margin="8dp"
                                    card_view:cardCornerRadius="8dp"
                                    card_view:cardElevation="4dp"
-                                   android:backgroundTint="@color/white">
+                                   android:backgroundTint="?attr/colorSurface">
 
     <LinearLayout
             android:layout_width="match_parent"
@@ -25,67 +25,65 @@
                 android:id="@+id/note_text_preview"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:textColor="@color/black"
+                android:textColor="?attr/colorOnSurface"
                 android:scaleType="centerCrop"
-                android:padding="5dp"
+                android:padding="12dp"
                 android:visibility="gone"/>
 
 
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical|center_horizontal"
-                android:background="@color/black">
+                android:gravity="center_vertical"
+                android:padding="8dp"
+                android:background="?attr/colorPrimaryContainer">
 
             <TextView
                     android:id="@+id/card_name"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Note Name"
-                    android:textAlignment="center"
-                    android:padding="5dp"
-                    android:textColor="@color/white"
-                    android:background="@color/black"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintHorizontal_bias="0"/>
+                    android:textAlignment="textStart"
+                    android:textColor="?attr/colorOnPrimaryContainer"
+                    android:textSize="16sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
 
             <ImageView
                     android:id="@+id/img_note_status"
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-
+                    android:layout_height="24dp"
+                    android:layout_width="24dp"
+                    android:layout_marginStart="8dp"
                     android:src="@drawable/ic_tick_circle"
-                    />
+                    app:tint="?attr/colorOnPrimaryContainer"/>
         </LinearLayout>
 
         <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
+                android:layout_height="48dp"
                 android:orientation="horizontal">
 
             <ImageButton
                     android:id="@+id/btn_relation_view"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_gravity="left"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:src="@drawable/ic_graph_view"
-                    android:background="@color/blue"
-                    android:padding="8dp"
+                    android:background="?attr/colorSecondaryContainer"
+                    android:padding="12dp"
+                    app:tint="?attr/colorOnSecondaryContainer"
                     android:contentDescription="View related notes"/>
 
             <ImageButton
                     android:id="@+id/btn_dlt_note"
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:src="@drawable/ic_delete"
-                    android:padding="8dp"
+                    android:padding="12dp"
                     android:background="@color/red"
+                    app:tint="@color/white"
                     android:contentDescription="Delete note"/>
         </LinearLayout>
     </LinearLayout>
