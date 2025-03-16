@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "InkWiseNote"
+rootProject.name = "inkwisenote2"
 include(":app")
  

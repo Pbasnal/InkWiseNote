@@ -11,7 +11,7 @@ file("secrets.properties").takeIf { it.exists() }?.apply {
 }
 
 android {
-    namespace = "com.originb.inkwisenote"
+    namespace = "com.originb.inkwisenote2"
     compileSdk = 34
 
     buildFeatures {
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.originb.inkwisenote"
+        applicationId = "com.originb.inkwisenote2"
         minSdk = 26
         targetSdk = 34
         versionCode = 3
