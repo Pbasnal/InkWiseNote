@@ -32,4 +32,20 @@
     <color name="on_primary_container_light">#1565C0</color>
     <color name="secondary_container_light">#B2EBF2</color>
     <color name="on_secondary_container_light">#006064</color>
+
+    <!-- Dark theme specific colors -->
+    <color name="background_dark">#121212</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <color name="on_background_dark">#FFFFFF</color>
+    <color name="on_surface_dark">#FFFFFF</color>
+    <color name="card_background_dark">#2D2D2D</color>
+    <color name="card_stroke_dark">#424242</color>
+    <color name="toolbar_background_dark">#1E1E1E</color>
+    <color name="toolbar_text_dark">#FFFFFF</color>
+
+    <!-- Dark theme containers -->
+    <color name="primary_container_dark">#081063</color>
+    <color name="on_primary_container_dark">#E8EAF6</color>
+    <color name="secondary_container_dark">#006064</color>
+    <color name="on_secondary_container_dark">#B2EBF2</color>
 </resources>
