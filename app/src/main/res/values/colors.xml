@@ -1,17 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
-    <color name="black">#FF000000</color>
-    <color name="dark_gray">#252526</color>
+    <!-- Base colors -->
+    <color name="primary">#2196F3</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="primary_variant">#1565C0</color>
+    <color name="secondary">#03DAC6</color>
+    <color name="secondary_dark">#018786</color>
+    
+    <!-- Common colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="red">#F44336</color>
+    <color name="blue">#2196F3</color>
+    <color name="dark_gray">#212121</color>
     <color name="light_gray">#969696</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="red">#960808</color>
-    <color name="blue">#000096</color>
     <color name="yellow">#FFA303</color>
-    <color name="green">#119102</color>
-
+    <color name="green">#4CAF50</color>
+    
+    <!-- Light theme specific colors -->
+    <color name="background_light">#FFFFFF</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="on_background_light">#000000</color>
+    <color name="on_surface_light">#000000</color>
+    <color name="card_background_light">#FFFFFF</color>
+    <color name="card_stroke_light">#E0E0E0</color>
+    <color name="toolbar_background_light">#FFFFFF</color>
+    <color name="toolbar_text_light">#000000</color>
+    
+    <!-- Light theme containers -->
+    <color name="primary_container_light">#E3F2FD</color>
+    <color name="on_primary_container_light">#1565C0</color>
+    <color name="secondary_container_light">#B2EBF2</color>
+    <color name="on_secondary_container_light">#006064</color>
 </resources>

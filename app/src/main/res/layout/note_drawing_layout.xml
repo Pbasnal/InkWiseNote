@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/smart_note_drawing_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -10,32 +10,39 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="@color/black">
+            android:background="?attr/colorSurface"
+            android:paddingTop="2dp">
 
-        <ImageButton
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/delete_note"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/red"
-                android:contentDescription="Add Note"
-                android:visibility="visible"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="0dp"
+                app:fabCustomSize="40dp"
+                android:contentDescription="Delete Note"
                 android:src="@drawable/ic_delete"
-                android:layout_gravity="end"/>
+                app:tint="@color/white"
+                app:backgroundTint="@color/red"/>
 
-        <androidx.cardview.widget.CardView
+        <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                card_view:cardCornerRadius="8dp"
-                card_view:cardElevation="4dp">
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="0dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="?attr/colorOutline">
 
             <com.originb.inkwisenote.modules.handwrittennotes.ui.DrawingView
                     android:id="@+id/smart_drawing_view"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@android:color/white"
-                    android:padding="50dp"/>
-        </androidx.cardview.widget.CardView>
+                    android:background="@color/white"
+                    android:padding="16dp"/>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
