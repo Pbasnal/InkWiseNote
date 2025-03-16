@@ -34,18 +34,12 @@ public class InitNoteHolder extends NoteHolder {
 
     private void createTextNote(View view) {
         if (atomicNote == null) return;
-
-        int position = getAdapterPosition();
-        atomicNote.setNoteType(NoteType.TEXT_NOTE.toString());
-        adapter.notifyItemChanged(position);
+        adapter.updateNoteType(atomicNote, NoteType.TEXT_NOTE.toString());
     }
 
     private void createHandwrittenNote(View view) {
         if (atomicNote == null) return;
-
-        int position = getAdapterPosition();
-        atomicNote.setNoteType(NoteType.HANDWRITTEN_PNG.toString());
-        adapter.notifyItemChanged(position);
+        adapter.updateNoteType(atomicNote, NoteType.HANDWRITTEN_PNG.toString());
     }
 
     @Override
