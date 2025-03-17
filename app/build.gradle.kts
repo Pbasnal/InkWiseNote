@@ -3,6 +3,7 @@ import java.util.*
 
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 val properties = Properties()
@@ -50,6 +51,9 @@ android {
         animationsDisabled = false
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {
@@ -70,6 +74,7 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+    implementation("androidx.core:core-ktx:+")
 
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
