@@ -117,7 +117,7 @@ jobs:
       - name: Upload info
         run: |
           echo "upload url of signed files ${{ steps.create_release.outputs.upload_url }}"
-          echo "asset output path:  ${{ steps.sign_app.outputs }}"
+          echo "asset path:  ${{ steps.sign_app.outputs.signedReleaseFile }}"
           echo "Files inside release-files"
           ls app/release_files
 
