@@ -65,21 +65,33 @@ jobs:
           versionCode: ${{ github.run_number }}
 
       - name: Build with Gradle
-        run: ./gradlew build
+        run: |
+          ./gradlew build
+          ./gradlew bundleRelease
+          ./gradlew assembleRelease
+          
+          echo "Bundle files"
+          ls app/build/outputs/bundle/release
+          
+          echo "APK Files"
+          ls app/build/outputs/apk/release
+          
+          mkdir app/release_files
+          mv app/build/outputs/bundle/release/app-release.aab app/release_files/app-release.aab
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/release_files/app-release-unsigned.apk
+          
+          echo "Release files folder"
+          ls app/release_files
 
-      - name: Build Release AAB
-        id: buildRelease
-        run: ./gradlew bundleRelease
-
-      - name: Sign Release AAB
-        id: sign_app
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/bundle/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
+#      - name: Sign Release AAB
+#        id: sign_app
+#        uses: r0adkll/sign-android-release@v1
+#        with:
+#          releaseDirectory: app/release_files
+#          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+#          alias: ${{ secrets.ALIAS }}
+#          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+#          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Create service_account.json
         id: createServiceAccount
