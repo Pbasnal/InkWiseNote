@@ -117,24 +117,26 @@ jobs:
       - name: Upload info
         run: |
           echo "upload url of signed files ${{ steps.create_release.outputs.upload_url }}"
-          echo "asset path:  ${{ steps.sign_app.outputs.signedReleaseFile }}"
+          echo "asset output path:  ${{ steps.sign_app.outputs }}"
           echo "Files inside release-files"
           ls app/release_files
 
-      # Uploading the signed files
-      - name: Upload all Signed Files
-        uses: softprops/action-gh-release@v1
-        with:
-          files: app/release_files/**/*
+      - name: Upload bundle files to Release
+        uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          asset_name: inkwise-note.aab
+          asset_content_type: application/vnd.android.package-archive
 
-#      - name: Upload apk and bundle files to Release
-#        uses: actions/upload-release-asset@v1
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#        with:
-#          upload_url: ${{ steps.create_release.outputs.upload_url }}
-#          asset_path: ${{ steps.sign_app.outputs.signedReleaseFile }}
-#          asset_name: inkwise-note.aab
-#          asset_content_type: application/vnd.android.package-archive
+      - name: Upload apk files to Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          asset_name: app-release-unsigned-signed.apk
+          asset_content_type: application/vnd.android.package-archive
