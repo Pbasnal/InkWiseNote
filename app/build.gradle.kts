@@ -22,8 +22,8 @@ android {
         applicationId = "com.originb.inkwisenote2"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "3"
+        versionCode = 4
+        versionName = "app_bundle_release"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
