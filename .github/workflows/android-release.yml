@@ -1,4 +1,4 @@
-name: Android Build Release ABB
+name: Android Build Release Files
 
 on:
   workflow_run:
@@ -60,31 +60,29 @@ jobs:
           echo "VISION_API_ENDPOINT=${VISION_API_ENDPOINT}" >> ./app/secrets.properties
 
       - name: Build with Gradle
-        run: ./gradlew build
-
-      - name: Build App Bundle
-        run: ./gradlew bundleRelease
-
-      - name: Build APK
-        run: ./gradlew assembleRelease
-
-      - name: Upload Release App Bundle
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-bundle
-          path: app/build/outputs/bundle/release/app-release.aab
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+        run: |
+          ./gradlew build
+          ./gradlew bundleRelease
+          ./gradlew assembleRelease
+          
+          echo "Bundle files"
+          ls app/build/outputs/bundle/release
+          
+          echo "APK Files"
+          ls app/build/outputs/apk/release
+          
+          mkdir app/release_files
+          mv app/build/outputs/bundle/release/app-release.aab app/release_files/app-release.aab
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/release_files/app-release-unsigned.apk
+          
+          echo "Release files folder"
+          ls app/release_files
 
       - name: Sign Release Bundle
         id: sign_app
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: app/build/outputs/bundle/release
+          releaseDirectory: app/release_files
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -116,7 +114,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload AAB to Release
+      - name: Upload apk and bundle files to Release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -124,26 +122,4 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ steps.sign_app.outputs.signedReleaseFile }}
           asset_name: inkwise-note.aab
-          asset_content_type: application/vnd.android.package-archive
-
-      - name: Sign Release APK
-        id: sign_app
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
-
-      - name: Upload APK to Release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ steps.sign_app.outputs.signedReleaseFile }}
-          asset_name: inkwise-note.apk
           asset_content_type: application/vnd.android.package-archive
