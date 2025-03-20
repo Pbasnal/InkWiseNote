@@ -58,3 +58,6 @@ InkwiseNote is an Android application for managing notes. It allows users to cre
 
 ### License
 This project is licensed under the MIT License - see the LICENSE file for de
+
+### Privacy Policy
+https://www.privacypolicies.com/live/52261e09-7202-4775-b7e7-e9066f55c0e3
