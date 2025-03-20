@@ -1,4 +1,4 @@
-name: Android Build Release ABB
+name: Android Build Release Files
 
 on:
   workflow_run:
