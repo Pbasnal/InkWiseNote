@@ -27,7 +27,6 @@ public class BackgroundOps {
 
     public static void execute(Runnable runnable) {
         getInstance().executor.execute(runnable);
-
     }
 
     public static void execute(Runnable runnable, Runnable continueOnMainThread) {

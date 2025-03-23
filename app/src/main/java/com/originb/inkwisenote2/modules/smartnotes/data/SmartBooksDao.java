@@ -8,7 +8,7 @@ import java.util.Set;
 @Dao
 public interface SmartBooksDao {
     @Query("SELECT * FROM smart_books WHERE book_id = :bookId")
-    SmartBookEntity getSmartbooksWithMatchingTitle(long bookId);
+    SmartBookEntity getSmartbook(long bookId);
 
     @Query("SELECT * FROM smart_books WHERE title like :title")
     List<SmartBookEntity> getSmartbooksWithMatchingTitle(String title);

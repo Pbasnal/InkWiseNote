@@ -135,7 +135,7 @@ public class SmartNotebookRepository {
     }
 
     public Optional<SmartNotebook> getSmartNotebooks(long bookId) {
-        SmartBookEntity smartBook = smartBooksDao.getSmartbooksWithMatchingTitle(bookId);
+        SmartBookEntity smartBook = smartBooksDao.getSmartbook(bookId);
         if (smartBook == null) return Optional.empty();
 
         List<SmartBookPage> smartBookPages = smartBookPagesDao.getSmartBookPages(bookId);
@@ -211,9 +211,7 @@ public class SmartNotebookRepository {
 
     private SmartBookEntity newSmartBook(String title, long createdDateTimeMs) {
         SmartBookEntity smartBookEntity = new SmartBookEntity();
-        if (Strings.isNullOrWhitespace(title)) {
-            smartBookEntity.setTitle(DateTimeUtils.msToDateTime(createdDateTimeMs));
-        } else {
+        if (!Strings.isNullOrWhitespace(title)) {
             smartBookEntity.setTitle(title);
         }
         smartBookEntity.setCreatedTimeMillis(createdDateTimeMs);
