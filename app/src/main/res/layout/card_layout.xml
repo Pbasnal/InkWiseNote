@@ -18,13 +18,17 @@
         <ImageView
                 android:id="@+id/card_image"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:minHeight="150dp"
                 android:scaleType="centerCrop"
                 android:padding="5dp"/>
         <TextView
                 android:id="@+id/note_text_preview"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:minHeight="150dp"
                 android:textColor="?attr/colorOnSurface"
                 android:scaleType="centerCrop"
                 android:padding="12dp"
@@ -33,7 +37,9 @@
 
         <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="0.3"
+                android:minHeight="25dp"
                 android:gravity="center_vertical"
                 android:padding="8dp"
                 android:background="?attr/colorPrimaryContainer">
@@ -53,7 +59,8 @@
             <ImageView
                     android:id="@+id/img_note_status"
                     android:layout_height="24dp"
-                    android:layout_width="24dp"
+                    android:layout_weight="0.2"
+                    android:layout_width="0dp"
                     android:layout_marginStart="8dp"
                     android:src="@drawable/ic_tick_circle"
                     app:tint="?attr/colorOnPrimaryContainer"/>
@@ -61,7 +68,9 @@
 
         <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="0dp"
+                android:minHeight="25dp"
+                android:layout_weight="0.3"
                 android:orientation="horizontal">
 
             <ImageButton

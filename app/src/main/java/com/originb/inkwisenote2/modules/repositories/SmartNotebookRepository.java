@@ -1,6 +1,5 @@
 package com.originb.inkwisenote2.modules.repositories;
 
-import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.common.ListUtils;
 import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.common.Strings;
@@ -15,7 +14,6 @@ public class SmartNotebookRepository {
     private final SmartBookPagesDao smartBookPagesDao;
 
     public SmartNotebookRepository() {
-
         this.atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
         this.smartBooksDao = Repositories.getInstance().getNotesDb().smartBooksDao();
         this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();

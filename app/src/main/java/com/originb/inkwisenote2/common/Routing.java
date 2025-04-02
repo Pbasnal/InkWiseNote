@@ -56,6 +56,14 @@ public class Routing {
             packageContext.startActivity(intent);
             // packageContext.finish(); // Optional since CLEAR_TASK will finish this activity anyway
         }
+
+        public static void openSmartHomePageAndStartFresh(Context packageContext) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.smarthome.SmartHomeActivity.class);
+            // Clear all activities on top and start fresh
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            packageContext.startActivity(intent);
+            // packageContext.finish(); // Optional since CLEAR_TASK will finish this activity anyway
+        }
     }
 }
 

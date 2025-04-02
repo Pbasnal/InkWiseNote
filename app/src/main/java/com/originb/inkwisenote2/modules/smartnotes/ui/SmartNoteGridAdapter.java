@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
+import com.originb.inkwisenote2.common.ScreenUtils;
 import com.originb.inkwisenote2.config.AppState;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.noterelation.data.NoteRelation;
@@ -31,9 +32,12 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
 
     private final Map<Long, GridNoteCardHolder> bookCards = new HashMap<>();
 
-    public SmartNoteGridAdapter(ComponentActivity parentActivity, List<SmartNotebook> smartNotebooks) {
+    private boolean isCompact = false;
+
+    public SmartNoteGridAdapter(ComponentActivity parentActivity, List<SmartNotebook> smartNotebooks, boolean isCompact) {
         this.parentActivity = parentActivity;
         this.smartNotebooks = smartNotebooks;
+        this.isCompact = isCompact;
 
         AppState.observeNoteRelationships(parentActivity, this::updateNoteRelations);
         EventBus.getDefault().register(this);
@@ -43,7 +47,7 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
     public void onNoteStatusChange(Events.NoteStatus noteStatus) {
         long bookId = noteStatus.smartNotebook.getSmartBook().getBookId();
 
-        if(bookCards.containsKey(bookId)) {
+        if (bookCards.containsKey(bookId)) {
             GridNoteCardHolder holder = bookCards.get(bookId);
             holder.updateNoteStatus(noteStatus);
         }
@@ -91,6 +95,13 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
     @Override
     public void onBindViewHolder(@NonNull @NotNull GridNoteCardHolder gridNoteCardHolder, int position) {
         SmartNotebook smartNotebook = smartNotebooks.get(position);
+
+        if (isCompact) {
+            ViewGroup.LayoutParams params = gridNoteCardHolder.getItemView().getLayoutParams();
+            params.height = ScreenUtils.pxToDp(200, parentActivity);
+            params.width = ScreenUtils.pxToDp(200, parentActivity);
+            gridNoteCardHolder.getItemView().setLayoutParams(params);
+        }
 
         logger.debug("Setting book at position: " + position, smartNotebook.getSmartBook());
         gridNoteCardHolder.setNote(smartNotebook);

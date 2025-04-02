@@ -56,7 +56,7 @@ public class NoteSearchActivity extends AppCompatActivity {
         resultsList = new ArrayList<>();
 
         recyclerView = findViewById(R.id.note_search_card_grid_view);
-        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
+        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>(), false);
 
         recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);

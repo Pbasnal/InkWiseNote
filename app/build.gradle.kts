@@ -57,7 +57,6 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
     implementation("com.google.android.material:material:1.12.0")
-    implementation("androidx.compose.ui:ui-graphics-android:1.7.2")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("org.projectlombok:lombok:1.18.30")
     implementation("com.rmtheis:tess-two:9.1.0")
@@ -70,6 +69,7 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-runtime:2.6.1")
 
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")

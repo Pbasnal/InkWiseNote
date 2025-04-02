@@ -125,7 +125,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
+        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>(), false);
 
         recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);

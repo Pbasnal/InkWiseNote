@@ -105,7 +105,7 @@ public class HomePageActivity extends AppCompatActivity {
         GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
         recyclerView.setLayoutManager(gridLayoutManager);
 
-        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>());
+        smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>(), false);
 
         BackgroundOps.execute(() -> noteRelationDao.getAllNoteRelations(),
                 AppState::updatedRelatedNotes
