@@ -1,8 +1,11 @@
 package com.originb.inkwisenote2.modules.repositories;
 
+import android.content.Context;
 import com.originb.inkwisenote2.common.ListUtils;
+import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.common.Strings;
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -56,7 +59,7 @@ public class SmartNotebookRepository {
 
     }
 
-    public void updateNotebook(SmartNotebook smartNotebook) {
+    public void updateNotebook(SmartNotebook smartNotebook, Context context) {
         long updateTime = System.currentTimeMillis();
 
         SmartBookEntity smartBookEntity = smartNotebook.getSmartBook();
@@ -69,6 +72,7 @@ public class SmartNotebookRepository {
         atomicNoteEntitiesDao.updateAtomicNote(smartNotebook.getAtomicNotes());
 
         int updateResult = smartBookPagesDao.updateSmartBookPage(smartNotebook.getSmartBookPages());
+        EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));
     }
 
     public Optional<SmartNotebook> getSmartNotebookContainingNote(long noteId) {

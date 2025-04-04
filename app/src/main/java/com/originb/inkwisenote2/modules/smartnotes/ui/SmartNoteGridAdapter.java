@@ -124,7 +124,9 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
 
         if (position < 0 || smartNotebooks.size() <= position) return;
 
-        SmartNotebook smartNotebook = smartNotebooks.get(holder.getAdapterPosition() - 1);
+        int index = holder.getAdapterPosition() - 1;
+        if (index < 0 || index >= smartNotebooks.size()) return;
+        SmartNotebook smartNotebook = smartNotebooks.get(index);
 
         bookCards.remove(smartNotebook.getSmartBook().getBookId());
     }

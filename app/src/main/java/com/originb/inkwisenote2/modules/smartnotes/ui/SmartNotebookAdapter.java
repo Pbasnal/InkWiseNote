@@ -107,7 +107,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         int position = smartNotebook.getAtomicNotes().indexOf(atomicNote);
         if (position != -1) {
             atomicNote.setNoteType(newNoteType);
-            BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook));
+            BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook, parentActivity));
             notifyItemChanged(position);
         }
     }
@@ -121,7 +121,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
             // update title
             smartNotebook.getSmartBook().setTitle(noteTitle);
-            smartNotebookRepository.updateNotebook(smartNotebook);
+            smartNotebookRepository.updateNotebook(smartNotebook, parentActivity);
         });
     }
 

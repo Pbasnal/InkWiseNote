@@ -248,7 +248,6 @@ public class SmartNotebookActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         smartNotebookAdapter.saveNote(noteTitleText.getText().toString());
-        EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, this));
     }
 
     @Override
