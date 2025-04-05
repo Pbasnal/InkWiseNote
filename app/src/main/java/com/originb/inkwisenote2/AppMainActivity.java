@@ -32,7 +32,7 @@ public class AppMainActivity extends AppCompatActivity {
         AppState.updateState();
 
 
-        Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
+        Routing.HomePageActivity.openHomePageAndStartFresh(this);
     }
 
     private void registerModules() {
