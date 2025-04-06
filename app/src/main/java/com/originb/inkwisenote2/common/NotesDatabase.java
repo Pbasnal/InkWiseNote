@@ -31,7 +31,7 @@ import com.originb.inkwisenote2.modules.queries.data.QueryDao;
         HandwrittenNoteEntity.class,
         TextNoteEntity.class,
         QueryEntity.class
-}, version = 11)
+}, version = 12)
 public abstract class NotesDatabase extends RoomDatabase {
 
     public abstract NoteRelationDao noteRelationDao();

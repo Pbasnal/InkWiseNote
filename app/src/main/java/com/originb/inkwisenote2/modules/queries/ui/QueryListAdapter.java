@@ -3,6 +3,7 @@ package com.originb.inkwisenote2.modules.queries.ui;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ListAdapter;
@@ -37,19 +38,23 @@ public class QueryListAdapter extends ListAdapter<QueryEntity, QueryListAdapter.
         private final TextView queryName;
         private final TextView findWords;
         private final TextView ignoreWords;
+        private final ImageButton editButton;
 
         QueryViewHolder(@NonNull View itemView) {
             super(itemView);
             queryName = itemView.findViewById(R.id.query_name);
             findWords = itemView.findViewById(R.id.find_words);
             ignoreWords = itemView.findViewById(R.id.ignore_words);
+            editButton = itemView.findViewById(R.id.edit_button);
         }
 
         void bind(QueryEntity query, OnQueryClickListener listener) {
             queryName.setText(query.getName());
             findWords.setText("Find: " + query.getWordsToFind());
             ignoreWords.setText("Ignore: " + query.getWordsToIgnore());
+            
             itemView.setOnClickListener(v -> listener.onQueryClick(query));
+            editButton.setOnClickListener(v -> listener.onEditClick(query));
         }
     }
 
@@ -58,7 +63,7 @@ public class QueryListAdapter extends ListAdapter<QueryEntity, QueryListAdapter.
                 @Override
                 public boolean areItemsTheSame(@NonNull QueryEntity oldItem,
                                              @NonNull QueryEntity newItem) {
-                    return oldItem.getId() == newItem.getId();
+                    return oldItem.getName() == newItem.getName();
                 }
 
                 @Override
@@ -72,5 +77,6 @@ public class QueryListAdapter extends ListAdapter<QueryEntity, QueryListAdapter.
 
     public interface OnQueryClickListener {
         void onQueryClick(QueryEntity query);
+        void onEditClick(QueryEntity query);
     }
 } 

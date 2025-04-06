@@ -8,6 +8,8 @@ import com.originb.inkwisenote2.modules.repositories.Repositories;
 import java.util.List;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
+import android.database.sqlite.SQLiteConstraintException;
 
 public class QueryRepository {
     private final QueryDao queryDao;
@@ -17,17 +19,28 @@ public class QueryRepository {
         queryDao = db.queryDao();
     }
 
-    public LiveData<List<QueryEntity>> getAllQueries() {
+    public List<QueryEntity> getAllQueries() {
         return queryDao.getAllQueries();
     }
 
     public void saveQuery(String name, List<String> wordsToFind, List<String> wordsToIgnore) {
         QueryEntity query = new QueryEntity();
+        fillEntityWithData(query, name, wordsToFind, wordsToIgnore);
+        query.setCreatedTimeMillis(System.currentTimeMillis());
+        
+        try {
+            queryDao.insertQuery(query);
+        } catch (SQLiteConstraintException e) {
+            // Name already exists, update instead
+            queryDao.updateQuery(query);
+        }
+    }
+
+    public QueryEntity fillEntityWithData(QueryEntity query, String name, List<String> wordsToFind, List<String> wordsToIgnore) {
         query.setName(name);
         query.setWordsToFind(String.join(",", wordsToFind));
         query.setWordsToIgnore(String.join(",", wordsToIgnore));
-        query.setCreatedTimeMillis(System.currentTimeMillis());
-        queryDao.insertQuery(query);
+        return query;
     }
 
     public void updateQuery(QueryEntity query, List<String> wordsToFind, List<String> wordsToIgnore) {
@@ -42,15 +55,15 @@ public class QueryRepository {
 
     public List<String> getWordsToFind(QueryEntity query) {
         if (query.getWordsToFind() == null || query.getWordsToFind().isEmpty()) {
-            return Arrays.asList();
+            return new ArrayList<>();
         }
-        return Arrays.asList(query.getWordsToFind().split(","));
+        return new ArrayList<>(Arrays.asList(query.getWordsToFind().split(",")));
     }
 
     public List<String> getWordsToIgnore(QueryEntity query) {
         if (query.getWordsToIgnore() == null || query.getWordsToIgnore().isEmpty()) {
-            return Arrays.asList();
+            return new ArrayList<>();
         }
-        return Arrays.asList(query.getWordsToIgnore().split(","));
+        return new ArrayList<>(Arrays.asList(query.getWordsToIgnore().split(",")));
     }
 } 
