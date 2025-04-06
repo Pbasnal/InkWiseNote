@@ -13,10 +13,11 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SmartHomePageViewModel extends ViewModel {
-    private final SmartNotebookRepository smartNotebookRepository;
+    private SmartNotebookRepository smartNotebookRepository;
     private final MutableLiveData<List<SmartNotebook>> userNotebooks = new MutableLiveData<>();
 
     public SmartHomePageViewModel() {
@@ -38,6 +39,7 @@ public class SmartHomePageViewModel extends ViewModel {
         BackgroundOps.execute(
                 // First lambda: get notebooks and sort them
                 () -> {
+                    if(smartNotebookRepository == null) return new ArrayList<SmartNotebook>();
                     List<SmartNotebook> notebooks = smartNotebookRepository.getAllSmartNotebooks();
                     if (notebooks != null) {
                         // Sort notebooks by last updated time in descending order (most recent first)

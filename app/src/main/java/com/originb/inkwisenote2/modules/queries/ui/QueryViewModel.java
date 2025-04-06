@@ -4,8 +4,11 @@ import android.app.Application;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
+import com.originb.inkwisenote2.modules.repositories.Repositories;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +20,7 @@ public class QueryViewModel extends AndroidViewModel {
 
     public QueryViewModel(Application application) {
         super(application);
-        repository = new QueryRepository(application);
+        repository = Repositories.getInstance().getQueryRepository();
     }
 
     public LiveData<List<QueryEntity>> getAllQueries() {
@@ -57,11 +60,13 @@ public class QueryViewModel extends AndroidViewModel {
     }
 
     public void saveQuery(String name) {
-        if (currentQuery == null) {
-            repository.saveQuery(name, wordsToFind.getValue(), wordsToIgnore.getValue());
-        } else {
-            repository.updateQuery(currentQuery, wordsToFind.getValue(), wordsToIgnore.getValue());
-        }
+        BackgroundOps.execute(() -> {
+            if (currentQuery == null) {
+                repository.saveQuery(name, wordsToFind.getValue(), wordsToIgnore.getValue());
+            } else {
+                repository.updateQuery(currentQuery, wordsToFind.getValue(), wordsToIgnore.getValue());
+            }
+        });
     }
 
     public void loadQuery(QueryEntity query) {

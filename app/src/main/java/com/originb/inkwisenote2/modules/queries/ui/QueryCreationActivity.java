@@ -8,12 +8,15 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.originb.inkwisenote2.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class QueryCreationActivity extends AppCompatActivity {
     private QueryViewModel viewModel;
     private EditText wordInput;
     private ChipGroup wordsToFindContainer;
     private ChipGroup wordsToIgnoreContainer;
+    private QueryListAdapter queryListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,6 +26,7 @@ public class QueryCreationActivity extends AppCompatActivity {
         viewModel = new ViewModelProvider(this).get(QueryViewModel.class);
         setupViews();
         setupObservers();
+        setupQueryList();
     }
 
     private void setupViews() {
@@ -86,10 +90,28 @@ public class QueryCreationActivity extends AppCompatActivity {
                     String name = input.getText().toString().trim();
                     if (!name.isEmpty()) {
                         viewModel.saveQuery(name);
-                        finish();
+                        wordsToIgnoreContainer.removeAllViews();
+                        wordsToFindContainer.removeAllViews();
                     }
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void setupQueryList() {
+        RecyclerView recyclerView = findViewById(R.id.recycler_view_all_queries);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        
+        queryListAdapter = new QueryListAdapter(query -> {
+            // Load the selected query for editing
+            viewModel.loadQuery(query);
+        });
+        
+        recyclerView.setAdapter(queryListAdapter);
+
+        // Observe queries from database
+        viewModel.getAllQueries().observe(this, queries -> {
+            queryListAdapter.submitList(queries);
+        });
     }
 } 

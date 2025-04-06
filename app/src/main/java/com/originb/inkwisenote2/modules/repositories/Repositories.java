@@ -5,6 +5,7 @@ import android.content.Context;
 import androidx.room.Room;
 import com.originb.inkwisenote2.common.NotesDatabase;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +14,7 @@ import lombok.Setter;
 public class Repositories {
     private static Repositories instance;
 
+    private QueryRepository queryRepository;
     private SmartNotebookRepository smartNotebookRepository;
     private HandwrittenNoteRepository handwrittenNoteRepository;
     private NoteRelationRepository noteRelationRepository;
@@ -45,5 +47,6 @@ public class Repositories {
         smartNotebookRepository = new SmartNotebookRepository();
         handwrittenNoteRepository = new HandwrittenNoteRepository();
         noteRelationRepository = new NoteRelationRepository();
+        queryRepository = new QueryRepository();
     }
 }

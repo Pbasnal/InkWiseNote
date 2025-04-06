@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class QueryRepository {
     private final QueryDao queryDao;
 
-    public QueryRepository(Context context) {
+    public QueryRepository() {
         NotesDatabase db = Repositories.getInstance().getNotesDb();
         queryDao = db.queryDao();
     }
