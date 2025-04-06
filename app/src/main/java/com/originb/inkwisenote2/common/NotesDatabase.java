@@ -18,6 +18,8 @@ import com.originb.inkwisenote2.modules.noterelation.data.NoteRelation;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
+import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
+import com.originb.inkwisenote2.modules.queries.data.QueryDao;
 
 @Database(entities = {
         NoteRelation.class,
@@ -27,8 +29,9 @@ import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
         SmartBookEntity.class,
         SmartBookPage.class,
         HandwrittenNoteEntity.class,
-        TextNoteEntity.class
-}, version = 9)
+        TextNoteEntity.class,
+        QueryEntity.class
+}, version = 11)
 public abstract class NotesDatabase extends RoomDatabase {
 
     public abstract NoteRelationDao noteRelationDao();
@@ -46,4 +49,6 @@ public abstract class NotesDatabase extends RoomDatabase {
     public abstract HandwrittenNotesDao handwrittenNotesDao();
 
     public abstract TextNotesDao textNotesDao();
+
+    public abstract QueryDao queryDao();
 }

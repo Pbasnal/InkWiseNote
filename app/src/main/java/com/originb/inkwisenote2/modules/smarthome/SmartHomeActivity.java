@@ -1,5 +1,6 @@
 package com.originb.inkwisenote2.modules.smarthome;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -14,8 +15,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.core.view.GravityCompat;
 import com.google.android.gms.common.util.CollectionUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Routing;
+import com.originb.inkwisenote2.modules.queries.ui.QueryCreationActivity;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
 import org.w3c.dom.Text;
 
@@ -89,6 +92,20 @@ public class SmartHomeActivity extends AppCompatActivity {
             if (CollectionUtils.isEmpty(notebooks)) return;
             smartNoteGridAdapter.setSmartNotebooks(notebooks);
             createdByUserText.setVisibility(View.VISIBLE);
+        });
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_queries) {
+                // Open QueryCreationActivity
+                Intent intent = new Intent(this, QueryCreationActivity.class);
+                startActivity(intent);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                return true;
+            }
+            // ... handle other menu items ...
+            return false;
         });
     }
 

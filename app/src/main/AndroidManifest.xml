@@ -43,6 +43,10 @@
                 android:exported="true">
         </activity>
 
+        <activity
+                android:name=".modules.queries.ui.QueryCreationActivity"
+                android:label="Search Queries"
+                android:exported="false"/>
 
     </application>
 </manifest>
