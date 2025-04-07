@@ -154,7 +154,7 @@
 
                 <!-- Third Row -->
                 <TextView
-                        android:id="@+id/tracked_by_user_text"
+                        android:id="@+id/queried_notes_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:padding="16dp"
@@ -162,7 +162,7 @@
                         android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
 
                 <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/third_row_recycler"
+                        android:id="@+id/queried_notes"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:clipToPadding="false"

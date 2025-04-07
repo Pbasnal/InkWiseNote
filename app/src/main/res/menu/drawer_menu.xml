@@ -8,9 +8,12 @@
                 android:title="Home"/>
         <!-- Add more menu items as needed -->
     </group>
-    
+
     <item
-        android:id="@+id/nav_queries"
-        android:icon="@drawable/ic_search"
-        android:title="Search Queries"/>
+            android:id="@+id/nav_queries"
+            android:icon="@drawable/ic_search"
+            android:title="Search Queries"/>
+    <item
+            android:id="@+id/admin_button"
+            android:title="Admin"/>
 </menu> 

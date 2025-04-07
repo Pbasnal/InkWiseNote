@@ -2,6 +2,7 @@ package com.originb.inkwisenote2.common;
 
 import android.content.Context;
 import android.content.Intent;
+import com.originb.inkwisenote2.modules.queries.ui.QueryCreationActivity;
 
 public class Routing {
 
@@ -63,6 +64,20 @@ public class Routing {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             packageContext.startActivity(intent);
             // packageContext.finish(); // Optional since CLEAR_TASK will finish this activity anyway
+        }
+    }
+
+    public static class QueryActivity {
+        public static void openQueryActivity(Context packageContext) {
+            Intent intent = new Intent(packageContext, QueryCreationActivity.class);
+            packageContext.startActivity(intent);
+        }
+    }
+
+    public static class AdminActivity {
+        public static void openAdminActivity(Context packageContext) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.admin.AdminActivity.class);
+            packageContext.startActivity(intent);
         }
     }
 }

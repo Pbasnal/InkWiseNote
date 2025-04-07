@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 public class SmartNotebookRepository {
 
+    private final AtomicNotesDomain atomicNotesDomain;
     private final AtomicNoteEntitiesDao atomicNoteEntitiesDao;
     private final SmartBooksDao smartBooksDao;
     private final SmartBookPagesDao smartBookPagesDao;
@@ -20,6 +21,7 @@ public class SmartNotebookRepository {
         this.atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
         this.smartBooksDao = Repositories.getInstance().getNotesDb().smartBooksDao();
         this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
+        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
     }
 
     // Create the data and return the notebook entity
@@ -27,7 +29,10 @@ public class SmartNotebookRepository {
                                                               String directoryPath,
                                                               NoteType noteType) {
 
-        AtomicNoteEntity atomicNoteEntity = newAtomicNote("", directoryPath, noteType);
+        AtomicNoteEntity atomicNoteEntity = atomicNotesDomain.saveAtomicNote(AtomicNotesDomain.constructAtomicNote(
+                "",
+                directoryPath,
+                noteType));
         SmartBookEntity smartBookEntity = newSmartBook(title, atomicNoteEntity.getCreatedTimeMillis());
         SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity, 0);
         SmartNotebook smartNotebook = new SmartNotebook(smartBookEntity, smartBookPage, atomicNoteEntity);
@@ -99,7 +104,7 @@ public class SmartNotebookRepository {
                     .map(SmartBookPage::getNoteId)
                     .collect(Collectors.toSet());
 
-            List<AtomicNoteEntity> atomicNoteEntities = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+            List<AtomicNoteEntity> atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds);
 
             smartNotebooks.add(new SmartNotebook(smartBook, smartBookPages, atomicNoteEntities));
         }
@@ -114,7 +119,7 @@ public class SmartNotebookRepository {
         List<SmartBookEntity> smartBooks = smartBooksDao.getSmartBooks(bookIdToPageMap.keySet());
         if (smartBooks == null || smartBooks.isEmpty()) return new HashSet<>();
 
-        List<AtomicNoteEntity> atomicNotes = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+        List<AtomicNoteEntity> atomicNotes = atomicNotesDomain.getAtomicNotes(noteIds);
         Map<Long, List<AtomicNoteEntity>> noteIdToNotes = ListUtils.groupBy(atomicNotes, AtomicNoteEntity::getNoteId);
 
         Set<Long> bookIdsToRemove = new HashSet<>();
@@ -147,7 +152,7 @@ public class SmartNotebookRepository {
                 .map(SmartBookPage::getNoteId)
                 .collect(Collectors.toSet());
 
-        List<AtomicNoteEntity> atomicNoteEntities = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+        List<AtomicNoteEntity> atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds);
 
         SmartNotebook smartNotebook = new SmartNotebook(smartBook, smartBookPages, atomicNoteEntities);
 
@@ -165,7 +170,7 @@ public class SmartNotebookRepository {
         Map<Long, List<SmartBookPage>> bookIdToPagesMap = ListUtils.groupBy(smartBookPages, SmartBookPage::getBookId);
 
         Set<Long> noteIds = smartBookPages.stream().map(SmartBookPage::getNoteId).collect(Collectors.toSet());
-        List<AtomicNoteEntity> atomicNotes = atomicNoteEntitiesDao.getAtomicNotes(noteIds);
+        List<AtomicNoteEntity> atomicNotes = atomicNotesDomain.getAtomicNotes(noteIds);
         Map<Long, List<AtomicNoteEntity>> noteIdToNotes = ListUtils.groupBy(atomicNotes, AtomicNoteEntity::getNoteId);
 
         Set<SmartNotebook> smartNotebooks = new HashSet<>();
@@ -185,30 +190,6 @@ public class SmartNotebookRepository {
         }
 
         return smartNotebooks;
-    }
-
-    public AtomicNoteEntity newAtomicNote(String filename, String filepath, NoteType noteType) {
-        long createdTimeMillis = System.currentTimeMillis();
-        AtomicNoteEntity atomicNoteEntity = new AtomicNoteEntity();
-        atomicNoteEntity.setCreatedTimeMillis(createdTimeMillis);
-
-        if (Strings.isNullOrWhitespace(filename)) {
-            atomicNoteEntity.setFilename(String.valueOf(createdTimeMillis));
-        } else {
-            atomicNoteEntity.setFilename(filename);
-        }
-        if (Strings.isNullOrWhitespace(filepath)) {
-            atomicNoteEntity.setFilepath("");
-        } else {
-            atomicNoteEntity.setFilepath(filepath);
-        }
-
-        atomicNoteEntity.setNoteType(noteType.toString());
-
-        long noteId = atomicNoteEntitiesDao.insertAtomicNote(atomicNoteEntity);
-        atomicNoteEntity.setNoteId(noteId);
-
-        return atomicNoteEntity;
     }
 
     private SmartBookEntity newSmartBook(String title, long createdDateTimeMs) {

@@ -12,6 +12,7 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
@@ -34,6 +35,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
     private SmartNotebook smartNotebook;
     private SmartNotebookRepository smartNotebookRepository;
+    private AtomicNotesDomain atomicNotesDomain;
 
     private SmartNotebookPageScrollLayout scrollLayout;
     private SmartNotebookAdapter smartNotebookAdapter;
@@ -56,6 +58,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
         this.indexOfCurrentPage = 0;
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
 
         recyclerView = findViewById(R.id.smart_note_page_view);
         scrollLayout = new SmartNotebookPageScrollLayout(this);
@@ -123,9 +126,10 @@ public class SmartNotebookActivity extends AppCompatActivity {
         // Determine the position to insert the new item after the currently visible one
         int positionOfNewHolder = indexOfCurrentPage + 1;
         BackgroundOps.execute(() -> {
-                    AtomicNoteEntity newAtomicNote = smartNotebookRepository.newAtomicNote("",
+                    AtomicNoteEntity newAtomicNote = atomicNotesDomain.saveAtomicNote(AtomicNotesDomain.constructAtomicNote(
+                            "",
                             workingNotePath,
-                            NoteType.NOT_SET);
+                            NoteType.NOT_SET));
                     SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(smartNotebook.smartBook,
                             newAtomicNote, positionOfNewHolder - 1);
                     smartNotebook.insertAtomicNoteAndPage(positionOfNewHolder - 1, newAtomicNote, newSmartPage);

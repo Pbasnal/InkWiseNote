@@ -5,9 +5,11 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
+import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -87,6 +89,10 @@ public class QueryViewModel extends AndroidViewModel {
             }
             allQueries.setValue(allQueriesMap);
             clearCurrentQuery();
+
+            if (allQueriesMap.containsKey(name)) {
+                EventBus.getDefault().post(new Events.QueryUpdated(allQueriesMap.get(name)));
+            }
         });
     }
 

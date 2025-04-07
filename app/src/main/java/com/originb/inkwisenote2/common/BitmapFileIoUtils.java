@@ -19,10 +19,11 @@ public class BitmapFileIoUtils {
         }
     }
 
-    public static Optional<Bitmap> readBitmapFromFile(String filePath, float bitmapScale) {
+    public static Optional<Bitmap> readBitmapFromFile(String filePath, BitmapScale bitmapScale) {
         File file = new File(filePath);
-        if (bitmapScale < 1) {
-            return getScaledImage(filePath, bitmapScale);
+        float bitmapScaleValue = bitmapScale.getValue();
+        if (bitmapScaleValue < 1) {
+            return getScaledImage(filePath, bitmapScaleValue);
         }
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inMutable = true;

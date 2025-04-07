@@ -36,16 +36,23 @@ public class AppMainActivity extends AppCompatActivity {
     }
 
     private void registerModules() {
-        ConfigReader.fromContext(this);
-        Repositories.registerRepositories(this);
-
-        String rootNotesDirectory = getFilesDir().getPath();
-        ConfigReader.setRuntimeSetting(ConfigKeys.NOTES_ROOT_DIRECTORY, rootNotesDirectory);
+        registerRepos(this);
+        registerConfigs(this);
 
         notebookEventListner = new SmartNotebookEventListener();
         handwrittenNoteEventListener = new HandwrittenNoteEventListener();
         noteRelationEventListener = new NoteRelationEventListener();
         noteOcrEventListener = new NoteOcrEventListener();
         textNoteListener = new TextNoteListener();
+    }
+
+    public static void registerRepos(AppCompatActivity appCompatActivity) {
+        ConfigReader.fromContext(appCompatActivity);
+        Repositories.registerRepositories(appCompatActivity);
+    }
+
+    public static void registerConfigs(AppCompatActivity appCompatActivity) {
+        String rootNotesDirectory = appCompatActivity.getFilesDir().getPath();
+        ConfigReader.setRuntimeSetting(ConfigKeys.NOTES_ROOT_DIRECTORY, rootNotesDirectory);
     }
 }

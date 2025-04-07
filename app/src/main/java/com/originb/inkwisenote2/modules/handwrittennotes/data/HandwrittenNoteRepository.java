@@ -105,7 +105,7 @@ public class HandwrittenNoteRepository {
         } else {
             fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
         }
-        handwrittenNoteWithImage.noteImage = BitmapFileIoUtils.readBitmapFromFile(fullPath, BitmapScale.FULL_SIZE.getValue());
+        handwrittenNoteWithImage.noteImage = BitmapFileIoUtils.readBitmapFromFile(fullPath, BitmapScale.FULL_SIZE);
         return handwrittenNoteWithImage;
     }
 
