@@ -22,16 +22,16 @@ public class MapsUtils {
      * @param <V> Type of the list elements
      * @return A new map containing all keys and merged lists
      */
-    public static <K, V> Map<K, List<V>> mergeMapsWithLists(Map<K, List<V>> map1, Map<K, List<V>> map2) {
+    public static <K, V> Map<K, Set<V>> mergeMapsWithSets(Map<K, Set<V>> map1, Map<K, Set<V>> map2) {
         if (isEmpty(map1) && isEmpty(map2)) {
             return new HashMap<>();
         }
         
-        Map<K, List<V>> result = new HashMap<>();
+        Map<K, Set<V>> result = new HashMap<>();
         
         // Add all entries from first map
         if (notEmpty(map1)) {
-            map1.forEach((key, list) -> result.put(key, new ArrayList<>(list)));
+            map1.forEach((key, list) -> result.put(key, new HashSet<>(list)));
         }
         
         // Merge entries from second map
@@ -42,7 +42,7 @@ public class MapsUtils {
                     result.get(key).addAll(list);
                 } else {
                     // New key, add new list
-                    result.put(key, new ArrayList<>(list));
+                    result.put(key, new HashSet<>(list));
                 }
             });
         }

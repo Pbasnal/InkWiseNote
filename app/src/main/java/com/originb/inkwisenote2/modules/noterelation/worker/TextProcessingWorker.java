@@ -74,7 +74,7 @@ public class TextProcessingWorker extends Worker {
             if (NoteType.HANDWRITTEN_PNG.toString().equals(atomicNote.getNoteType())) {
                 text = getHandwrittenNoteText(atomicNote);
             } else {
-                text = getTextNoteText(bookId);
+                text = getTextNoteText(atomicNote.getNoteId());
             }
             processTextForHandwrittenNote(atomicNote, text);
         }
@@ -83,7 +83,7 @@ public class TextProcessingWorker extends Worker {
     }
 
     private String getTextNoteText(long bookId) {
-        TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForBook(bookId);
+        TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(bookId);
         return textNoteEntity.getNoteText();
     }
 

@@ -12,7 +12,10 @@ public interface TextNotesDao {
     List<TextNoteEntity> getAllTextNotes();
 
     @Query("SELECT * FROM text_notes WHERE book_id = :bookId")
-    TextNoteEntity getTextNoteForBook(Long bookId);
+    List<TextNoteEntity> getTextNoteForBook(Long bookId);
+
+    @Query("SELECT * FROM text_notes WHERE note_id = :noteId")
+    TextNoteEntity getTextNoteForNote(Long noteId);
 
     @Query("SELECT * FROM text_notes WHERE book_id IN (:bookIds)")
     List<TextNoteEntity> getTextNoteForBooks(Set<Long> bookIds);

@@ -97,7 +97,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 
         if (NoteType.TEXT_NOTE.equals(firstNote.getNoteType())) {
             BackgroundOps.execute(() ->
-                            textNotesDao.getTextNoteForBook(smartNotebook.getSmartBook().getBookId()),
+                            textNotesDao.getTextNoteForNote(firstNote.getNoteId()),
                     (textNote) -> {
                         noteImage.setVisibility(View.GONE);
                         textPreview.setVisibility(View.VISIBLE);

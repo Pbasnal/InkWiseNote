@@ -40,7 +40,7 @@ public class TextNoteHolder extends NoteHolder {
 
     @Override
     public void setNote(long bookId, AtomicNoteEntity atomicNote) {
-        BackgroundOps.execute(() -> getSmartNotebook(bookId),
+        BackgroundOps.execute(() -> getSmartNotebook(bookId, atomicNote.getNoteId()),
                 smartNotebookOpt -> {
                     notebook = smartNotebookOpt.get();
                     noteEditText.setText(textNoteEntity.getNoteText());
@@ -51,13 +51,14 @@ public class TextNoteHolder extends NoteHolder {
                 });
     }
 
-    private Optional<SmartNotebook> getSmartNotebook(long bookId) {
+    private Optional<SmartNotebook> getSmartNotebook(long bookId, long noteId) {
         Optional<SmartNotebook> notebookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
 
         notebookOpt.ifPresent(notebook -> {
-            textNoteEntity = textNotesDao.getTextNoteForBook(notebook.getSmartBook().getBookId());
+            textNoteEntity = textNotesDao.getTextNoteForNote(noteId);
             if (textNoteEntity == null) {
-                textNoteEntity = new TextNoteEntity(notebook.getAtomicNotes().get(0).getNoteId(),
+                textNoteEntity = new TextNoteEntity(
+                        noteId,
                         notebook.smartBook.getBookId());
                 textNotesDao.insertTextNote(textNoteEntity);
             }

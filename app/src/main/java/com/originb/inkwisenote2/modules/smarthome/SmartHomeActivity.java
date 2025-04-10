@@ -1,6 +1,5 @@
 package com.originb.inkwisenote2.modules.smarthome;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -18,7 +17,6 @@ import com.google.android.material.navigation.NavigationView;
 import com.originb.inkwisenote2.AppMainActivity;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Routing;
-import com.originb.inkwisenote2.modules.queries.ui.QueryCreationActivity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
 
@@ -111,7 +109,7 @@ public class SmartHomeActivity extends AppCompatActivity {
                 Routing.QueryActivity.openQueryActivity(this);
                 return true;
             }
-            if(itemId == R.id.admin_button) {
+            if (itemId == R.id.admin_button) {
                 Routing.AdminActivity.openAdminActivity(this);
             }
             return false;
@@ -180,16 +178,14 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotesText.setVisibility(View.GONE);
 
             queriedNotebooksRecyclerView.setLayoutManager(
-                    new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
+                    new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
 
             queryResultsAdapter = new QueryResultsAdapter(activity);
             queriedNotebooksRecyclerView.setAdapter(queryResultsAdapter);
 
-            // Observe queries and results
-            activity.smartHomePageViewModel.getQueryResults().observe(activity, results -> {
+            activity.smartHomePageViewModel.getLiveQueryResults().observe(activity, results -> {
                 if (results == null) return;
-
-                queryResultsAdapter.setData(new ArrayList<>(results.keySet()), results);
+                queryResultsAdapter.setData(results);
                 queriedNotesText.setVisibility(View.VISIBLE);
             });
         }
