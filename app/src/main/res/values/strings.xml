@@ -11,4 +11,8 @@
     <string name="create_by_user">Your recent SmartNotebooks</string>
     <string name="create_by_us">Smart Notebooks created by us for you!</string>
     <string name="custom_tracking">Words and topics currently being tracked</string>
+    <string name="query_results_title">Query Results</string>
+    <string name="select_query">Select a query:</string>
+    <string name="no_queries_available">No queries available. Create a query first.</string>
+    <string name="no_results_found">No results found for this query.</string>
 </resources>

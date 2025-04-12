@@ -4,13 +4,13 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.R;
-import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
-import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.common.Routing;
 
 import java.util.*;
 
@@ -36,6 +36,8 @@ public class QueryResultsAdapter extends RecyclerView.Adapter<QueryResultsAdapte
         String queryName = queryNames.get(position);
         holder.queryName.setText(queryName);
 
+        holder.setQueryName(queryName, context);
+
         Set<QueryNoteResult> results = queryResults.get(queryName);
         if (results != null) {
             holder.notesAdapter.setNotes(results);
@@ -55,6 +57,7 @@ public class QueryResultsAdapter extends RecyclerView.Adapter<QueryResultsAdapte
 
     static class QueryViewHolder extends RecyclerView.ViewHolder {
         TextView queryName;
+        ImageButton imageButton;
         RecyclerView resultsRecyclerView;
         NotesAdapter notesAdapter;
 
@@ -62,6 +65,7 @@ public class QueryResultsAdapter extends RecyclerView.Adapter<QueryResultsAdapte
             super(itemView);
             queryName = itemView.findViewById(R.id.query_name);
             resultsRecyclerView = itemView.findViewById(R.id.query_results_recycler);
+            imageButton = itemView.findViewById(R.id.open_query_results_btn);
 
             // Set up horizontal scrolling for results
             resultsRecyclerView.setLayoutManager(
@@ -70,6 +74,12 @@ public class QueryResultsAdapter extends RecyclerView.Adapter<QueryResultsAdapte
 
             notesAdapter = new NotesAdapter(itemView.getContext());
             resultsRecyclerView.setAdapter(notesAdapter);
+        }
+
+        public void setQueryName(String queryName, Context packageContext) {
+            imageButton.setOnClickListener(v -> {
+                Routing.QueryActivity.openQueryResultsActivity(packageContext, queryName);
+            });
         }
     }
 } 

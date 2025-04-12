@@ -3,6 +3,9 @@ package com.originb.inkwisenote2.common;
 import android.content.Context;
 import android.content.Intent;
 import com.originb.inkwisenote2.modules.queries.ui.QueryCreationActivity;
+import com.originb.inkwisenote2.modules.queries.ui.QueryResultsActivity;
+
+import java.util.Set;
 
 public class Routing {
 
@@ -18,6 +21,14 @@ public class Routing {
             Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.smartnotes.ui.SmartNotebookActivity.class);
             intent.putExtra("workingNotePath", currentDirectoryPath);
             intent.putExtra("bookId", bookId);
+            packageContext.startActivity(intent);
+        }
+
+        public static void openNotebookIntent(Context packageContext, String currentDirectoryPath, String commaSeparatedNoteIds) {
+
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.smartnotes.ui.SmartNotebookActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            intent.putExtra("noteIds", commaSeparatedNoteIds);
             packageContext.startActivity(intent);
         }
     }
@@ -70,6 +81,11 @@ public class Routing {
     public static class QueryActivity {
         public static void openQueryActivity(Context packageContext) {
             Intent intent = new Intent(packageContext, QueryCreationActivity.class);
+            packageContext.startActivity(intent);
+        }
+        public static void openQueryResultsActivity(Context packageContext, String queryName) {
+            Intent intent = new Intent(packageContext, QueryResultsActivity.class);
+            intent.putExtra("query_name", queryName);
             packageContext.startActivity(intent);
         }
     }

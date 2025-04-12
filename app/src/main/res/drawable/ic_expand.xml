@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:aapt="http://schemas.android.com/aapt"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportHeight="24"
+        android:viewportWidth="24">
+
+    <!-- Background Path (Optional) -->
+    <path
+            android:fillColor="#00000000"
+            android:pathData="M0,0h24v24H0z"/>
+
+    <!-- Downward-facing arrow for expand -->
+    <path
+            android:fillColor="#000000"
+            android:pathData="M7 10l5 5 5-5"/>
+</vector>

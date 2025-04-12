@@ -68,6 +68,12 @@ public class SmartNotebookRepository {
         long updateTime = System.currentTimeMillis();
 
         SmartBookEntity smartBookEntity = smartNotebook.getSmartBook();
+
+        // means this is a virtual notebook
+        if (smartBookEntity.getBookId() == -1) {
+            return;
+        }
+
         smartBookEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
         smartBooksDao.updateSmartBook(smartBookEntity);
 
@@ -139,6 +145,25 @@ public class SmartNotebookRepository {
         }
 
         return smartNotebooks;
+    }
+
+    public Optional<SmartNotebook> getVirtualSmartNotebooks(Set<Long> noteIds) {
+        List<AtomicNoteEntity> atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds);
+        List<SmartBookPage> smartBookPages = new ArrayList<>();
+
+        int pageIndex = 0;
+        for (AtomicNoteEntity note : atomicNoteEntities) {
+            smartBookPages.add(new SmartBookPage(-1,
+                    note.getNoteId(),
+                    pageIndex));
+            pageIndex++;
+        }
+        SmartBookEntity smartBook = new SmartBookEntity(-1, "",
+                System.currentTimeMillis(),
+                System.currentTimeMillis());
+
+        return Optional.of(new SmartNotebook(smartBook, smartBookPages, atomicNoteEntities));
+
     }
 
     public Optional<SmartNotebook> getSmartNotebooks(long bookId) {

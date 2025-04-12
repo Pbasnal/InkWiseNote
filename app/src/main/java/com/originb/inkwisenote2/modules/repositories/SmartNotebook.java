@@ -1,6 +1,5 @@
 package com.originb.inkwisenote2.modules.repositories;
 
-import com.originb.inkwisenote2.modules.noterelation.data.NoteRelation;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;

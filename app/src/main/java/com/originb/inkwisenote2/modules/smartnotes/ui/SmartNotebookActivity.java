@@ -24,7 +24,10 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SmartNotebookActivity extends AppCompatActivity {
 
@@ -225,9 +228,13 @@ public class SmartNotebookActivity extends AppCompatActivity {
     private Optional<SmartNotebook> getSmartNotebook() {
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
         workingNotePath = getIntent().getStringExtra("workingNotePath");
+        String[] noteIds = getIntent().getStringExtra("noteIds").split(",");
 
         if (bookIdToOpen != -1) {
             return smartNotebookRepository.getSmartNotebooks(bookIdToOpen);
+        } else if (noteIds != null && noteIds.length > 0) {
+            Set<Long> noteIdsSet = Arrays.stream(noteIds).map(Long::parseLong).collect(Collectors.toSet());
+            return smartNotebookRepository.getVirtualSmartNotebooks(noteIdsSet);
         }
 
         return smartNotebookRepository.initializeNewSmartNotebook("",
