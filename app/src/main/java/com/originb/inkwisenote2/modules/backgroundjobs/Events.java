@@ -38,4 +38,9 @@ public class Events {
     public static class QueryUpdated extends EventData {
         public QueryEntity query;
     }
+
+    @AllArgsConstructor
+    public static class QueryDeleted extends EventData {
+        public QueryEntity query;
+    }
 }

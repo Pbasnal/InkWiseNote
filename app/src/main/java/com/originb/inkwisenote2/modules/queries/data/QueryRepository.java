@@ -23,6 +23,10 @@ public class QueryRepository {
         return queryDao.getAllQueries();
     }
 
+    public QueryEntity getQueryByName(String queryName) {
+        return queryDao.getQuery(queryName);
+    }
+
     public void saveQuery(String name, List<String> wordsToFind, List<String> wordsToIgnore) {
         QueryEntity query = new QueryEntity();
         fillEntityWithData(query, name, wordsToFind, wordsToIgnore);

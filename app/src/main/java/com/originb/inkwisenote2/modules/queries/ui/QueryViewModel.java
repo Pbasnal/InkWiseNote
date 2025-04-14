@@ -1,9 +1,8 @@
 package com.originb.inkwisenote2.modules.queries.ui;
 
 import android.app.Application;
-import androidx.lifecycle.AndroidViewModel;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.*;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
@@ -15,8 +14,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 public class QueryViewModel extends AndroidViewModel {
+
     private final QueryRepository repository;
     private final MutableLiveData<List<String>> wordsToFind = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<List<String>> wordsToIgnore = new MutableLiveData<>(new ArrayList<>());
@@ -25,8 +26,10 @@ public class QueryViewModel extends AndroidViewModel {
 
     private MutableLiveData<Map<String, QueryEntity>> allQueries;
 
+
     public QueryViewModel(Application application) {
         super(application);
+
         repository = Repositories.getInstance().getQueryRepository();
         allQueries = new MutableLiveData<>(new HashMap<>());
     }
@@ -45,6 +48,8 @@ public class QueryViewModel extends AndroidViewModel {
     }
 
     public void addWordToFind(String word) {
+        if (word.isEmpty()) return;
+
         List<String> currentList = wordsToFind.getValue();
         if (currentList != null && !currentList.contains(word)) {
             currentList.add(word);
@@ -53,6 +58,8 @@ public class QueryViewModel extends AndroidViewModel {
     }
 
     public void addWordToIgnore(String word) {
+        if (word.isEmpty()) return;
+
         List<String> currentList = wordsToIgnore.getValue();
         if (currentList != null && !currentList.contains(word)) {
             currentList.add(word);
@@ -61,54 +68,79 @@ public class QueryViewModel extends AndroidViewModel {
     }
 
     public void removeWordToFind(String word) {
-        List<String> currentList = new ArrayList<>(wordsToFind.getValue() != null ?
-                wordsToFind.getValue() : new ArrayList<>());
+        List<String> currentList = wordsToFind.getValue();
+        if (currentList == null) currentList = new ArrayList<>();
+
         currentList.remove(word);
         wordsToFind.setValue(currentList);
     }
 
     public void removeWordToIgnore(String word) {
-        List<String> currentList = new ArrayList<>(wordsToIgnore.getValue() != null ?
-                wordsToIgnore.getValue() : new ArrayList<>());
+        List<String> currentList = wordsToFind.getValue();
+        if (currentList == null) currentList = new ArrayList<>();
+
         currentList.remove(word);
         wordsToIgnore.setValue(currentList);
     }
 
-    public void saveQuery(String name) {
+    public void findQueryWithQueryName(String queryName, Observer<QueryEntity> onQueryFetch) {
+        BackgroundOps.execute(() -> repository.getQueryByName(queryName),
+                onQueryFetch::onChanged);
+    }
+
+    public void saveQuery(String queryName) {
         BackgroundOps.execute(() -> {
-            if (currentQuery == null || !currentQuery.getName().equals(name)) {
-                repository.saveQuery(name, wordsToFind.getValue(), wordsToIgnore.getValue());
+            if (isNewQuery(queryName)) {
+                repository.saveQuery(queryName, wordsToFind.getValue(), wordsToIgnore.getValue());
             } else {
                 repository.updateQuery(currentQuery, wordsToFind.getValue(), wordsToIgnore.getValue());
             }
-            return repository.getAllQueries();
-        }, queries -> {
-            Map<String, QueryEntity> allQueriesMap = new HashMap<>();
-            for (QueryEntity query : queries) {
-                allQueriesMap.put(query.getName(), query);
-            }
-            allQueries.setValue(allQueriesMap);
-            clearCurrentQuery();
+            return repository.getQueryByName(queryName);
+        }, query -> {
+            Map<String, QueryEntity> allQueriesMap = allQueries.getValue();
+            allQueriesMap.put(queryName, query);
 
-            if (allQueriesMap.containsKey(name)) {
-                EventBus.getDefault().post(new Events.QueryUpdated(allQueriesMap.get(name)));
-            }
+            allQueries.setValue(allQueriesMap);
+
+            clearCurrentQuery();
+            EventBus.getDefault().post(new Events.QueryUpdated(allQueriesMap.get(queryName)));
         });
+    }
+
+    public void deleteQuery(QueryEntity queryToDelete) {
+        BackgroundOps.execute(() -> {
+            repository.deleteQuery(queryToDelete);
+            return queryToDelete;
+        }, queryToRemove -> {
+            Map<String, QueryEntity> allQueriesMap = allQueries.getValue();
+            allQueriesMap.remove(queryToRemove.getName());
+
+            allQueries.setValue(allQueriesMap);
+            EventBus.getDefault().post(new Events.QueryDeleted(queryToRemove));
+        });
+    }
+
+    private boolean isNewQuery(String queryName) {
+        return currentQuery == null || !currentQuery.getName().equals(queryName);
     }
 
     public void loadQuery(QueryEntity query) {
         currentQuery = query;
         currentQueryName.setValue(query.getName());
-        wordsToFind.setValue(new ArrayList<>(repository.getWordsToFind(query)));
-        wordsToIgnore.setValue(new ArrayList<>(repository.getWordsToIgnore(query)));
+        wordsToFind.setValue(repository.getWordsToFind(query));
+        wordsToIgnore.setValue(repository.getWordsToIgnore(query));
     }
 
-    public LiveData<List<String>> getWordsToFind() {
-        return wordsToFind;
+    public void onWordsToFindChange(LifecycleOwner owner, Observer<List<String>> observer) {
+        wordsToFind.observe(owner, observer);
     }
 
-    public LiveData<List<String>> getWordsToIgnore() {
-        return wordsToIgnore;
+    public void onWordsToIgnoreChange(LifecycleOwner owner, Observer<List<String>> observer) {
+        wordsToIgnore.observe(owner, observer);
+    }
+
+    public void onQueryNameChange(LifecycleOwner owner, Observer<String> observer) {
+        currentQueryName.observe(owner, observer);
     }
 
     public void clearCurrentQuery() {
@@ -118,7 +150,5 @@ public class QueryViewModel extends AndroidViewModel {
         wordsToIgnore.setValue(new ArrayList<>());
     }
 
-    public LiveData<String> getCurrentQueryName() {
-        return currentQueryName;
-    }
-} 
+
+}
