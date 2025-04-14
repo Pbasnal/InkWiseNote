@@ -1,128 +1,146 @@
 package com.originb.inkwisenote2.modules.queries.ui;
 
 import android.os.Bundle;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
-import com.originb.inkwisenote2.R;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.originb.inkwisenote2.R;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 
 public class QueryCreationActivity extends AppCompatActivity {
     private QueryViewModel viewModel;
-    private EditText wordInput;
-    private ChipGroup wordsToFindContainer;
-    private ChipGroup wordsToIgnoreContainer;
     private QueryListAdapter queryListAdapter;
-    private boolean isEditing = false;
-    private String currentQueryName = "";
-    private TextView currentQueryNameTextView;
+
+    private EditText currentQueryNameTextView;
+
+    private ChipGroup wordsToFindContainer;
+    private EditText wordToFindInput;
+    private Button addToFindBtn;
+
+    private ChipGroup wordsToIgnoreContainer;
+    private EditText wordToIgnoreInput;
+    private Button addToIgnoreBtn;
+
+    private Button saveQueryButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_query_creation);
 
-
         viewModel = new ViewModelProvider(this).get(QueryViewModel.class);
-        setupViews();
+
+        currentQueryNameTextView = findViewById(R.id.current_query_name);
+
+        wordsToFindContainer = findViewById(R.id.words_to_find_container);
+        wordToFindInput = findViewById(R.id.word_to_find_input);
+        addToFindBtn = findViewById(R.id.add_to_find);
+
+        wordsToIgnoreContainer = findViewById(R.id.words_to_ignore_container);
+        wordToIgnoreInput = findViewById(R.id.word_to_ignore_input);
+        addToIgnoreBtn = findViewById(R.id.add_to_ignore);
+
+
+        saveQueryButton = findViewById(R.id.save_query);
+
+        setupButtons();
         setupObservers();
         setupQueryList();
     }
 
-    private void setupViews() {
-        wordInput = findViewById(R.id.word_input);
-        wordsToFindContainer = findViewById(R.id.words_to_find_container);
-        wordsToIgnoreContainer = findViewById(R.id.words_to_ignore_container);
-        currentQueryNameTextView = findViewById(R.id.current_query_name);
+    private void setupButtons() {
 
-        findViewById(R.id.add_to_find).setOnClickListener(v -> {
-            String word = wordInput.getText().toString().trim();
-            if (!word.isEmpty()) {
-                viewModel.addWordToFind(word);
-                wordInput.setText("");
-            }
+        addToFindBtn.setOnClickListener(v -> {
+            viewModel.addWordToFind(wordToFindInput.getText().toString().trim());
+            wordToFindInput.setText("");
         });
 
-        findViewById(R.id.add_to_ignore).setOnClickListener(v -> {
-            String word = wordInput.getText().toString().trim();
-            if (!word.isEmpty()) {
-                viewModel.addWordToIgnore(word);
-                wordInput.setText("");
-            }
+        addToIgnoreBtn.setOnClickListener(v -> {
+            viewModel.addWordToIgnore(wordToIgnoreInput.getText().toString().trim());
+            wordToIgnoreInput.setText("");
         });
 
-        findViewById(R.id.save_query).setOnClickListener(v -> showSaveDialog());
-
-        currentQueryNameTextView.setText(currentQueryName);
+        saveQueryButton.setOnClickListener(v -> saveQuery());
     }
 
     private void setupObservers() {
-        viewModel.getWordsToFind().observe(this, words -> {
+        viewModel.onWordsToFindChange(this, words -> {
             wordsToFindContainer.removeAllViews();
             for (String word : words) {
-                addWordChip(wordsToFindContainer, word, () ->
-                        viewModel.removeWordToFind(word));
+                Chip chip = createWordChip(word);
+                chip.setOnCloseIconClickListener(v -> {
+                    viewModel.removeWordToFind(word);
+                    wordsToFindContainer.removeView(chip);
+                });
+                wordsToFindContainer.addView(chip);
             }
         });
 
-        viewModel.getWordsToIgnore().observe(this, words -> {
+        viewModel.onWordsToIgnoreChange(this, words -> {
             wordsToIgnoreContainer.removeAllViews();
             for (String word : words) {
-                addWordChip(wordsToIgnoreContainer, word, () ->
-                        viewModel.removeWordToIgnore(word));
+                Chip chip = createWordChip(word);
+                chip.setOnCloseIconClickListener(v -> {
+                    viewModel.removeWordToIgnore(word);
+                    wordsToIgnoreContainer.removeView(chip);
+                });
+                wordsToIgnoreContainer.addView(chip);
             }
         });
 
-        viewModel.getCurrentQueryName().observe(this, name -> {
+        viewModel.onQueryNameChange(this, name -> {
             currentQueryNameTextView.setText(name != null ? name : "");
         });
     }
 
-    private void addWordChip(ChipGroup container, String word, Runnable onDelete) {
+    private Chip createWordChip(String word) {
         Chip chip = new Chip(this);
         chip.setText(word);
         chip.setCloseIconVisible(true);
-        chip.setOnCloseIconClickListener(v -> {
-            onDelete.run();
-            container.removeView(chip);
-        });
-        container.addView(chip);
+
+        return chip;
     }
 
-    private void showSaveDialog() {
-        EditText input = new EditText(this);
-        input.setHint("Enter query name");
-        
-        String existingName = currentQueryNameTextView.getText().toString();
-        if (!existingName.isEmpty()) {
-            input.setText(existingName);
-        }
+    private void saveQuery() {
+        String queryName = currentQueryNameTextView.getText().toString().trim();
+        if (queryName.isEmpty()) queryName = "untitled query";
+
+        final String newQueryName = queryName; // needed because lambda needs final
+        viewModel.findQueryWithQueryName(queryName, query -> {
+            if (query == null) {
+                viewModel.saveQuery(newQueryName);
+            } else {
+                showErrorDialogMsg("Error",
+                        "Query name " + newQueryName + " already exists\nChoose a different name");
+            }
+        });
+    }
+
+    private void showErrorDialogMsg(String title, String message) {
+        TextView textView = new TextView(this);
+        textView.setText(message);
 
         new MaterialAlertDialogBuilder(this)
-            .setTitle(existingName.isEmpty() ? "Save Query" : "Update Query")
-            .setView(input)
-            .setPositiveButton(existingName.isEmpty() ? "Save" : "Update", (dialog, which) -> {
-                String name = input.getText().toString().trim();
-                if (!name.isEmpty()) {
-                    viewModel.saveQuery(name);
-                }
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
+                .setTitle(title)
+                .setView(textView)
+                .setPositiveButton("Ok", null)
+                .show();
     }
 
     private void setupQueryList() {
         RecyclerView recyclerView = findViewById(R.id.recycler_view_all_queries);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        
+
         queryListAdapter = new QueryListAdapter(new QueryListAdapter.OnQueryClickListener() {
             @Override
             public void onQueryClick(QueryEntity query) {
@@ -131,13 +149,15 @@ public class QueryCreationActivity extends AppCompatActivity {
 
             @Override
             public void onEditClick(QueryEntity query) {
-                isEditing = true;
-                currentQueryName = query.getName();
                 viewModel.loadQuery(query);
-                currentQueryNameTextView.setText(currentQueryName);
+            }
+
+            @Override
+            public void onDeleteClick(QueryEntity query) {
+                viewModel.deleteQuery(query);
             }
         });
-        
+
         recyclerView.setAdapter(queryListAdapter);
 
         viewModel.getAllQueries().observe(this, queries -> {

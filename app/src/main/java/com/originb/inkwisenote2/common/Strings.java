@@ -1,6 +1,5 @@
 package com.originb.inkwisenote2.common;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -14,7 +13,7 @@ public class Strings {
 
     public static boolean isNullOrWhitespace(String string) {
         if (Objects.isNull(string)) return true;
-        if (string.trim() == "") return true;
+        if (string.trim().isEmpty()) return true;
 
         return false;
     }

@@ -123,6 +123,13 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.postValue(queryResultsMap);
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onQueryDeleted(Events.QueryDeleted queryDeleted) {
+        Map<String, Set<QueryNoteResult>> queryResultsMap = liveQueryResults.getValue();
+        queryResultsMap.remove(queryDeleted.query.getName());
+        liveQueryResults.postValue(queryResultsMap);
+    }
+
     private QueryNoteResult transform(AtomicNoteEntity atomicNoteEntity,
                                       Set<String> wordsToFind,
                                       Set<String> wordsToIgnore) {

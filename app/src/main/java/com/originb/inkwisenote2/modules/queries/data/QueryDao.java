@@ -1,5 +1,6 @@
 package com.originb.inkwisenote2.modules.queries.data;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.*;
 import java.util.List;
 
@@ -7,6 +8,9 @@ import java.util.List;
 public interface QueryDao {
     @Query("SELECT * FROM queries ORDER BY created_time_ms DESC")
     List<QueryEntity> getAllQueries();
+
+    @Query("SELECT * FROM queries WHERE name = :query_name")
+    QueryEntity getQuery(String query_name);
 
     @Insert
     long insertQuery(QueryEntity query);
