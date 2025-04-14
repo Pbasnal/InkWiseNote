@@ -21,6 +21,7 @@ import com.originb.inkwisenote2.modules.repositories.*;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import lombok.Getter;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,6 +32,9 @@ import android.util.Log;
 import android.animation.ObjectAnimator;
 
 public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+    @Getter
+    private View itemView;
 
     private final SmartNoteGridAdapter smartNoteGridAdapter;
     private ComponentActivity parentActivity;
@@ -57,6 +61,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         super(itemView);
         this.smartNoteGridAdapter = smartNoteGridAdapter;
         this.parentActivity = parentActivity;
+        this.itemView = itemView;
 
         noteImage = itemView.findViewById(R.id.card_image);
         textPreview = itemView.findViewById(R.id.note_text_preview);
@@ -92,7 +97,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 
         if (NoteType.TEXT_NOTE.equals(firstNote.getNoteType())) {
             BackgroundOps.execute(() ->
-                            textNotesDao.getTextNoteForBook(smartNotebook.getSmartBook().getBookId()),
+                            textNotesDao.getTextNoteForNote(firstNote.getNoteId()),
                     (textNote) -> {
                         noteImage.setVisibility(View.GONE);
                         textPreview.setVisibility(View.VISIBLE);
@@ -177,9 +182,9 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
 //                    parentActivity.getFilesDir().getPath(),
 //                    smartNotebook.getSmartBook().getBookId());
 //        } else {
-            Routing.SmartNotebookActivity.openNotebookIntent(parentActivity,
-                    parentActivity.getFilesDir().getPath(),
-                    smartNotebook.getSmartBook().getBookId());
+        Routing.SmartNotebookActivity.openNotebookIntent(parentActivity,
+                parentActivity.getFilesDir().getPath(),
+                smartNotebook.getSmartBook().getBookId());
 //        }
     }
 

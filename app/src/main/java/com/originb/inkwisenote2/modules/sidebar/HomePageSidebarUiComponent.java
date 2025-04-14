@@ -10,6 +10,7 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.R;
+import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.config.Feature;
 import com.originb.inkwisenote2.modules.admin.AdminActivity;
@@ -52,9 +53,8 @@ public class HomePageSidebarUiComponent {
     private void setAdminButton() {
         adminButton.setVisibility(View.VISIBLE);
         adminButton.setOnClickListener(v -> {
-            Intent intent = new Intent(appCompatActivity, AdminActivity.class);
-            appCompatActivity.startActivity(intent);
             drawerLayout.closeDrawer(GravityCompat.START);
+            Routing.AdminActivity.openAdminActivity(appCompatActivity);
         });
     }
 

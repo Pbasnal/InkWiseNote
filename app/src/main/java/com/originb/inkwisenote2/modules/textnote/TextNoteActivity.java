@@ -68,7 +68,7 @@ public class TextNoteActivity extends AppCompatActivity {
         }
 
         notebookOpt.ifPresent(notebook -> {
-            textNoteEntity = textNotesDao.getTextNoteForBook(notebook.getSmartBook().getBookId());
+            textNoteEntity = textNotesDao.getTextNoteForNote(notebook.getSmartBook().getBookId());
             if (textNoteEntity == null) {
                 textNoteEntity = new TextNoteEntity(notebook.getAtomicNotes().get(0).getNoteId(),
                         notebook.smartBook.getBookId());

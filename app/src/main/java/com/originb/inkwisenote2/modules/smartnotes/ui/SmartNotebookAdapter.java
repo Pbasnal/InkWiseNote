@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
@@ -91,16 +92,22 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     @Override
     public void onViewRecycled(@NonNull NoteHolder holder) {
         super.onViewRecycled(holder);
-        if (holder instanceof HandwrittenNoteHolder || holder instanceof TextNoteHolder) {
-            holder.saveNote();
-        }
+        BackgroundOps.execute(() ->
+                        smartNotebookRepository.getSmartNotebooks(smartNotebook.smartBook.getBookId()),
+                existingSmartNotebook -> {
+                    if (existingSmartNotebook.isPresent()) {
+                        holder.saveNote();
+                    }
+                }
+        );
+
     }
 
     public void updateNoteType(AtomicNoteEntity atomicNote, String newNoteType) {
         int position = smartNotebook.getAtomicNotes().indexOf(atomicNote);
         if (position != -1) {
             atomicNote.setNoteType(newNoteType);
-            BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook));
+            BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook, parentActivity));
             notifyItemChanged(position);
         }
     }
@@ -114,11 +121,13 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
             // update title
             smartNotebook.getSmartBook().setTitle(noteTitle);
-            smartNotebookRepository.updateNotebook(smartNotebook);
+            smartNotebookRepository.updateNotebook(smartNotebook, parentActivity);
         });
     }
 
     public void removeNoteCard(long noteId) {
+        if (!noteCards.containsKey(noteId)) return;
+
         int position = noteCards.get(noteId).getAdapterPosition();
         noteCards.remove(noteId);
         notifyItemRemoved(position);

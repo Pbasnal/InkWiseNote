@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import com.originb.inkwisenote2.common.ScreenUtils;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import lombok.Getter;
@@ -44,7 +45,7 @@ public class RuledPageBackground {
 
         int canvasWidth = templateCanvas.getWidth();
         int canvasHeight = templateCanvas.getHeight();
-        int lineSpacing = (int) (pageTemplate.getLineSpacing() * density);  // Space between each line, you can change to your desired value
+        int lineSpacing = ScreenUtils.pxToDp(pageTemplate.getLineSpacing(), context);  // Space between each line, you can change to your desired value
 
         int color = Color.parseColor(pageTemplate.getLineColor());
         Paint linePaint = new Paint();
