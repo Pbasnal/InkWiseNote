@@ -56,6 +56,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
             String commaSeparatedNoteIds = noteIds.stream()  // Convert set to stream
                     .map(String::valueOf)  // Map each Long to String
                     .collect(Collectors.joining(","));
+
             Try.to(() -> Routing.SmartNotebookActivity.openNotebookIntent(context, context.getFilesDir().getPath(), commaSeparatedNoteIds), logger)
                     .get();
         });

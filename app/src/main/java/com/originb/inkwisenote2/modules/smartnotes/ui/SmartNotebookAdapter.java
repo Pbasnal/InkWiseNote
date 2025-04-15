@@ -26,7 +26,7 @@ import java.util.Optional;
 
 public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
-    private Logger logger = new Logger("SmartNotebookAdapter");
+    private final Logger logger = new Logger("SmartNotebookAdapter");
     private final ComponentActivity parentActivity;
 
     @Setter
@@ -49,6 +49,10 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
     @Override
     public int getItemViewType(int position) {
+        if (smartNotebook == null || position >= smartNotebook.getAtomicNotes().size()) {
+            return VIEW_TYPE_INIT;
+        }
+        
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
         if (NoteType.NOT_SET.toString().equals(atomicNote.getNoteType())) {
             return VIEW_TYPE_INIT;
@@ -84,6 +88,8 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull @NotNull NoteHolder noteHolder, int position) {
+        if (smartNotebook == null || position >= smartNotebook.getAtomicNotes().size()) return;
+        
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
         noteHolder.setNote(smartNotebook.getSmartBook().getBookId(), atomicNote);
         noteCards.put(atomicNote.getNoteId(), noteHolder);
@@ -92,18 +98,21 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     @Override
     public void onViewRecycled(@NonNull NoteHolder holder) {
         super.onViewRecycled(holder);
+        if (smartNotebook == null) return;
+        
         BackgroundOps.execute(() ->
-                        smartNotebookRepository.getSmartNotebooks(smartNotebook.smartBook.getBookId()),
-                existingSmartNotebook -> {
-                    if (existingSmartNotebook.isPresent()) {
-                        holder.saveNote();
-                    }
+            smartNotebookRepository.getSmartNotebooks(smartNotebook.smartBook.getBookId()),
+            existingSmartNotebook -> {
+                if (existingSmartNotebook.isPresent()) {
+                    holder.saveNote();
                 }
+            }
         );
-
     }
 
     public void updateNoteType(AtomicNoteEntity atomicNote, String newNoteType) {
+        if (smartNotebook == null) return;
+        
         int position = smartNotebook.getAtomicNotes().indexOf(atomicNote);
         if (position != -1) {
             atomicNote.setNoteType(newNoteType);
@@ -114,6 +123,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
     public void saveNote(String noteTitle) {
         if (smartNotebook == null) return;
+        
         BackgroundOps.execute(() -> {
             for (NoteHolder noteHolder : noteCards.values()) {
                 noteHolder.saveNote();
@@ -126,19 +136,16 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     }
 
     public void removeNoteCard(long noteId) {
-        if (!noteCards.containsKey(noteId)) return;
+        if (smartNotebook == null || !noteCards.containsKey(noteId)) return;
 
         int position = noteCards.get(noteId).getAdapterPosition();
         noteCards.remove(noteId);
         notifyItemRemoved(position);
     }
 
-    // this function assumes that either the smartNotebook has updated
-// notes and pages or
-// all new notes or pages are inserted after current index so that
-// the note and page at this index is not affected.
     public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
-        if (!noteCards.containsKey(atomicNote.getNoteId())) {
+        if (smartNotebook == null || atomicNote == null || 
+            !noteCards.containsKey(atomicNote.getNoteId())) {
             return;
         }
 
@@ -150,5 +157,4 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
     public int getItemCount() {
         return smartNotebook != null ? smartNotebook.atomicNotes.size() : 0;
     }
-
 }
