@@ -1,13 +1,17 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.view.View;
+import android.widget.ImageButton;
 import androidx.activity.ComponentActivity;
 import androidx.cardview.widget.CardView;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Logger;
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
+import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
+import org.greenrobot.eventbus.EventBus;
 
 public class InitNoteHolder extends NoteHolder {
 
@@ -16,7 +20,10 @@ public class InitNoteHolder extends NoteHolder {
     private final CardView cardToText;
     private final SmartNotebookAdapter adapter;
 
+    private ImageButton deleteNote;
+
     private AtomicNoteEntity atomicNote = null;
+    private long bookId;
 
     public InitNoteHolder(View itemView,
                           ComponentActivity parentActivity,
@@ -30,6 +37,15 @@ public class InitNoteHolder extends NoteHolder {
 
         cardToText = itemView.findViewById(R.id.tap_to_text);
         cardToText.setOnClickListener(this::createTextNote);
+
+        deleteNote = itemView.findViewById(R.id.delete_note);
+        deleteNote.setOnClickListener(v -> {
+            BackgroundOps.execute(() ->
+                    EventBus.getDefault().post(new Events.NoteDeleted(
+                            smartNotebookRepository.getSmartNotebooks(bookId).get(),
+                            atomicNote
+                    )));
+        });
     }
 
     private void createTextNote(View view) {
@@ -44,12 +60,13 @@ public class InitNoteHolder extends NoteHolder {
 
     @Override
     public void setNote(long bookId, AtomicNoteEntity atomicNote) {
+        this.bookId = bookId;
         this.atomicNote = atomicNote;
         logger.debug("Setting note");
     }
 
     @Override
-    public boolean saveNote() {
-        return true;
+    public NoteHolderData getNoteHolderData() {
+        return NoteHolderData.initNoteData();
     }
 }

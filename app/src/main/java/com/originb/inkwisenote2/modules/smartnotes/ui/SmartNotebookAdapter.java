@@ -16,13 +16,11 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.textnote.TextNoteHolder;
-import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
 
@@ -95,20 +93,21 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         noteCards.put(atomicNote.getNoteId(), noteHolder);
     }
 
-    @Override
-    public void onViewRecycled(@NonNull NoteHolder holder) {
-        super.onViewRecycled(holder);
-        if (smartNotebook == null) return;
-        
-        BackgroundOps.execute(() ->
-            smartNotebookRepository.getSmartNotebooks(smartNotebook.smartBook.getBookId()),
-            existingSmartNotebook -> {
-                if (existingSmartNotebook.isPresent()) {
-                    holder.saveNote();
-                }
-            }
-        );
-    }
+    // should not be needed since we are saving the notes whenever the page is changed
+//    @Override
+//    public void onViewRecycled(@NonNull NoteHolder holder) {
+//        super.onViewRecycled(holder);
+//        if (smartNotebook == null) return;
+//
+//        BackgroundOps.execute(() ->
+//            smartNotebookRepository.getSmartNotebooks(smartNotebook.smartBook.getBookId()),
+//            existingSmartNotebook -> {
+//                if (existingSmartNotebook.isPresent()) {
+//                    holder.saveNote();
+//                }
+//            }
+//        );
+//    }
 
     public void updateNoteType(AtomicNoteEntity atomicNote, String newNoteType) {
         if (smartNotebook == null) return;
@@ -121,19 +120,20 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         }
     }
 
-    public void saveNote(String noteTitle) {
-        if (smartNotebook == null) return;
-        
-        BackgroundOps.execute(() -> {
-            for (NoteHolder noteHolder : noteCards.values()) {
-                noteHolder.saveNote();
-            }
-
-            // update title
-            smartNotebook.getSmartBook().setTitle(noteTitle);
-            smartNotebookRepository.updateNotebook(smartNotebook, parentActivity);
-        });
-    }
+//    No need to save all notes since notes are saved when page changes. Only the current note needs saving
+//    public void saveNote(String noteTitle) {
+//        if (smartNotebook == null) return;
+//
+//        BackgroundOps.execute(() -> {
+//            for (NoteHolder noteHolder : noteCards.values()) {
+//                noteHolder.saveNote();
+//            }
+//
+//            // update title
+//            smartNotebook.getSmartBook().setTitle(noteTitle);
+//            smartNotebookRepository.updateNotebook(smartNotebook, parentActivity);
+//        });
+//    }
 
     public void removeNoteCard(long noteId) {
         if (smartNotebook == null || !noteCards.containsKey(noteId)) return;
@@ -143,18 +143,22 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         notifyItemRemoved(position);
     }
 
-    public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
-        if (smartNotebook == null || atomicNote == null || 
-            !noteCards.containsKey(atomicNote.getNoteId())) {
-            return;
-        }
-
-        NoteHolder noteHolder = noteCards.get(atomicNote.getNoteId());
-        BackgroundOps.execute(noteHolder::saveNote);
-    }
+//    public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
+//        if (smartNotebook == null || atomicNote == null ||
+//            !noteCards.containsKey(atomicNote.getNoteId())) {
+//            return;
+//        }
+//
+//        NoteHolder noteHolder = noteCards.get(atomicNote.getNoteId());
+//        BackgroundOps.execute(noteHolder::saveNote);
+//    }
 
     @Override
     public int getItemCount() {
         return smartNotebook != null ? smartNotebook.atomicNotes.size() : 0;
+    }
+
+    public NoteHolder.NoteHolderData getNoteData(long noteId) {
+        return noteCards.get(noteId).getNoteHolderData();
     }
 }

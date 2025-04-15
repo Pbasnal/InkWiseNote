@@ -15,6 +15,7 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.smartnotes.ui.NoteHolder;
 import org.greenrobot.eventbus.EventBus;
 
@@ -83,17 +84,8 @@ public class HandwrittenNoteHolder extends NoteHolder {
     }
 
     @Override
-    public boolean saveNote() {
-        // Todo: need to reload note images on home page once this is done
-
-        BackgroundOps.execute(() ->
-         handwrittenNoteRepository.saveHandwrittenNotes(bookId,
-                atomicNote,
-                drawingView.getBitmap(),
-                drawingView.getPageTemplate())
-         );
-
-        return true;
+    public NoteHolderData getNoteHolderData() {
+        return NoteHolderData.handWrittenNoteData(drawingView.getBitmap(), drawingView.getPageTemplate());
     }
 
     public boolean useDefaultBitmap() {

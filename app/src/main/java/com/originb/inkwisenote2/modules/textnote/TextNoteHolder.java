@@ -68,11 +68,7 @@ public class TextNoteHolder extends NoteHolder {
     }
 
     @Override
-    public boolean saveNote() {
-        BackgroundOps.execute(() -> {
-            textNoteEntity.setNoteText(noteEditText.getText().toString());
-            textNotesDao.updateTextNote(textNoteEntity);
-        });
-        return true;
+    public NoteHolderData getNoteHolderData() {
+        return NoteHolderData.textNoteData(noteEditText.getText().toString().trim());
     }
 }
