@@ -45,6 +45,9 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private final MutableLiveData<Long> createdTimeMillis = new MutableLiveData<>();
     private final MutableLiveData<Boolean> showNextButton = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> showPrevButton = new MutableLiveData<>(false);
+    
+    // New LiveData to notify when a note type changes
+    private final MutableLiveData<Integer> noteTypeChangedPosition = new MutableLiveData<>();
 
     public SmartNotebookViewModel(@NonNull Application application) {
         super(application);
@@ -56,7 +59,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         EventBus.getDefault().register(this);
     }
 
-    public LiveData<Integer> getCurrentPageIndexLive() {
+    public MutableLiveData<Integer> getCurrentPageIndexLive() {
         return currentPageIndexLive;
     }
 
@@ -82,6 +85,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public LiveData<Boolean> getShowPrevButton() {
         return showPrevButton;
+    }
+    
+    public LiveData<Integer> getNoteTypeChangedPosition() {
+        return noteTypeChangedPosition;
     }
 
     public void loadSmartNotebook(Long bookId, String workingPath, String noteIdsString) {
@@ -150,6 +157,44 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             updateNavigationButtons();
         });
     }
+    
+    /**
+     * Get an atomic note by its ID
+     * @param noteId The note ID to find
+     * @return The atomic note or null if not found
+     */
+    public AtomicNoteEntity getNoteById(long noteId) {
+        SmartNotebook notebook = smartNotebook.getValue();
+        if (notebook == null) return null;
+        
+        return notebook.getAtomicNotes().stream()
+                .filter(note -> note.getNoteId() == noteId)
+                .findFirst()
+                .orElse(null);
+    }
+    
+    /**
+     * Update the type of a note and notify listeners
+     * @param note The note to update
+     * @param newType The new note type
+     */
+    public void updateNoteType(AtomicNoteEntity note, NoteType newType) {
+        SmartNotebook notebook = smartNotebook.getValue();
+        if (notebook == null) return;
+        
+        note.setNoteType(newType.toString());
+        
+        int position = notebook.getAtomicNotes().indexOf(note);
+        if (position != -1) {
+            BackgroundOps.execute(() -> {
+                smartNotebookRepository.updateNotebook(notebook, getApplication());
+                return position;
+            }, updatedPosition -> {
+                // Notify that the note type changed at this position
+                noteTypeChangedPosition.setValue(updatedPosition);
+            });
+        }
+    }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNoteDelete(Events.NoteDeleted noteDeleted) {
@@ -190,20 +235,23 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public void saveCurrentNote(NoteHolder.NoteHolderData noteHolderData) {
         SmartNotebook notebook = smartNotebook.getValue();
+        if (notebook == null) return;
+
+        AtomicNoteEntity currentNote = getCurrentNote();
+        if (currentNote == null) return;
 
         switch (noteHolderData.noteType) {
             case HANDWRITTEN_PNG:
                 handwrittenNoteRepository.saveHandwrittenNotes(notebook.smartBook.getBookId(),
-                        getCurrentNote(),
+                        currentNote,
                         noteHolderData.bitmap,
                         noteHolderData.pageTemplate);
                 break;
             case TEXT_NOTE:
-                AtomicNoteEntity atomicNote = getCurrentNote();
-                TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
+                TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(currentNote.getNoteId());
                 if (textNoteEntity == null) {
                     textNoteEntity = new TextNoteEntity(
-                            atomicNote.getNoteId(),
+                            currentNote.getNoteId(),
                             notebook.smartBook.getBookId());
                     textNotesDao.insertTextNote(textNoteEntity);
                 } else {
@@ -216,9 +264,15 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public AtomicNoteEntity getCurrentNote() {
-        int currentNoteIndex = currentPageIndexLive.getValue();
         SmartNotebook notebook = smartNotebook.getValue();
-        return notebook.getAtomicNotes().get(currentNoteIndex);
+        Integer currentIndex = currentPageIndexLive.getValue();
+        
+        if (notebook == null || currentIndex == null || 
+            currentIndex < 0 || currentIndex >= notebook.getAtomicNotes().size()) {
+            return null;
+        }
+        
+        return notebook.getAtomicNotes().get(currentIndex);
     }
 
     private Optional<SmartNotebook> getSmartNotebook(Long bookIdToOpen, String workingPath, String noteIdsString) {
