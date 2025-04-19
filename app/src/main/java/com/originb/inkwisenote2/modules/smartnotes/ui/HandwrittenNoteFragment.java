@@ -1,40 +1,55 @@
-package com.originb.inkwisenote2.modules.handwrittennotes.ui;
+package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageButton;
-import androidx.activity.ComponentActivity;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 import com.originb.inkwisenote2.R;
-import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.common.BitmapScale;
-import com.originb.inkwisenote2.modules.backgroundjobs.Events;
-import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
+import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
+import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.ui.NoteHolder;
+import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import org.greenrobot.eventbus.EventBus;
 
-public class HandwrittenNoteHolder extends NoteHolder {
+public class HandwrittenNoteFragment extends NoteFragment {
 
-    private final DrawingView drawingView;
-    private AtomicNoteEntity atomicNote;
-
+    private View fragmentView;
+    private DrawingView drawingView;
     private ImageButton deleteNote;
 
     private long bookId;
 
+    private final SmartNotebookRepository smartNotebookRepository;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private ConfigReader configReader;
 
-    public HandwrittenNoteHolder(View itemView, ComponentActivity parentActivity, SmartNotebookRepository smartNotebookRepository) {
-        super(itemView, parentActivity, smartNotebookRepository);
-        drawingView = itemView.findViewById(R.id.smart_drawing_view);
-        deleteNote = itemView.findViewById(R.id.delete_note);
+
+    public HandwrittenNoteFragment() {
+        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+        configReader = ConfigReader.getInstance();
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        fragmentView = inflater.inflate(R.layout.note_drawing_fragment, container, false);
+        drawingView = fragmentView.findViewById(R.id.smart_drawing_view);
+        deleteNote = fragmentView.findViewById(R.id.delete_note);
 
         deleteNote.setOnClickListener(v -> {
             BackgroundOps.execute(() ->
@@ -45,14 +60,6 @@ public class HandwrittenNoteHolder extends NoteHolder {
 
         });
 
-        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
-        configReader = ConfigReader.getInstance();
-    }
-
-    @Override
-    public void setNote(long bookId, AtomicNoteEntity atomicNote) {
-        this.bookId = bookId;
-        this.atomicNote = atomicNote;
         BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
                 (bitmapOpt) -> {
                     if (bitmapOpt.isPresent()) {
@@ -81,6 +88,8 @@ public class HandwrittenNoteHolder extends NoteHolder {
 
                     drawingView.setPageTemplate(pageTemplate);
                 });
+
+        return fragmentView;
     }
 
     @Override

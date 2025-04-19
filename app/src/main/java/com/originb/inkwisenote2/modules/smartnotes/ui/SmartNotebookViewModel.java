@@ -15,6 +15,7 @@ import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
 
@@ -45,6 +46,11 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private final MutableLiveData<Long> createdTimeMillis = new MutableLiveData<>();
     private final MutableLiveData<Boolean> showNextButton = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> showPrevButton = new MutableLiveData<>(false);
+
+//    public class SmartNotebookUpdate {
+//        public SmartNotebook smartNotebook;
+//        public AtomicNoteEntity updatedAtomicNote;
+//    }
 
     public SmartNotebookViewModel(@NonNull Application application) {
         super(application);
@@ -188,7 +194,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()));
     }
 
-    public void saveCurrentNote(NoteHolder.NoteHolderData noteHolderData) {
+    public void saveCurrentNote(NoteHolderData noteHolderData) {
         SmartNotebook notebook = smartNotebook.getValue();
 
         switch (noteHolderData.noteType) {
