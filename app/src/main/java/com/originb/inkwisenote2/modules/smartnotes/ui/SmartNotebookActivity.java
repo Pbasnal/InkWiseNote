@@ -119,10 +119,14 @@ public class SmartNotebookActivity extends AppCompatActivity {
         // Observe smart notebook data changes
         viewModel.getSmartNotebook().observe(this, notebook -> {
             if (smartNotebookAdapter == null) {
-                smartNotebookAdapter = new SmartNotebookAdapter(this, notebook);
+                smartNotebookAdapter = new SmartNotebookAdapter(this, notebook.smartNotebook, viewModel);
                 recyclerView.setAdapter(smartNotebookAdapter);
             }
-            smartNotebookAdapter.setSmartNotebook(notebook);
+            if (notebook.indexOfUpdatedNote == -1) {
+                smartNotebookAdapter.setSmartNotebook(notebook.smartNotebook);
+            } else {
+                smartNotebookAdapter.setSmartNotebook(notebook.smartNotebook, notebook.indexOfUpdatedNote);
+            }
         });
 
         // Observe notebook title

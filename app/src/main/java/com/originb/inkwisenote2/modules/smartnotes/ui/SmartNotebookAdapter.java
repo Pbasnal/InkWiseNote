@@ -22,7 +22,6 @@ import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
 
     private final Logger logger = new Logger("SmartNotebookAdapter");
     private final AppCompatActivity parentActivity;
+    private final SmartNotebookViewModel viewModel;
 
     private SmartNotebook smartNotebook;
     private final SmartNotebookRepository smartNotebookRepository;
@@ -45,11 +45,13 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
     private static final int VIEW_TYPE_HANDWRITTEN = 2;
 
     public SmartNotebookAdapter(AppCompatActivity parentActivity,
-                                SmartNotebook smartNotebook) {
+                                SmartNotebook smartNotebook,
+                                SmartNotebookViewModel viewModel) {
         this.parentActivity = parentActivity;
         this.smartNotebook = smartNotebook;
         this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         this.fragmentManager = parentActivity.getSupportFragmentManager();
+        this.viewModel = viewModel;
     }
 
     public void setSmartNotebook(SmartNotebook smartNotebook) {
@@ -58,14 +60,28 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
 
         List<AtomicNoteEntity> atomicNotes = smartNotebook.getAtomicNotes();
 
-        for (int i = 0; i < atomicNotes.size(); i++) {
-            AtomicNoteEntity atomicNote = atomicNotes.get(i);
+        for (AtomicNoteEntity atomicNote : atomicNotes) {
             NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
             fragment.setAtomicNote(atomicNote);
             fragment.setBookId(smartNotebook.smartBook.getBookId());
             fragments.put(atomicNote.getNoteId(), fragment);
         }
         notifyDataSetChanged();
+    }
+
+    public void setSmartNotebook(SmartNotebook smartNotebook, int indexOfUpdatedNote) {
+        this.smartNotebook = smartNotebook;
+        if (fragments == null) {
+            fragments = new HashMap<>();
+        }
+
+        AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(indexOfUpdatedNote);
+        NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
+        fragment.setAtomicNote(atomicNote);
+        fragment.setBookId(smartNotebook.smartBook.getBookId());
+        fragments.put(atomicNote.getNoteId(), fragment);
+
+        notifyItemInserted(indexOfUpdatedNote);
     }
 
     @Override
