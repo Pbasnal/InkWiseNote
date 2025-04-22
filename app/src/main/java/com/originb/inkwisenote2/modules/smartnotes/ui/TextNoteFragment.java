@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Routing;
+import com.originb.inkwisenote2.functionalUtils.Try;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
@@ -49,9 +50,11 @@ public class TextNoteFragment extends NoteFragment {
                 smartNotebookOpt -> {
                     notebook = smartNotebookOpt.get();
                     noteEditText.setText(textNoteEntity.getNoteText());
-                    deleteBtn.setOnClickListener(view -> {
-                        EventBus.getDefault().post(new Events.NotebookDeleted(notebook));
-                    });
+                    deleteBtn.setOnClickListener(view ->
+                            EventBus.getDefault()
+                                    .post(new Events.DeleteNoteCommand(notebook,
+                                            atomicNote))
+                    );
                 });
 
         return itemView;
@@ -76,6 +79,12 @@ public class TextNoteFragment extends NoteFragment {
 
     @Override
     public NoteHolderData getNoteHolderData() {
-        return NoteHolderData.textNoteData(noteEditText.getText().toString().trim());
+        String noteText = "";
+        if (noteEditText != null) {
+            noteEditText.getText().toString();
+            noteText = noteEditText.getText().toString().trim();
+        }
+
+        return NoteHolderData.textNoteData(noteText);
     }
 }

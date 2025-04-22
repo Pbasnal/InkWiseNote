@@ -19,6 +19,7 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRep
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
@@ -29,8 +30,6 @@ public class HandwrittenNoteFragment extends NoteFragment {
     private View fragmentView;
     private DrawingView drawingView;
     private ImageButton deleteNote;
-
-    private long bookId;
 
     private final SmartNotebookRepository smartNotebookRepository;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
@@ -51,14 +50,16 @@ public class HandwrittenNoteFragment extends NoteFragment {
         drawingView = fragmentView.findViewById(R.id.smart_drawing_view);
         deleteNote = fragmentView.findViewById(R.id.delete_note);
 
-        deleteNote.setOnClickListener(v -> {
-            BackgroundOps.execute(() ->
-                    EventBus.getDefault().post(new Events.NoteDeleted(
-                            smartNotebookRepository.getSmartNotebooks(bookId).get(),
-                            atomicNote
-                    )));
 
-        });
+        BackgroundOps.execute(() -> smartNotebookRepository.getSmartNotebooks(bookId),
+                smartNotebookOpt -> {
+                    SmartNotebook notebook = smartNotebookOpt.get();
+                    deleteNote.setOnClickListener(view ->
+                            EventBus.getDefault()
+                                    .post(new Events.DeleteNoteCommand(notebook,
+                                            atomicNote))
+                    );
+                });
 
         BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
                 (bitmapOpt) -> {

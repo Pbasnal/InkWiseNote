@@ -5,7 +5,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -16,12 +15,6 @@ import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class SmartNotebookActivity extends AppCompatActivity {
 
@@ -119,7 +112,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
         // Observe smart notebook data changes
         viewModel.getSmartNotebook().observe(this, notebook -> {
             if (smartNotebookAdapter == null) {
-                smartNotebookAdapter = new SmartNotebookAdapter(this, notebook.smartNotebook, viewModel);
+                smartNotebookAdapter = new SmartNotebookAdapter(this, notebook.smartNotebook);
                 recyclerView.setAdapter(smartNotebookAdapter);
             }
             if (notebook.indexOfUpdatedNote == -1) {
@@ -161,6 +154,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
             recyclerView.post(() -> {
                 scrollLayout.setScrollRequested(true);
                 recyclerView.smoothScrollToPosition(index);
+                smartNotebookAdapter.setNoteData(index, viewModel.getCurrentNote());
             });
         });
     }

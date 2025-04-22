@@ -48,6 +48,8 @@ public class InitNoteFragment extends NoteFragment {
         cardToText = itemView.findViewById(R.id.tap_to_text);
         cardToText.setOnClickListener(this::createTextNote);
 
+        deleteNote = itemView.findViewById(R.id.delete_note);
+
         BackgroundOps.execute(() -> smartNotebookRepository.getSmartNotebooks(bookId),
                 smartNotebookOpt -> smartNotebookOpt.ifPresent(smartNotebook -> {
                     this.smartNotebook = smartNotebook;
@@ -56,14 +58,14 @@ public class InitNoteFragment extends NoteFragment {
                     } else {
                         deleteNote.setVisibility(View.VISIBLE);
                     }
+
+                    deleteNote.setOnClickListener(v ->
+                            EventBus.getDefault()
+                                    .post(new Events.DeleteNoteCommand(smartNotebook,
+                                            atomicNote))
+                    );
                 }));
 
-        deleteNote = itemView.findViewById(R.id.delete_note);
-        deleteNote.setOnClickListener(v ->
-                EventBus.getDefault().post(new Events.NoteDeleted(
-                        smartNotebook,
-                        atomicNote
-                )));
         return itemView;
     }
 
