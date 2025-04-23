@@ -48,12 +48,25 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> showPrevButton = new MutableLiveData<>(false);
 
     public static class SmartNotebookUpdate {
+        public int notbookUpdateType = 0;
         public SmartNotebook smartNotebook;
+        public AtomicNoteEntity atomicNote;
         public int indexOfUpdatedNote = -1;
+
+        public static int NOTE_UPDATE = 0;
+        public static int NOTE_DELETED = 1;
 
         public static SmartNotebookUpdate fromNotebook(SmartNotebook smartNotebook) {
             SmartNotebookUpdate smartNotebookUpdate = new SmartNotebookUpdate();
             smartNotebookUpdate.smartNotebook = smartNotebook;
+            return smartNotebookUpdate;
+        }
+
+        public static SmartNotebookUpdate noteDeleted(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+            SmartNotebookUpdate smartNotebookUpdate = new SmartNotebookUpdate();
+            smartNotebookUpdate.atomicNote = atomicNote;
+            smartNotebookUpdate.smartNotebook = smartNotebook;
+            smartNotebookUpdate.notbookUpdateType = NOTE_DELETED;
             return smartNotebookUpdate;
         }
 
@@ -172,6 +185,15 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNotebookDelete(Events.NotebookDeleted notebookDeleted) {
+        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook deletedNotebook = notebookDeleted.smartNotebook;
+        if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId()) return;
+
+        smartNotebook.setValue(null);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNoteDelete(Events.NoteDeleted noteDeleted) {
         SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
         if (notebook == null) return;
@@ -184,7 +206,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             return;
         }
 
-        smartNotebook.setValue(SmartNotebookUpdate.fromNotebook(notebook));
+        smartNotebook.setValue(SmartNotebookUpdate.noteDeleted(notebook, noteDeleted.atomicNote));
 
         int currentPageIndex = currentPageIndexLive.getValue();
         if (currentPageIndex == notebook.getAtomicNotes().size()) {

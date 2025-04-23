@@ -110,15 +110,21 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
     private void setupObservers() {
         // Observe smart notebook data changes
-        viewModel.getSmartNotebook().observe(this, notebook -> {
+        viewModel.getSmartNotebook().observe(this, notebookUpdate -> {
+            if (notebookUpdate == null) {
+                finish();
+            }
             if (smartNotebookAdapter == null) {
-                smartNotebookAdapter = new SmartNotebookAdapter(this, notebook.smartNotebook);
+                smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
                 recyclerView.setAdapter(smartNotebookAdapter);
             }
-            if (notebook.indexOfUpdatedNote == -1) {
-                smartNotebookAdapter.setSmartNotebook(notebook.smartNotebook);
+
+            if (notebookUpdate.notbookUpdateType == SmartNotebookViewModel.SmartNotebookUpdate.NOTE_DELETED) {
+                smartNotebookAdapter.removeNoteCard(notebookUpdate.atomicNote.getNoteId());
+            } else if (notebookUpdate.indexOfUpdatedNote == -1) {
+                smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook);
             } else {
-                smartNotebookAdapter.setSmartNotebook(notebook.smartNotebook, notebook.indexOfUpdatedNote);
+                smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook, notebookUpdate.indexOfUpdatedNote);
             }
         });
 

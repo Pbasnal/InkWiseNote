@@ -95,6 +95,7 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     @Override
     public NoteHolderData getNoteHolderData() {
+        if (drawingView == null) return NoteHolderData.handWrittenNoteData(null, null);
         return NoteHolderData.handWrittenNoteData(drawingView.getBitmap(), drawingView.getPageTemplate());
     }
 

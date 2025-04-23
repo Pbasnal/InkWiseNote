@@ -36,7 +36,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
 
     // noteId to card mapping
     private final Map<Long, FragmentViewHolder> noteCards = new HashMap<>();
-//    private Map<Long, NoteFragment> fragments = new HashMap<>();
 
     public SmartNotebookAdapter(AppCompatActivity parentActivity,
                                 SmartNotebook smartNotebook) {
@@ -47,33 +46,13 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
 
     public void setSmartNotebook(SmartNotebook smartNotebook) {
         this.smartNotebook = smartNotebook;
-//        this.fragments = new HashMap<>();
-
-//        List<AtomicNoteEntity> atomicNotes = smartNotebook.getAtomicNotes();
-//
-//        for (AtomicNoteEntity atomicNote : atomicNotes) {
-//            NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
-//            fragment.setAtomicNote(atomicNote);
-//            fragment.setBookId(smartNotebook.smartBook.getBookId());
-//            fragments.put(atomicNote.getNoteId(), fragment);
-//        }
         notifyDataSetChanged();
     }
 
     public void setSmartNotebook(SmartNotebook smartNotebook, int indexOfUpdatedNote) {
         this.smartNotebook = smartNotebook;
-//        if (fragments == null) {
-//            fragments = new HashMap<>();
-//        }
-//
         AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(indexOfUpdatedNote);
-//        NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
-//        fragment.setAtomicNote(atomicNote);
-//        fragment.setBookId(smartNotebook.smartBook.getBookId());
-//        fragments.put(atomicNote.getNoteId(), fragment);
-
-        noteCards.get(atomicNote.getNoteId()).setNote(smartNotebook, atomicNote, indexOfUpdatedNote);
-
+//        noteCards.get(atomicNote.getNoteId()).setNote(smartNotebook, atomicNote, indexOfUpdatedNote);
         notifyItemInserted(indexOfUpdatedNote);
     }
 
@@ -100,7 +79,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
     public void onBindViewHolder(@NonNull @NotNull FragmentViewHolder holder, int position) {
         List<AtomicNoteEntity> atomicNotes = smartNotebook.getAtomicNotes();
 
-//        if (fragments == null || fragments.isEmpty()) return;
         if (position < 0 || position >= atomicNotes.size()) return;
 
         AtomicNoteEntity atomicNote = atomicNotes.get(position);
@@ -118,9 +96,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
             NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
             fragment.setAtomicNote(atomicNote);
             fragment.setBookId(smartNotebook.smartBook.getBookId());
-
-//            fragments.put(atomicNote.getNoteId(), fragment);
-
             BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook, parentActivity));
             notifyItemChanged(position);
         }
@@ -153,9 +128,13 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
     }
 
     public void setNoteData(Integer index, AtomicNoteEntity currentNote) {
-        if(noteCards.containsKey(currentNote.getNoteId())) {
+        if (noteCards.containsKey(currentNote.getNoteId())) {
             noteCards.get(currentNote.getNoteId()).setNote(smartNotebook, currentNote, index);
         }
+    }
+
+    public void noteDeleted(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+
     }
 
     static class FragmentViewHolder extends RecyclerView.ViewHolder {
@@ -172,7 +151,8 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
         }
 
         public void setNote(SmartNotebook notebook, AtomicNoteEntity atomicNote, int position) {
-            if (isCorrectFragmentAttached(atomicNote)) return;
+            if (isCorrectFragmentAttached(atomicNote)
+                    && atomicNote.getNoteId() == noteFragment.atomicNote.getNoteId()) return;
 
             noteFragment = createFragmentByType(atomicNote.getNoteType());
             noteFragment.setAtomicNote(atomicNote);

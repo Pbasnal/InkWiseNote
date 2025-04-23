@@ -48,6 +48,8 @@ public class SmartNotebookRepository {
         smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+
+        EventBus.getDefault().post(new Events.NotebookDeleted(smartNotebook));
     }
 
     public void deleteNoteFromBook(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
@@ -64,6 +66,7 @@ public class SmartNotebookRepository {
                         smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
                         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
                     });
+            EventBus.getDefault().post(new Events.NoteDeleted(smartNotebook, atomicNote));
         }
     }
 
