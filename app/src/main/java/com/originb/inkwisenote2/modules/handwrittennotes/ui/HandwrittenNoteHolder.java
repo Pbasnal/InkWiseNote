@@ -86,10 +86,14 @@ public class HandwrittenNoteHolder extends NoteHolder {
     public boolean saveNote() {
         // Todo: need to reload note images on home page once this is done
 
-        return handwrittenNoteRepository.saveHandwrittenNotes(bookId,
+        BackgroundOps.execute(() ->
+         handwrittenNoteRepository.saveHandwrittenNotes(bookId,
                 atomicNote,
                 drawingView.getBitmap(),
-                drawingView.getPageTemplate());
+                drawingView.getPageTemplate())
+         );
+
+        return true;
     }
 
     public boolean useDefaultBitmap() {

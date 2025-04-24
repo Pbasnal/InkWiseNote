@@ -18,7 +18,9 @@
 
         <activity android:name=".modules.notesearch.NoteSearchActivity"/>
         <activity android:name=".HomePageActivity"/>
+        <activity android:name=".modules.smarthome.SmartHomeActivity"/>
         <activity android:name=".modules.textnote.TextNoteActivity"/>
+        <activity android:name=".modules.queries.ui.QueryResultsActivity"/>
         <activity
                 android:name=".modules.smartnotes.ui.SmartNotebookActivity"
                 android:screenOrientation="portrait"/>
@@ -42,6 +44,10 @@
                 android:exported="true">
         </activity>
 
+        <activity
+                android:name=".modules.queries.ui.QueryCreationActivity"
+                android:label="Search Queries"
+                android:exported="false"/>
 
     </application>
 </manifest>

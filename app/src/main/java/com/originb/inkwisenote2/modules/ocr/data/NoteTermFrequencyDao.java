@@ -16,6 +16,9 @@ public interface NoteTermFrequencyDao {
     @Query("SELECT * FROM note_term_frequency WHERE term IN (:terms)")
     List<NoteTermFrequency> getNoteIdsForTerms(Set<String> terms);
 
+    @Query("SELECT * FROM note_term_frequency WHERE term NOT IN (:terms)")
+    List<NoteTermFrequency> getNoteIdsForAllTermsExcept(Set<String> terms);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertTermFrequenciesToDb(List<NoteTermFrequency> noteRelation);
 

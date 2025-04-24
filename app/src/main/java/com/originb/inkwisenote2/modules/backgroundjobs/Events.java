@@ -2,6 +2,7 @@ package com.originb.inkwisenote2.modules.backgroundjobs;
 
 import android.content.Context;
 import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
+import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import lombok.AllArgsConstructor;
@@ -31,5 +32,15 @@ public class Events {
     public static class SmartNotebookSaved extends EventData {
         public SmartNotebook smartNotebook;
         public Context context;
+    }
+
+    @AllArgsConstructor
+    public static class QueryUpdated extends EventData {
+        public QueryEntity query;
+    }
+
+    @AllArgsConstructor
+    public static class QueryDeleted extends EventData {
+        public QueryEntity query;
     }
 }

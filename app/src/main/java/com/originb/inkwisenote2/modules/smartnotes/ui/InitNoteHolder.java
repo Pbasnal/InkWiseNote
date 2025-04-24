@@ -50,6 +50,6 @@ public class InitNoteHolder extends NoteHolder {
 
     @Override
     public boolean saveNote() {
-        return false;
+        return true;
     }
 }

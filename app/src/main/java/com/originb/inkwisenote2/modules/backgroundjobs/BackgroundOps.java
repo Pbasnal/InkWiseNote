@@ -2,6 +2,8 @@ package com.originb.inkwisenote2.modules.backgroundjobs;
 
 import android.os.Handler;
 import android.os.Looper;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -27,7 +29,6 @@ public class BackgroundOps {
 
     public static void execute(Runnable runnable) {
         getInstance().executor.execute(runnable);
-
     }
 
     public static void execute(Runnable runnable, Runnable continueOnMainThread) {

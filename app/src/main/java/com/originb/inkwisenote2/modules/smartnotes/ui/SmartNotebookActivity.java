@@ -12,6 +12,7 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
@@ -23,7 +24,10 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SmartNotebookActivity extends AppCompatActivity {
 
@@ -34,6 +38,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
     private SmartNotebook smartNotebook;
     private SmartNotebookRepository smartNotebookRepository;
+    private AtomicNotesDomain atomicNotesDomain;
 
     private SmartNotebookPageScrollLayout scrollLayout;
     private SmartNotebookAdapter smartNotebookAdapter;
@@ -56,6 +61,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
         this.indexOfCurrentPage = 0;
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
 
         recyclerView = findViewById(R.id.smart_note_page_view);
         scrollLayout = new SmartNotebookPageScrollLayout(this);
@@ -123,9 +129,10 @@ public class SmartNotebookActivity extends AppCompatActivity {
         // Determine the position to insert the new item after the currently visible one
         int positionOfNewHolder = indexOfCurrentPage + 1;
         BackgroundOps.execute(() -> {
-                    AtomicNoteEntity newAtomicNote = smartNotebookRepository.newAtomicNote("",
+                    AtomicNoteEntity newAtomicNote = atomicNotesDomain.saveAtomicNote(AtomicNotesDomain.constructAtomicNote(
+                            "",
                             workingNotePath,
-                            NoteType.NOT_SET);
+                            NoteType.NOT_SET));
                     SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(smartNotebook.smartBook,
                             newAtomicNote, positionOfNewHolder - 1);
                     smartNotebook.insertAtomicNoteAndPage(positionOfNewHolder - 1, newAtomicNote, newSmartPage);
@@ -221,9 +228,13 @@ public class SmartNotebookActivity extends AppCompatActivity {
     private Optional<SmartNotebook> getSmartNotebook() {
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
         workingNotePath = getIntent().getStringExtra("workingNotePath");
+        String[] noteIds = getIntent().getStringExtra("noteIds").split(",");
 
         if (bookIdToOpen != -1) {
             return smartNotebookRepository.getSmartNotebooks(bookIdToOpen);
+        } else if (noteIds != null && noteIds.length > 0) {
+            Set<Long> noteIdsSet = Arrays.stream(noteIds).map(Long::parseLong).collect(Collectors.toSet());
+            return smartNotebookRepository.getVirtualSmartNotebooks(noteIdsSet);
         }
 
         return smartNotebookRepository.initializeNewSmartNotebook("",
@@ -248,7 +259,6 @@ public class SmartNotebookActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         smartNotebookAdapter.saveNote(noteTitleText.getText().toString());
-        EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, this));
     }
 
     @Override
