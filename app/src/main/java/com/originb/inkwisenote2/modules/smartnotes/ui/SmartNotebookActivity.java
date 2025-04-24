@@ -5,9 +5,8 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
@@ -15,6 +14,7 @@ import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 
 public class SmartNotebookActivity extends AppCompatActivity {
 
@@ -23,8 +23,9 @@ public class SmartNotebookActivity extends AppCompatActivity {
     private String workingNotePath;
 
     private SmartNotebookViewModel viewModel;
-    private NotePagerAdapter pagerAdapter;
-    private ViewPager2 viewPager;
+    private SmartNotebookPageScrollLayout scrollLayout;
+    private SmartNotebookAdapter smartNotebookAdapter;
+    private RecyclerView recyclerView;
 
     private FloatingActionButton nextButton;
     private FloatingActionButton prevButton;
@@ -55,11 +56,12 @@ public class SmartNotebookActivity extends AppCompatActivity {
     }
 
     private void initializeViews() {
-        // Initialize ViewPager2 and its adapter
-        viewPager = findViewById(R.id.smart_note_page_view);
-        pagerAdapter = new NotePagerAdapter(this);
-        viewPager.setAdapter(pagerAdapter);
-        
+        // Initialize RecyclerView and its components
+        recyclerView = findViewById(R.id.smart_note_page_view);
+        scrollLayout = new SmartNotebookPageScrollLayout(this);
+        recyclerView.addOnScrollListener(new SmartNotebookScrollListener(scrollLayout));
+        recyclerView.setLayoutManager(scrollLayout);
+
         // Initialize buttons
         nextButton = findViewById(R.id.fab_next_note);
         prevButton = findViewById(R.id.fab_prev_note);
@@ -84,46 +86,45 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
         // Button click listeners
         nextButton.setOnClickListener(view -> {
-            NoteFragment currentFragment = getCurrentFragment();
-            if (currentFragment != null) {
-                NoteHolder.NoteHolderData noteData = currentFragment.getNoteHolderData();
-                BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
-                        viewModel::navigateToNextPage);
-            } else {
-                viewModel.navigateToNextPage();
-            }
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+                    viewModel::navigateToNextPage);
         });
 
         prevButton.setOnClickListener(view -> {
-            NoteFragment currentFragment = getCurrentFragment();
-            if (currentFragment != null) {
-                NoteHolder.NoteHolderData noteData = currentFragment.getNoteHolderData();
-                BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
-                        viewModel::navigateToPreviousPage);
-            } else {
-                viewModel.navigateToPreviousPage();
-            }
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+                    viewModel::navigateToPreviousPage);
         });
 
-        newNotePageBtn.setOnClickListener(view -> viewModel.addNewPage());
-        
-        // ViewPager page change listener
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                if (viewModel.getCurrentPageIndexLive().getValue() != position) {
-                    viewModel.getCurrentPageIndexLive().setValue(position);
-                }
-            }
+        newNotePageBtn.setOnClickListener(view -> {
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+                    viewModel::addNewPage);
         });
     }
 
     private void setupObservers() {
         // Observe smart notebook data changes
-        viewModel.getSmartNotebook().observe(this, notebook -> {
-            if (notebook != null) {
-                pagerAdapter.setSmartNotebook(notebook);
+        viewModel.getSmartNotebook().observe(this, notebookUpdate -> {
+            if (notebookUpdate == null) {
+                finish();
+            }
+            if (smartNotebookAdapter == null) {
+                smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
+                recyclerView.setAdapter(smartNotebookAdapter);
+            }
+
+            if (notebookUpdate.notbookUpdateType == SmartNotebookViewModel.SmartNotebookUpdate.NOTE_DELETED) {
+                smartNotebookAdapter.removeNoteCard(notebookUpdate.atomicNote.getNoteId());
+            } else if (notebookUpdate.indexOfUpdatedNote == -1) {
+                smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook);
+            } else {
+                smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook, notebookUpdate.indexOfUpdatedNote);
             }
         });
 
@@ -156,63 +157,33 @@ public class SmartNotebookActivity extends AppCompatActivity {
 
         // Observe current page index (for scrolling)
         viewModel.getCurrentPageIndexLive().observe(this, index -> {
-            // Only scroll if the current page is different
-            if (viewPager.getCurrentItem() != index) {
-                viewPager.setCurrentItem(index, true);
-            }
+            recyclerView.post(() -> {
+                scrollLayout.setScrollRequested(true);
+                recyclerView.smoothScrollToPosition(index);
+                smartNotebookAdapter.setNoteData(index, viewModel.getCurrentNote());
+            });
         });
-        
-        // Observe note type changes
-        viewModel.getNoteTypeChangedPosition().observe(this, position -> {
-            if (position != null && position >= 0) {
-                pagerAdapter.notifyNoteTypeChanged(position);
-            }
-        });
-    }
-    
-    /**
-     * Get the current fragment displayed in the ViewPager
-     * @return The current NoteFragment, or null if not found
-     */
-    private NoteFragment getCurrentFragment() {
-        // Get the current fragment from the ViewPager
-        Fragment currentFragment = getSupportFragmentManager()
-                .findFragmentByTag("f" + viewPager.getCurrentItem());
-        
-        if (currentFragment instanceof NoteFragment) {
-            return (NoteFragment) currentFragment;
-        }
-        
-        return null;
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
         viewModel.updateTitle(noteTitleText.getText().toString());
-        
-        NoteFragment currentFragment = getCurrentFragment();
-        if (currentFragment != null) {
-            NoteHolder.NoteHolderData noteHolderData = currentFragment.getNoteHolderData();
-            BackgroundOps.execute(() -> {
-                viewModel.saveCurrentNote(noteHolderData);
-                viewModel.saveCurrentSmartNotebook();
-            });
-        }
+        NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
+        BackgroundOps.execute(() -> {
+            viewModel.saveCurrentNote(noteHolderData);
+            viewModel.saveCurrentSmartNotebook();
+        });
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        
-        NoteFragment currentFragment = getCurrentFragment();
-        if (currentFragment != null) {
-            NoteHolder.NoteHolderData noteHolderData = currentFragment.getNoteHolderData();
-            BackgroundOps.execute(() -> {
-                viewModel.saveCurrentNote(noteHolderData);
-                viewModel.saveCurrentSmartNotebook();
-            });
-        }
+        NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
+        BackgroundOps.execute(() -> {
+            viewModel.saveCurrentNote(noteHolderData);
+            viewModel.saveCurrentSmartNotebook();
+        });
     }
 
     @Override

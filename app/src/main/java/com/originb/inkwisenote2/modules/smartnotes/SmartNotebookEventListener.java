@@ -17,16 +17,18 @@ public class SmartNotebookEventListener {
     }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
-    public void onNotebookDelete(Events.NotebookDeleted notebookToDelete) {
+    public void onDeleteNotebookCommand(Events.DeleteNotebookCommand deleteNotebookCommand) {
         BackgroundOps.execute(() -> BackgroundOps.execute(() ->
-                smartNotebookRepository.deleteSmartNotebook(notebookToDelete.smartNotebook)
+                smartNotebookRepository.deleteSmartNotebook(deleteNotebookCommand.smartNotebook)
         ));
     }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
-    public void onNoteDelete(Events.NoteDeleted noteDeleted) {
-        BackgroundOps.execute(() -> BackgroundOps.execute(() ->
-                smartNotebookRepository.deleteNoteFromBook(noteDeleted.smartNotebook, noteDeleted.atomicNote)
+    public void onDeleteNoteCommand(Events.DeleteNoteCommand deleteNoteCommand) {
+        BackgroundOps.execute(() -> BackgroundOps.execute(() -> {
+                    smartNotebookRepository.deleteNoteFromBook(deleteNoteCommand.smartNotebook,
+                            deleteNoteCommand.atomicNote);
+                }
         ));
     }
 

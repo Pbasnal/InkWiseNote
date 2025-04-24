@@ -101,7 +101,9 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
                     (textNote) -> {
                         noteImage.setVisibility(View.GONE);
                         textPreview.setVisibility(View.VISIBLE);
-                        textPreview.setText(textNote.getNoteText());
+                        if(textNote != null) {
+                            textPreview.setText(textNote.getNoteText());
+                        }
                     });
         } else {
             BackgroundOps.execute(() ->

@@ -48,20 +48,26 @@ public class SmartNotebookRepository {
         smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+
+        EventBus.getDefault().post(new Events.NotebookDeleted(smartNotebook));
     }
 
     public void deleteNoteFromBook(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
         // will pages allow this to be deleted first?
-        atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
-        smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
+        if (smartNotebook.getAtomicNotes().size() <= 1) deleteSmartNotebook(smartNotebook);
+        else {
 
-        getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
-                .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
-                .ifPresent(updatedSmartNotebook -> {
-                    smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
-                    smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
-                });
+            atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
+            smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
 
+            getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
+                    .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
+                    .ifPresent(updatedSmartNotebook -> {
+                        smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
+                        smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+                    });
+            EventBus.getDefault().post(new Events.NoteDeleted(smartNotebook, atomicNote));
+        }
     }
 
     public void updateNotebook(SmartNotebook smartNotebook, Context context) {

@@ -3,137 +3,103 @@ package com.originb.inkwisenote2.modules.smartnotes.ui;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.activity.ComponentActivity;
+import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.handwrittennotes.ui.HandwrittenNoteHolder;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.textnote.TextNoteHolder;
-import lombok.Setter;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
+import static com.originb.inkwisenote2.modules.smartnotes.data.NoteType.*;
 
-    private final Logger logger = new Logger("SmartNotebookAdapter");
-    private final ComponentActivity parentActivity;
+public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdapter.FragmentViewHolder> {
 
-    @Setter
+    private static Logger logger = new Logger("SmartNotebookAdapter");
+    private final AppCompatActivity parentActivity;
+
     private SmartNotebook smartNotebook;
     private final SmartNotebookRepository smartNotebookRepository;
 
     // noteId to card mapping
-    private final Map<Long, NoteHolder> noteCards = new HashMap<>();
+    private final Map<Long, FragmentViewHolder> noteCards = new HashMap<>();
 
-    private static final int VIEW_TYPE_INIT = 0;
-    private static final int VIEW_TYPE_TEXT = 1;
-    private static final int VIEW_TYPE_HANDWRITTEN = 2;
-
-    public SmartNotebookAdapter(ComponentActivity parentActivity,
+    public SmartNotebookAdapter(AppCompatActivity parentActivity,
                                 SmartNotebook smartNotebook) {
         this.parentActivity = parentActivity;
         this.smartNotebook = smartNotebook;
         this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
     }
 
+    public void setSmartNotebook(SmartNotebook smartNotebook) {
+        this.smartNotebook = smartNotebook;
+        notifyDataSetChanged();
+    }
+
+    public void setSmartNotebook(SmartNotebook smartNotebook, int indexOfUpdatedNote) {
+        this.smartNotebook = smartNotebook;
+        AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(indexOfUpdatedNote);
+//        noteCards.get(atomicNote.getNoteId()).setNote(smartNotebook, atomicNote, indexOfUpdatedNote);
+        notifyItemInserted(indexOfUpdatedNote);
+    }
+
     @Override
     public int getItemViewType(int position) {
-        if (smartNotebook == null || position >= smartNotebook.getAtomicNotes().size()) {
-            return VIEW_TYPE_INIT;
-        }
-        
-        AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
-        if (NoteType.NOT_SET.toString().equals(atomicNote.getNoteType())) {
-            return VIEW_TYPE_INIT;
-        } else if (NoteType.TEXT_NOTE.toString().equals(atomicNote.getNoteType())) {
-            return VIEW_TYPE_TEXT;
-        } else if (NoteType.HANDWRITTEN_PNG.toString().equals(atomicNote.getNoteType())) {
-            return VIEW_TYPE_HANDWRITTEN;
-        }
-        return VIEW_TYPE_INIT;
+        return position;
     }
 
     @NonNull
     @NotNull
     @Override
-    public NoteHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
-        View itemView;
-        switch (viewType) {
-            case VIEW_TYPE_TEXT:
-                itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.note_text_layout, parent, false);
-                return new TextNoteHolder(itemView, parentActivity, smartNotebookRepository);
-            case VIEW_TYPE_HANDWRITTEN:
-                itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.note_drawing_layout, parent, false);
-                return new HandwrittenNoteHolder(itemView, parentActivity, smartNotebookRepository);
-            case VIEW_TYPE_INIT:
-            default:
-                itemView = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.note_init_layout, parent, false);
-                return new InitNoteHolder(itemView, parentActivity, smartNotebookRepository, this);
-        }
+    public FragmentViewHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.fragment_note_page, parent, false);
+
+        // Create a truly unique ID for the fragment container
+        FragmentViewHolder holder = new FragmentViewHolder(view, this, parentActivity);
+        holder.fragmentContainer.setId(viewType + 1);
+
+        return holder;
     }
 
     @Override
-    public void onBindViewHolder(@NonNull @NotNull NoteHolder noteHolder, int position) {
-        if (smartNotebook == null || position >= smartNotebook.getAtomicNotes().size()) return;
-        
-        AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(position);
-        noteHolder.setNote(smartNotebook.getSmartBook().getBookId(), atomicNote);
-        noteCards.put(atomicNote.getNoteId(), noteHolder);
-    }
+    public void onBindViewHolder(@NonNull @NotNull FragmentViewHolder holder, int position) {
+        List<AtomicNoteEntity> atomicNotes = smartNotebook.getAtomicNotes();
 
-    // should not be needed since we are saving the notes whenever the page is changed
-//    @Override
-//    public void onViewRecycled(@NonNull NoteHolder holder) {
-//        super.onViewRecycled(holder);
-//        if (smartNotebook == null) return;
-//
-//        BackgroundOps.execute(() ->
-//            smartNotebookRepository.getSmartNotebooks(smartNotebook.smartBook.getBookId()),
-//            existingSmartNotebook -> {
-//                if (existingSmartNotebook.isPresent()) {
-//                    holder.saveNote();
-//                }
-//            }
-//        );
-//    }
+        if (position < 0 || position >= atomicNotes.size()) return;
+
+        AtomicNoteEntity atomicNote = atomicNotes.get(position);
+        holder.setNote(smartNotebook, atomicNotes.get(position), position);
+        noteCards.put(atomicNote.getNoteId(), holder);
+    }
 
     public void updateNoteType(AtomicNoteEntity atomicNote, String newNoteType) {
         if (smartNotebook == null) return;
-        
+
         int position = smartNotebook.getAtomicNotes().indexOf(atomicNote);
         if (position != -1) {
             atomicNote.setNoteType(newNoteType);
+
+            NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
+            fragment.setAtomicNote(atomicNote);
+            fragment.setBookId(smartNotebook.smartBook.getBookId());
             BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook, parentActivity));
             notifyItemChanged(position);
         }
     }
-
-//    No need to save all notes since notes are saved when page changes. Only the current note needs saving
-//    public void saveNote(String noteTitle) {
-//        if (smartNotebook == null) return;
-//
-//        BackgroundOps.execute(() -> {
-//            for (NoteHolder noteHolder : noteCards.values()) {
-//                noteHolder.saveNote();
-//            }
-//
-//            // update title
-//            smartNotebook.getSmartBook().setTitle(noteTitle);
-//            smartNotebookRepository.updateNotebook(smartNotebook, parentActivity);
-//        });
-//    }
 
     public void removeNoteCard(long noteId) {
         if (smartNotebook == null || !noteCards.containsKey(noteId)) return;
@@ -143,22 +109,145 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<NoteHolder> {
         notifyItemRemoved(position);
     }
 
-//    public void saveNotebookPageAt(int currentVisibleItemIndex, AtomicNoteEntity atomicNote) {
-//        if (smartNotebook == null || atomicNote == null ||
-//            !noteCards.containsKey(atomicNote.getNoteId())) {
-//            return;
-//        }
-//
-//        NoteHolder noteHolder = noteCards.get(atomicNote.getNoteId());
-//        BackgroundOps.execute(noteHolder::saveNote);
-//    }
-
     @Override
     public int getItemCount() {
         return smartNotebook != null ? smartNotebook.atomicNotes.size() : 0;
     }
 
-    public NoteHolder.NoteHolderData getNoteData(long noteId) {
+    private NoteFragment createFragmentByType(String noteType) {
+        if (TEXT_NOTE.toString().equals(noteType)) {
+            return new TextNoteFragment();
+        } else if (HANDWRITTEN_PNG.toString().equals(noteType)) {
+            return new HandwrittenNoteFragment();
+        }
+        return new InitNoteFragment(this);
+    }
+
+    public NoteHolderData getNoteData(long noteId) {
         return noteCards.get(noteId).getNoteHolderData();
     }
+
+    public void setNoteData(Integer index, AtomicNoteEntity currentNote) {
+        if (noteCards.containsKey(currentNote.getNoteId())) {
+            noteCards.get(currentNote.getNoteId()).setNote(smartNotebook, currentNote, index);
+        }
+    }
+
+    static class FragmentViewHolder extends RecyclerView.ViewHolder {
+        FrameLayout fragmentContainer;
+        NoteFragment noteFragment;
+        SmartNotebookAdapter adapter;
+        FragmentManager fragmentManager;
+
+        public FragmentViewHolder(@NonNull View itemView, SmartNotebookAdapter adapter, AppCompatActivity parentActivity) {
+            super(itemView);
+            fragmentContainer = itemView.findViewById(R.id.note_fragment_container);
+            this.adapter = adapter;
+            this.fragmentManager = parentActivity.getSupportFragmentManager();
+        }
+
+        public void setNote(SmartNotebook notebook, AtomicNoteEntity atomicNote, int position) {
+            if (isCorrectFragmentAttached(atomicNote)
+                    && atomicNote.getNoteId() == noteFragment.atomicNote.getNoteId()) return;
+
+            noteFragment = createFragmentByType(atomicNote.getNoteType());
+            noteFragment.setAtomicNote(atomicNote);
+            noteFragment.setBookId(notebook.smartBook.getBookId());
+
+            final int containerId = fragmentContainer.getId();
+            itemView.post(() -> {
+                if (!itemView.isAttachedToWindow()) {
+                    logger.debug("View hasn't attached to window");
+                    return;
+                }
+                FragmentTransaction transaction = fragmentManager.beginTransaction();
+
+                // Remove any existing fragment in this container
+                Fragment existingFragment = fragmentManager.findFragmentById(containerId);
+                if (existingFragment != null && existingFragment != noteFragment) {
+                    transaction.remove(existingFragment);
+                }
+                final String fragmentTag = "fragment_" + position;
+                // Add the fragment to this container
+                if (noteFragment.isDetached()) {
+                    transaction.attach(noteFragment);
+                } else if (!noteFragment.isAdded()) {
+                    transaction.add(containerId, noteFragment, fragmentTag);
+                } else {
+                    transaction.replace(containerId, noteFragment, fragmentTag);
+                }
+                try {
+                    transaction.commitNowAllowingStateLoss();
+                } catch (Exception ex) {
+                    logger.exception("Failed to commit fragment transaction", ex);
+                }
+            });
+        }
+
+        private boolean isCorrectFragmentAttached(AtomicNoteEntity atomicNote) {
+            if (noteFragment == null) return false;
+
+            NoteHolderData noteHolderData = noteFragment.getNoteHolderData();
+
+            switch (noteHolderData.noteType) {
+                case TEXT_NOTE:
+                    return TEXT_NOTE.equals(atomicNote.getNoteType());
+                case HANDWRITTEN_PNG:
+                    return HANDWRITTEN_PNG.equals(atomicNote.getNoteType());
+                case NOT_SET:
+                    return NOT_SET.equals(atomicNote.getNoteType());
+                default:
+                    return false;
+            }
+        }
+
+        private NoteFragment createFragmentByType(String noteType) {
+            if (TEXT_NOTE.equals(noteType)) {
+                return new TextNoteFragment();
+            } else if (HANDWRITTEN_PNG.equals(noteType)) {
+                return new HandwrittenNoteFragment();
+            }
+            return new InitNoteFragment(adapter);
+        }
+
+        public NoteHolderData getNoteHolderData() {
+            return noteFragment.getNoteHolderData();
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

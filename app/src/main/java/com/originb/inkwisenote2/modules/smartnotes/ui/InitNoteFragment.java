@@ -12,95 +12,75 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.repositories.Repositories;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import org.greenrobot.eventbus.EventBus;
 
-/**
- * Fragment for initializing a note type
- */
-public class InitNoteFragment extends NoteFragment {
 
-    private final Logger logger = new Logger("InitNoteFragment");
+public class InitNoteFragment extends NoteFragment {
+    private final Logger logger = new Logger("InitNoteHolder");
     private CardView cardToHandwriting;
     private CardView cardToText;
+    private SmartNotebookAdapter adapter;
+
     private ImageButton deleteNote;
 
-    /**
-     * Create a new instance of InitNoteFragment
-     * @param noteId The note ID
-     * @param bookId The book ID
-     * @return A new instance of InitNoteFragment
-     */
-    public static InitNoteFragment newInstance(long noteId, long bookId) {
-        InitNoteFragment fragment = new InitNoteFragment();
-        Bundle args = new Bundle();
-        setArguments(args, noteId, bookId);
-        fragment.setArguments(args);
-        return fragment;
+    private SmartNotebookRepository smartNotebookRepository;
+    private SmartNotebook smartNotebook;
+
+    public InitNoteFragment(SmartNotebookAdapter adapter) {
+        this.adapter = adapter;
+        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.note_init_layout, container, false);
-    }
+        // Inflate the layout for this fragment
+        View itemView = inflater.inflate(R.layout.note_init_fragment, container, false);
 
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        cardToHandwriting = view.findViewById(R.id.touch_to_write);
-        cardToText = view.findViewById(R.id.tap_to_text);
-        deleteNote = view.findViewById(R.id.delete_note);
-
+        cardToHandwriting = itemView.findViewById(R.id.touch_to_write);
         cardToHandwriting.setOnClickListener(this::createHandwrittenNote);
+
+        cardToText = itemView.findViewById(R.id.tap_to_text);
         cardToText.setOnClickListener(this::createTextNote);
-        
-        deleteNote.setOnClickListener(v -> {
-            BackgroundOps.execute(() -> {
-                EventBus.getDefault().post(new Events.NoteDeleted(
-                        smartNotebookRepository.getSmartNotebooks(bookId).get(),
-                        viewModel.getNoteById(noteId)
-                ));
-            });
-        });
-        
-        super.onViewCreated(view, savedInstanceState);
+
+        deleteNote = itemView.findViewById(R.id.delete_note);
+
+        BackgroundOps.execute(() -> smartNotebookRepository.getSmartNotebooks(bookId),
+                smartNotebookOpt -> smartNotebookOpt.ifPresent(smartNotebook -> {
+                    this.smartNotebook = smartNotebook;
+                    if (smartNotebook.getAtomicNotes().size() <= 1) {
+                        deleteNote.setVisibility(View.GONE);
+                    } else {
+                        deleteNote.setVisibility(View.VISIBLE);
+                    }
+
+                    deleteNote.setOnClickListener(v ->
+                            EventBus.getDefault()
+                                    .post(new Events.DeleteNoteCommand(smartNotebook,
+                                            atomicNote))
+                    );
+                }));
+
+        return itemView;
     }
 
     private void createTextNote(View view) {
-        atomicNote = viewModel.getNoteById(noteId);
         if (atomicNote == null) return;
-        
-        BackgroundOps.execute(() -> {
-            // Update note type in database
-            atomicNote.setNoteType(NoteType.TEXT_NOTE.toString());
-            viewModel.updateNoteType(atomicNote, NoteType.TEXT_NOTE);
-        });
+        adapter.updateNoteType(atomicNote, NoteType.TEXT_NOTE.toString());
     }
 
     private void createHandwrittenNote(View view) {
-        atomicNote = viewModel.getNoteById(noteId);
         if (atomicNote == null) return;
-        
-        BackgroundOps.execute(() -> {
-            // Update note type in database
-            atomicNote.setNoteType(NoteType.HANDWRITTEN_PNG.toString());
-            viewModel.updateNoteType(atomicNote, NoteType.HANDWRITTEN_PNG);
-        });
+        adapter.updateNoteType(atomicNote, NoteType.HANDWRITTEN_PNG.toString());
     }
 
     @Override
-    protected void loadNote() {
-        atomicNote = viewModel.getNoteById(noteId);
-        logger.debug("Setting init note");
+    public NoteHolderData getNoteHolderData() {
+        return NoteHolderData.initNoteData();
     }
-
-    @Override
-    public NoteHolder.NoteHolderData getNoteHolderData() {
-        return NoteHolder.NoteHolderData.initNoteData();
-    }
-
-    @Override
-    public NoteType getNoteType() {
-        return NoteType.NOT_SET;
-    }
-} 
+}
