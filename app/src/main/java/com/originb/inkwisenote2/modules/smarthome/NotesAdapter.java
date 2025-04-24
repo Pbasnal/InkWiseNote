@@ -22,7 +22,7 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
     private Context context;
     private List<QueryNoteResult> notes;
     private Logger logger = new Logger("NotesAdapter");
-    ;
+    private String queryName = "";
 
     public NotesAdapter(Context context) {
         this.context = context;
@@ -57,7 +57,12 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
                     .map(String::valueOf)  // Map each Long to String
                     .collect(Collectors.joining(","));
 
-            Try.to(() -> Routing.SmartNotebookActivity.openNotebookIntent(context, context.getFilesDir().getPath(), commaSeparatedNoteIds), logger)
+            Try.to(() -> Routing.SmartNotebookActivity.openNotebookIntent(
+                                    context,
+                                    context.getFilesDir().getPath(),
+                                    queryName,
+                                    commaSeparatedNoteIds),
+                            logger)
                     .get();
         });
     }
@@ -67,7 +72,8 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
         return notes.size();
     }
 
-    public void setNotes(Set<QueryNoteResult> notes) {
+    public void setNotes(String queryName, Set<QueryNoteResult> notes) {
+        this.queryName = queryName;
         this.notes = new ArrayList<>(notes);
         notifyDataSetChanged();
     }

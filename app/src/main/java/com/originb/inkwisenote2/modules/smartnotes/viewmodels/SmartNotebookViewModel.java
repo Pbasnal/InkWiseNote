@@ -108,10 +108,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         return createdTimeMillis;
     }
 
-    public void loadSmartNotebook(Long bookId, String workingPath, String noteIdsString) {
+    public void loadSmartNotebook(Long bookId, String workingPath, String bookTitle, String noteIdsString) {
         this.workingNotePath = workingPath;
         BackgroundOps.executeOpt(
-                () -> getSmartNotebook(bookId, workingPath, noteIdsString),
+                () -> getSmartNotebook(bookId, workingPath, bookTitle, noteIdsString),
                 notebook -> {
                     smartNotebook.setValue(SmartNotebookUpdate.fromNotebook(notebook));
                     notebookTitle.setValue(notebook.smartBook.getTitle());
@@ -255,7 +255,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         return notebook.getAtomicNotes().get(currentNoteIndex);
     }
 
-    private Optional<SmartNotebook> getSmartNotebook(Long bookIdToOpen, String workingPath, String noteIdsString) {
+    private Optional<SmartNotebook> getSmartNotebook(Long bookIdToOpen, String workingPath, String bookTitle, String noteIdsString) {
         workingNotePath = workingPath;
 
         if (bookIdToOpen != null && bookIdToOpen != -1) {
@@ -265,7 +265,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             Set<Long> noteIdsSet = Arrays.stream(noteIds)
                     .map(Long::parseLong)
                     .collect(Collectors.toSet());
-            return smartNotebookRepository.getVirtualSmartNotebooks(noteIdsSet);
+            return smartNotebookRepository.getVirtualSmartNotebooks(bookTitle, noteIdsSet);
         }
 
         return smartNotebookRepository.initializeNewSmartNotebook(

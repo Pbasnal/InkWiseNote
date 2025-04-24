@@ -24,10 +24,11 @@ public class Routing {
             packageContext.startActivity(intent);
         }
 
-        public static void openNotebookIntent(Context packageContext, String currentDirectoryPath, String commaSeparatedNoteIds) {
+        public static void openNotebookIntent(Context packageContext, String currentDirectoryPath, String bookTitle, String commaSeparatedNoteIds) {
 
             Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.smartnotes.ui.SmartNotebookActivity.class);
             intent.putExtra("workingNotePath", currentDirectoryPath);
+            intent.putExtra("bookTitle", bookTitle);
             intent.putExtra("noteIds", commaSeparatedNoteIds);
             packageContext.startActivity(intent);
         }

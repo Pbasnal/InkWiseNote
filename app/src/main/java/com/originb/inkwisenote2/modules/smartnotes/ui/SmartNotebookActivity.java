@@ -54,11 +54,12 @@ public class SmartNotebookActivity extends AppCompatActivity {
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
         workingNotePath = getIntent().getStringExtra("workingNotePath");
         String noteIds = getIntent().getStringExtra("noteIds");
+        String bookTitle = getIntent().getStringExtra("bookTitle");
 
         if (noteIds == null || Strings.isNullOrWhitespace(noteIds)) {
             currentState = new SmartNotebookActivityRWState();
         } else {
-            currentState = new SmartNotebookActivityReadOnlyState();
+            currentState = new SmartNotebookActivityVirtualNotebook();
         }
 
         // Initialize UI components
@@ -66,7 +67,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
         currentState.initializeViews();
         setupObservers();
 
-        viewModel.loadSmartNotebook(bookIdToOpen, workingNotePath, noteIds);
+        viewModel.loadSmartNotebook(bookIdToOpen, workingNotePath, bookTitle, noteIds);
     }
 
     private void initializeRecyclerView() {
@@ -206,7 +207,7 @@ public class SmartNotebookActivity extends AppCompatActivity {
         }
     }
 
-    public class SmartNotebookActivityReadOnlyState implements ISmartNotebookActivityState {
+    public class SmartNotebookActivityVirtualNotebook implements ISmartNotebookActivityState {
 
         @Override
         public void initializeViews() {

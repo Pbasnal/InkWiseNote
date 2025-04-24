@@ -153,7 +153,7 @@ public class SmartNotebookRepository {
         return smartNotebooks;
     }
 
-    public Optional<SmartNotebook> getVirtualSmartNotebooks(Set<Long> noteIds) {
+    public Optional<SmartNotebook> getVirtualSmartNotebooks(String bookTitle, Set<Long> noteIds) {
         List<AtomicNoteEntity> atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds);
         List<SmartBookPage> smartBookPages = new ArrayList<>();
 
@@ -164,7 +164,7 @@ public class SmartNotebookRepository {
                     pageIndex));
             pageIndex++;
         }
-        SmartBookEntity smartBook = new SmartBookEntity(-1, "",
+        SmartBookEntity smartBook = new SmartBookEntity(-1, bookTitle,
                 System.currentTimeMillis(),
                 System.currentTimeMillis());
 
