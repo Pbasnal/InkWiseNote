@@ -3,12 +3,8 @@ package com.originb.inkwisenote2.modules.smartnotes.ui;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
@@ -24,9 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.originb.inkwisenote2.modules.smartnotes.data.NoteType.*;
-
-public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdapter.FragmentViewHolder> {
+public class SmartNotebookAdapter extends RecyclerView.Adapter<FragmentViewHolder> {
 
     private static Logger logger = new Logger("SmartNotebookAdapter");
     private final AppCompatActivity parentActivity;
@@ -51,8 +45,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
 
     public void setSmartNotebook(SmartNotebook smartNotebook, int indexOfUpdatedNote) {
         this.smartNotebook = smartNotebook;
-        AtomicNoteEntity atomicNote = smartNotebook.getAtomicNotes().get(indexOfUpdatedNote);
-//        noteCards.get(atomicNote.getNoteId()).setNote(smartNotebook, atomicNote, indexOfUpdatedNote);
         notifyItemInserted(indexOfUpdatedNote);
     }
 
@@ -69,7 +61,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
                 .inflate(R.layout.fragment_note_page, parent, false);
 
         // Create a truly unique ID for the fragment container
-        FragmentViewHolder holder = new FragmentViewHolder(view, this, parentActivity);
+        FragmentViewHolder holder = new FragmentViewHolder(this, view, this, parentActivity);
         holder.fragmentContainer.setId(viewType + 1);
 
         return holder;
@@ -90,15 +82,13 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
         if (smartNotebook == null) return;
 
         int position = smartNotebook.getAtomicNotes().indexOf(atomicNote);
-        if (position != -1) {
-            atomicNote.setNoteType(newNoteType);
-
-            NoteFragment fragment = createFragmentByType(atomicNote.getNoteType());
-            fragment.setAtomicNote(atomicNote);
-            fragment.setBookId(smartNotebook.smartBook.getBookId());
-            BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook, parentActivity));
-            notifyItemChanged(position);
+        if (position == -1) {
+            return;
         }
+        atomicNote.setNoteType(newNoteType);
+        BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(smartNotebook, parentActivity));
+        notifyItemChanged(position);
+
     }
 
     public void removeNoteCard(long noteId) {
@@ -114,15 +104,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
         return smartNotebook != null ? smartNotebook.atomicNotes.size() : 0;
     }
 
-    private NoteFragment createFragmentByType(String noteType) {
-        if (TEXT_NOTE.toString().equals(noteType)) {
-            return new TextNoteFragment();
-        } else if (HANDWRITTEN_PNG.toString().equals(noteType)) {
-            return new HandwrittenNoteFragment();
-        }
-        return new InitNoteFragment(this);
-    }
-
     public NoteHolderData getNoteData(long noteId) {
         return noteCards.get(noteId).getNoteHolderData();
     }
@@ -130,88 +111,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
     public void setNoteData(Integer index, AtomicNoteEntity currentNote) {
         if (noteCards.containsKey(currentNote.getNoteId())) {
             noteCards.get(currentNote.getNoteId()).setNote(smartNotebook, currentNote, index);
-        }
-    }
-
-    static class FragmentViewHolder extends RecyclerView.ViewHolder {
-        FrameLayout fragmentContainer;
-        NoteFragment noteFragment;
-        SmartNotebookAdapter adapter;
-        FragmentManager fragmentManager;
-
-        public FragmentViewHolder(@NonNull View itemView, SmartNotebookAdapter adapter, AppCompatActivity parentActivity) {
-            super(itemView);
-            fragmentContainer = itemView.findViewById(R.id.note_fragment_container);
-            this.adapter = adapter;
-            this.fragmentManager = parentActivity.getSupportFragmentManager();
-        }
-
-        public void setNote(SmartNotebook notebook, AtomicNoteEntity atomicNote, int position) {
-            if (isCorrectFragmentAttached(atomicNote)
-                    && atomicNote.getNoteId() == noteFragment.atomicNote.getNoteId()) return;
-
-            noteFragment = createFragmentByType(atomicNote.getNoteType());
-            noteFragment.setAtomicNote(atomicNote);
-            noteFragment.setBookId(notebook.smartBook.getBookId());
-
-            final int containerId = fragmentContainer.getId();
-            itemView.post(() -> {
-                if (!itemView.isAttachedToWindow()) {
-                    logger.debug("View hasn't attached to window");
-                    return;
-                }
-                FragmentTransaction transaction = fragmentManager.beginTransaction();
-
-                // Remove any existing fragment in this container
-                Fragment existingFragment = fragmentManager.findFragmentById(containerId);
-                if (existingFragment != null && existingFragment != noteFragment) {
-                    transaction.remove(existingFragment);
-                }
-                final String fragmentTag = "fragment_" + position;
-                // Add the fragment to this container
-                if (noteFragment.isDetached()) {
-                    transaction.attach(noteFragment);
-                } else if (!noteFragment.isAdded()) {
-                    transaction.add(containerId, noteFragment, fragmentTag);
-                } else {
-                    transaction.replace(containerId, noteFragment, fragmentTag);
-                }
-                try {
-                    transaction.commitNowAllowingStateLoss();
-                } catch (Exception ex) {
-                    logger.exception("Failed to commit fragment transaction", ex);
-                }
-            });
-        }
-
-        private boolean isCorrectFragmentAttached(AtomicNoteEntity atomicNote) {
-            if (noteFragment == null) return false;
-
-            NoteHolderData noteHolderData = noteFragment.getNoteHolderData();
-
-            switch (noteHolderData.noteType) {
-                case TEXT_NOTE:
-                    return TEXT_NOTE.equals(atomicNote.getNoteType());
-                case HANDWRITTEN_PNG:
-                    return HANDWRITTEN_PNG.equals(atomicNote.getNoteType());
-                case NOT_SET:
-                    return NOT_SET.equals(atomicNote.getNoteType());
-                default:
-                    return false;
-            }
-        }
-
-        private NoteFragment createFragmentByType(String noteType) {
-            if (TEXT_NOTE.equals(noteType)) {
-                return new TextNoteFragment();
-            } else if (HANDWRITTEN_PNG.equals(noteType)) {
-                return new HandwrittenNoteFragment();
-            }
-            return new InitNoteFragment(adapter);
-        }
-
-        public NoteHolderData getNoteHolderData() {
-            return noteFragment.getNoteHolderData();
         }
     }
 }

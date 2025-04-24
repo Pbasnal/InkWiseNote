@@ -19,4 +19,12 @@ public enum NoteType {
     public boolean equals(String noteType) {
         return this.noteType.equals(noteType);
     }
+
+    public static NoteType fromString(String noteType) {
+        switch (noteType) {
+            case "handwritten_png": return HANDWRITTEN_PNG;
+            case "text_note": return TEXT_NOTE;
+            default:  return   NOT_SET;
+        }
+    }
 }

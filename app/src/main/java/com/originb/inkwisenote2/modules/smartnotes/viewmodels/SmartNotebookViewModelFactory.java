@@ -1,4 +1,4 @@
-package com.originb.inkwisenote2.modules.smartnotes.ui;
+package com.originb.inkwisenote2.modules.smartnotes.viewmodels;
 
 import android.app.Application;
 import androidx.annotation.NonNull;

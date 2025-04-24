@@ -109,21 +109,16 @@
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-    <androidx.viewpager2.widget.ViewPager2
+    <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/smart_note_page_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="4dp" />
-<!--    <androidx.recyclerview.widget.RecyclerView-->
-<!--            android:id="@+id/smart_note_page_view"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="0dp"-->
-<!--            android:layout_weight="1"-->
-<!--            android:background="?android:attr/colorBackground"-->
-<!--            android:clipToPadding="false"-->
-<!--            android:padding="8dp"-->
-<!--            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"-->
-<!--            app:spanCount="1"/>-->
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="?android:attr/colorBackground"
+            android:clipToPadding="false"
+            android:padding="8dp"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            app:spanCount="1"/>
 
 
 </LinearLayout>

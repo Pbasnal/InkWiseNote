@@ -8,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.BitmapScale;
 import com.originb.inkwisenote2.config.ConfigReader;
@@ -36,7 +35,8 @@ public class HandwrittenNoteFragment extends NoteFragment {
     private ConfigReader configReader;
 
 
-    public HandwrittenNoteFragment() {
+    public HandwrittenNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+        super(smartNotebook, atomicNote);
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         configReader = ConfigReader.getInstance();
@@ -51,15 +51,11 @@ public class HandwrittenNoteFragment extends NoteFragment {
         deleteNote = fragmentView.findViewById(R.id.delete_note);
 
 
-        BackgroundOps.execute(() -> smartNotebookRepository.getSmartNotebooks(bookId),
-                smartNotebookOpt -> {
-                    SmartNotebook notebook = smartNotebookOpt.get();
-                    deleteNote.setOnClickListener(view ->
-                            EventBus.getDefault()
-                                    .post(new Events.DeleteNoteCommand(notebook,
-                                            atomicNote))
-                    );
-                });
+        deleteNote.setOnClickListener(view ->
+                EventBus.getDefault()
+                        .post(new Events.DeleteNoteCommand(smartNotebook,
+                                atomicNote))
+        );
 
         BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
                 (bitmapOpt) -> {

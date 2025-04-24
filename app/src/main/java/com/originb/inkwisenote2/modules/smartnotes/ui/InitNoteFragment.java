@@ -15,26 +15,24 @@ import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import org.greenrobot.eventbus.EventBus;
 
 
 public class InitNoteFragment extends NoteFragment {
-    private final Logger logger = new Logger("InitNoteHolder");
     private CardView cardToHandwriting;
     private CardView cardToText;
     private SmartNotebookAdapter adapter;
 
     private ImageButton deleteNote;
 
-    private SmartNotebookRepository smartNotebookRepository;
-    private SmartNotebook smartNotebook;
-
-    public InitNoteFragment(SmartNotebookAdapter adapter) {
+    public InitNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote, SmartNotebookAdapter adapter) {
+        super(smartNotebook, atomicNote);
         this.adapter = adapter;
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
     }
+
 
     @Nullable
     @Override
@@ -50,21 +48,18 @@ public class InitNoteFragment extends NoteFragment {
 
         deleteNote = itemView.findViewById(R.id.delete_note);
 
-        BackgroundOps.execute(() -> smartNotebookRepository.getSmartNotebooks(bookId),
-                smartNotebookOpt -> smartNotebookOpt.ifPresent(smartNotebook -> {
-                    this.smartNotebook = smartNotebook;
-                    if (smartNotebook.getAtomicNotes().size() <= 1) {
-                        deleteNote.setVisibility(View.GONE);
-                    } else {
-                        deleteNote.setVisibility(View.VISIBLE);
-                    }
+        // TODO: What happens if the 2nd last not was deleted while this note was visible on screen
+        if (smartNotebook.getAtomicNotes().size() <= 1) {
+            deleteNote.setVisibility(View.GONE);
+        } else {
+            deleteNote.setVisibility(View.VISIBLE);
+        }
 
-                    deleteNote.setOnClickListener(v ->
-                            EventBus.getDefault()
-                                    .post(new Events.DeleteNoteCommand(smartNotebook,
-                                            atomicNote))
-                    );
-                }));
+        deleteNote.setOnClickListener(v ->
+                EventBus.getDefault()
+                        .post(new Events.DeleteNoteCommand(smartNotebook,
+                                atomicNote))
+        );
 
         return itemView;
     }

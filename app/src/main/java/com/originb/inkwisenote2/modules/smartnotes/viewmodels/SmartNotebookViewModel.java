@@ -1,4 +1,4 @@
-package com.originb.inkwisenote2.modules.smartnotes.ui;
+package com.originb.inkwisenote2.modules.smartnotes.viewmodels;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -14,10 +14,7 @@ import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
+import com.originb.inkwisenote2.modules.smartnotes.data.*;
 
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
@@ -42,19 +39,14 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> currentPageIndexLive = new MutableLiveData<>(0);
     private final MutableLiveData<SmartNotebookUpdate> smartNotebook = new MutableLiveData<>();
     private final MutableLiveData<String> notebookTitle = new MutableLiveData<>("");
-    private final MutableLiveData<String> pageNumberText = new MutableLiveData<>("");
+    private final MutableLiveData<NotebookNavigationData> navigationDataLive = new MutableLiveData<>(new NotebookNavigationData());
     private final MutableLiveData<Long> createdTimeMillis = new MutableLiveData<>();
-    private final MutableLiveData<Boolean> showNextButton = new MutableLiveData<>(false);
-    private final MutableLiveData<Boolean> showPrevButton = new MutableLiveData<>(false);
 
     public static class SmartNotebookUpdate {
-        public int notbookUpdateType = 0;
+        public SmartNotebookUpdateType notbookUpdateType = SmartNotebookUpdateType.NOTE_UPDATE;
         public SmartNotebook smartNotebook;
         public AtomicNoteEntity atomicNote;
         public int indexOfUpdatedNote = -1;
-
-        public static int NOTE_UPDATE = 0;
-        public static int NOTE_DELETED = 1;
 
         public static SmartNotebookUpdate fromNotebook(SmartNotebook smartNotebook) {
             SmartNotebookUpdate smartNotebookUpdate = new SmartNotebookUpdate();
@@ -66,7 +58,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             SmartNotebookUpdate smartNotebookUpdate = new SmartNotebookUpdate();
             smartNotebookUpdate.atomicNote = atomicNote;
             smartNotebookUpdate.smartNotebook = smartNotebook;
-            smartNotebookUpdate.notbookUpdateType = NOTE_DELETED;
+            smartNotebookUpdate.notbookUpdateType = SmartNotebookUpdateType.NOTE_DELETED;
             return smartNotebookUpdate;
         }
 
@@ -75,6 +67,13 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             SmartNotebookUpdate smartNotebookUpdate = new SmartNotebookUpdate();
             smartNotebookUpdate.smartNotebook = updatedNotebook;
             smartNotebookUpdate.indexOfUpdatedNote = indexOfUpdatedNote;
+            return smartNotebookUpdate;
+        }
+
+        public static SmartNotebookUpdate notebookDeleted(SmartNotebook deletedNotebook) {
+            SmartNotebookUpdate smartNotebookUpdate = new SmartNotebookUpdate();
+            smartNotebookUpdate.smartNotebook = deletedNotebook;
+            smartNotebookUpdate.notbookUpdateType = SmartNotebookUpdateType.NOTEBOOK_DELETED;
             return smartNotebookUpdate;
         }
     }
@@ -101,20 +100,12 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         return notebookTitle;
     }
 
-    public LiveData<String> getPageNumberText() {
-        return pageNumberText;
+    public LiveData<NotebookNavigationData> getNavigationDataLive() {
+        return navigationDataLive;
     }
 
     public LiveData<Long> getCreatedTimeMillis() {
         return createdTimeMillis;
-    }
-
-    public LiveData<Boolean> getShowNextButton() {
-        return showNextButton;
-    }
-
-    public LiveData<Boolean> getShowPrevButton() {
-        return showPrevButton;
     }
 
     public void loadSmartNotebook(Long bookId, String workingPath, String noteIdsString) {
@@ -126,7 +117,6 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                     notebookTitle.setValue(notebook.smartBook.getTitle());
                     createdTimeMillis.setValue(notebook.smartBook.getCreatedTimeMillis());
                     updatePageNumberText();
-                    updateNavigationButtons();
                 }
         );
     }
@@ -140,7 +130,6 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         if (nextIndex < notebook.getAtomicNotes().size()) {
             currentPageIndexLive.setValue(nextIndex);
             updatePageNumberText();
-            updateNavigationButtons();
         }
     }
 
@@ -154,7 +143,6 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         if (prevIndex >= 0) {
             currentPageIndexLive.setValue(prevIndex);
             updatePageNumberText();
-            updateNavigationButtons();
         }
     }
 
@@ -180,7 +168,6 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             smartNotebook.setValue(SmartNotebookUpdate.fromNoteAndBook(updatedNotebook, indexToInsertAt));
             currentPageIndexLive.setValue(indexToInsertAt);
             updatePageNumberText();
-            updateNavigationButtons();
         });
     }
 
@@ -190,7 +177,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         SmartNotebook deletedNotebook = notebookDeleted.smartNotebook;
         if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId()) return;
 
-        smartNotebook.setValue(null);
+        smartNotebook.setValue(SmartNotebookUpdate.notebookDeleted(deletedNotebook));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -214,7 +201,6 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
 
         updatePageNumberText();
-        updateNavigationButtons();
     }
 
     public void updateTitle(String title) {
@@ -292,17 +278,14 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         if (notebook == null || index == null) return;
 
         String text = (index + 1) + "/" + notebook.getAtomicNotes().size();
-        pageNumberText.setValue(text);
-    }
 
-    private void updateNavigationButtons() {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
-        Integer index = currentPageIndexLive.getValue();
-        if (notebook == null || index == null) return;
+        NotebookNavigationData navigationData   = navigationDataLive.getValue();
+        navigationData.pageNumbeText = text;
 
         int totalPages = notebook.getAtomicNotes().size();
-        showNextButton.setValue(index < totalPages - 1);
-        showPrevButton.setValue(index > 0);
+        navigationData.showNextButton = (index < totalPages - 1);
+        navigationData.showPrevButton = (index > 0);
+        navigationDataLive.setValue(navigationData);
     }
 
     @Override
