@@ -133,10 +133,6 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<SmartNotebookAdap
         }
     }
 
-    public void noteDeleted(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
-
-    }
-
     static class FragmentViewHolder extends RecyclerView.ViewHolder {
         FrameLayout fragmentContainer;
         NoteFragment noteFragment;
