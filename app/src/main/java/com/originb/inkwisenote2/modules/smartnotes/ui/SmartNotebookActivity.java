@@ -1,45 +1,36 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
-import com.originb.inkwisenote2.common.Routing;
-import com.originb.inkwisenote2.modules.backgroundjobs.Events;
-import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
-import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
+import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
+import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
+import com.originb.inkwisenote2.modules.smartnotes.data.NotebookNavigationData;
+import com.originb.inkwisenote2.modules.smartnotes.data.SmartNotebookUpdateType;
+import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.ISmartNotebookActivityState;
+import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.IStateManager;
+import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModel;
+import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModelFactory;
 
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-public class SmartNotebookActivity extends AppCompatActivity {
+public class SmartNotebookActivity extends AppCompatActivity implements IStateManager {
 
     private Logger logger = new Logger("SmartNotebookActivity");
 
     private String workingNotePath;
-    private int indexOfCurrentPage;
 
-    private SmartNotebook smartNotebook;
-    private SmartNotebookRepository smartNotebookRepository;
-    private AtomicNotesDomain atomicNotesDomain;
-
+    private SmartNotebookViewModel viewModel;
     private SmartNotebookPageScrollLayout scrollLayout;
     private SmartNotebookAdapter smartNotebookAdapter;
     private RecyclerView recyclerView;
@@ -51,226 +42,296 @@ public class SmartNotebookActivity extends AppCompatActivity {
     private TextView noteCreatedTime;
     private TextView pageNumText;
 
+    private ISmartNotebookActivityState currentState;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_smart_note);
 
-        createNoteTitleEditText();
-        createNoteCreatedTimeText();
+        // Initialize ViewModel using the factory
+        SmartNotebookViewModelFactory factory = new SmartNotebookViewModelFactory(getApplication());
+        viewModel = new ViewModelProvider(this, factory).get(SmartNotebookViewModel.class);
 
-        this.indexOfCurrentPage = 0;
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
+        // Load notebook data
+        Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
+        workingNotePath = getIntent().getStringExtra("workingNotePath");
+        String noteIds = getIntent().getStringExtra("noteIds");
+        String bookTitle = getIntent().getStringExtra("bookTitle");
 
+        if (noteIds == null || Strings.isNullOrWhitespace(noteIds)) {
+            currentState = new SmartNotebookActivityRWState();
+        } else {
+            currentState = new SmartNotebookActivityVirtualNotebook(this);
+        }
+
+        // Initialize UI components
+        initializeRecyclerView();
+        currentState.initializeViews();
+        currentState.setupObservers();
+
+        viewModel.loadSmartNotebook(bookIdToOpen, workingNotePath, bookTitle, noteIds);
+    }
+
+    public void changeState() {
+        viewModel.onNotebookIsInDb(isNotebookSaved -> {
+            currentState.finalizeState();
+            currentState = new SmartNotebookActivityRWState();
+            currentState.initializeViews();
+        });
+    }
+
+    private void initializeRecyclerView() {
+        // Initialize RecyclerView and its components
         recyclerView = findViewById(R.id.smart_note_page_view);
         scrollLayout = new SmartNotebookPageScrollLayout(this);
         recyclerView.addOnScrollListener(new SmartNotebookScrollListener(scrollLayout));
         recyclerView.setLayoutManager(scrollLayout);
+    }
 
-        smartNotebookAdapter = new SmartNotebookAdapter(this, null);
-        BackgroundOps.executeOpt(this::getSmartNotebook, smartNotebook -> {
-            this.smartNotebook = smartNotebook;
-            smartNotebookAdapter.setSmartNotebook(smartNotebook);
-            noteTitleText.setText(smartNotebook.smartBook.getTitle());
-            noteCreatedTime.setText(DateTimeUtils.msToDateTime(smartNotebook.smartBook.getCreatedTimeMillis()));
-            recyclerView.setAdapter(smartNotebookAdapter);
+    public void initializeNavigationButtons() {
+        // Initialize buttons
+        nextButton = findViewById(R.id.fab_next_note);
+        prevButton = findViewById(R.id.fab_prev_note);
 
-            if (smartNotebook.getAtomicNotes().size() > 1) {
-                nextButton.setVisibility(View.VISIBLE);
-            }
-            updatePageNumberText(smartNotebook);
+        // Initially hide navigation buttons
+        nextButton.setVisibility(View.INVISIBLE);
+        prevButton.setVisibility(View.INVISIBLE);
+
+        // Button click listeners
+        nextButton.setOnClickListener(view -> {
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+                    viewModel::navigateToNextPage);
         });
 
-        createNextNoteButton();
-        createPrevNoteButton();
-        createNewNoteButton();
+        prevButton.setOnClickListener(view -> {
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+                    viewModel::navigateToPreviousPage);
+        });
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onNoteDelete(Events.NoteDeleted noteDeleted) {
-        long noteId = noteDeleted.atomicNote.getNoteId();
-        smartNotebook.removeNote(noteId);
-
-        if (smartNotebook.atomicNotes.isEmpty()) {
-            BackgroundOps.execute(() -> smartNotebookRepository.deleteSmartNotebook(smartNotebook),
-                    () -> Routing.HomePageActivity.openHomePageAndStartFresh(this));
-        }
-
-        smartNotebookAdapter.removeNoteCard(noteId);
-        updatePageNumberText(smartNotebook);
+    public void initializeNewNoteButton() {
+        newNotePageBtn = findViewById(R.id.fab_add_note);
+        newNotePageBtn.setImageResource(R.drawable.ic_add);
+        newNotePageBtn.setVisibility(View.VISIBLE);
+        newNotePageBtn.setOnClickListener(view -> {
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+                    viewModel::addNewPage);
+        });
     }
 
-    private void updatePageNumberText(SmartNotebook smartNotebook) {
-        pageNumText = findViewById(R.id.page_num_text);
-        setPageNum(indexOfCurrentPage);
-    }
+    public void initializeNoteTitle() {
+        noteTitleText = findViewById(R.id.smart_note_title);
 
-    private void createNoteTitleEditText() {
-        noteTitleText = this.findViewById(R.id.smart_note_title);
-        noteTitleText.setOnClickListener((view) ->
-                noteTitleText.selectAll()
-        );
+        noteTitleText.setOnClickListener((view) -> noteTitleText.selectAll());
         noteTitleText.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) noteTitleText.selectAll();
         });
     }
 
-    private void createNoteCreatedTimeText() {
-        noteCreatedTime = this.findViewById(R.id.note_created_time);
+    public void initializeCreatedTimeAndPageNum() {
+        // Initialize text fields
+        noteCreatedTime = findViewById(R.id.note_created_time);
+        pageNumText = findViewById(R.id.page_num_text);
     }
 
-    private void createNewNoteButton() {
-        newNotePageBtn = findViewById(R.id.fab_add_note);
-        newNotePageBtn.setOnClickListener(this::onNewNotePageClick);
-    }
-
-    private void onNewNotePageClick(View view) {
-        // Determine the position to insert the new item after the currently visible one
-        int positionOfNewHolder = indexOfCurrentPage + 1;
-        BackgroundOps.execute(() -> {
-                    AtomicNoteEntity newAtomicNote = atomicNotesDomain.saveAtomicNote(AtomicNotesDomain.constructAtomicNote(
-                            "",
-                            workingNotePath,
-                            NoteType.NOT_SET));
-                    SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(smartNotebook.smartBook,
-                            newAtomicNote, positionOfNewHolder - 1);
-                    smartNotebook.insertAtomicNoteAndPage(positionOfNewHolder - 1, newAtomicNote, newSmartPage);
-
-                    smartNotebookAdapter.saveNotebookPageAt(indexOfCurrentPage, newAtomicNote);
-                    return smartNotebook;
-                },
-                atomicNoteEntity -> {
-                    // Notify the adapter about the new item inserted
-                    smartNotebookAdapter.notifyItemInserted(positionOfNewHolder);
-                    int totalItemCount = recyclerView.getAdapter().getItemCount();
-                    if (positionOfNewHolder == totalItemCount) {
-                        nextButton.setVisibility(View.INVISIBLE);
-                    } else {
-                        nextButton.setVisibility(View.VISIBLE);
-                    }
-
-                    prevButton.setVisibility(View.VISIBLE);
-
-                    scrollLayout.setScrollRequested(true);
-                    // Optionally scroll to the new item
-                    recyclerView.postDelayed(() -> {
-                        recyclerView.smoothScrollToPosition(positionOfNewHolder);
-                        setPageNum(positionOfNewHolder);
-                        indexOfCurrentPage = positionOfNewHolder;
-                    }, 10);
-                });
-    }
-
-    private void createNextNoteButton() {
-        nextButton = findViewById(R.id.fab_next_note);
-
-        nextButton.setVisibility(View.INVISIBLE);
-        nextButton.setOnClickListener(view -> {
-            // Get the total number of items
-            int totalItemCount = recyclerView.getAdapter().getItemCount();
-
-            smartNotebookAdapter.saveNotebookPageAt(indexOfCurrentPage,
-                    smartNotebook.getAtomicNotes().get(indexOfCurrentPage));
-
-            int pageIndex = indexOfCurrentPage + 1;
-
-            // hide next button if this is the last visible note
-            if (pageIndex >= totalItemCount - 1) {
-                nextButton.setVisibility(View.INVISIBLE);
-            }
-            if (totalItemCount > 1) {
-                prevButton.setVisibility(View.VISIBLE);
-            }
-
-            // Check if we can scroll to the next item
-            if (pageIndex < totalItemCount) {
-                // Scroll to the next item
-                scrollLayout.setScrollRequested(true);
-                recyclerView.smoothScrollToPosition(pageIndex);
-                setPageNum(pageIndex);
-                indexOfCurrentPage = pageIndex;
-            }
-            // don't use currentPageIndex after this because it is getting modified above
-        });
-    }
-
-    private void createPrevNoteButton() {
-        prevButton = findViewById(R.id.fab_prev_note);
-        prevButton.setVisibility(View.INVISIBLE);
-        prevButton.setOnClickListener(view -> {
-            // Get the total number of items
-            int totalItemCount = recyclerView.getAdapter().getItemCount();
-
-            smartNotebookAdapter.saveNotebookPageAt(indexOfCurrentPage,
-                    smartNotebook.getAtomicNotes().get(indexOfCurrentPage));
-
-            int indexOfPrevPage = indexOfCurrentPage - 1;
-
-            if (indexOfPrevPage <= 0) {
-                prevButton.setVisibility(View.INVISIBLE);
-            }
-            if (totalItemCount > 1) {
-                nextButton.setVisibility(View.VISIBLE);
-            }
-            // Check if we can scroll to the next item
-            if (indexOfPrevPage >= 0) {
-                // Scroll to the next item
-                scrollLayout.setScrollRequested(true);
-                recyclerView.smoothScrollToPosition(indexOfPrevPage);
-                setPageNum(indexOfPrevPage);
-                indexOfCurrentPage = indexOfPrevPage;
-            }
-            // don't use currentPageIndex after this because it is getting modified above
-        });
-    }
-
-    private Optional<SmartNotebook> getSmartNotebook() {
-        Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
-        workingNotePath = getIntent().getStringExtra("workingNotePath");
-        String[] noteIds = getIntent().getStringExtra("noteIds").split(",");
-
-        if (bookIdToOpen != -1) {
-            return smartNotebookRepository.getSmartNotebooks(bookIdToOpen);
-        } else if (noteIds != null && noteIds.length > 0) {
-            Set<Long> noteIdsSet = Arrays.stream(noteIds).map(Long::parseLong).collect(Collectors.toSet());
-            return smartNotebookRepository.getVirtualSmartNotebooks(noteIdsSet);
+    public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
+        if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTEBOOK_DELETED) {
+            finish();
+        }
+        if (smartNotebookAdapter == null) {
+            smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
+            recyclerView.setAdapter(smartNotebookAdapter);
         }
 
-        return smartNotebookRepository.initializeNewSmartNotebook("",
-                workingNotePath,
-                NoteType.NOT_SET);
+        if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTE_DELETED) {
+            smartNotebookAdapter.removeNoteCard(notebookUpdate.atomicNote.getNoteId());
+        } else if (notebookUpdate.indexOfUpdatedNote == -1) {
+            smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook);
+        } else {
+            smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook, notebookUpdate.indexOfUpdatedNote);
+        }
+        String createdTime = DateTimeUtils.msToDateTime(notebookUpdate.smartNotebook.smartBook.getLastModifiedTimeMillis());
+        noteCreatedTime.setText(createdTime);
+        noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+
     }
 
-    private void setPageNum(int position) {
-        pageNumText.setText(new StringBuilder()
-                .append(position + 1)
-                .append("/")
-                .append(smartNotebook.getAtomicNotes().size())
-                .toString());
+    public void onNavigationDataChange(NotebookNavigationData navigationData) {
+        pageNumText.setText(navigationData.pageNumbeText);
+        nextButton.setVisibility(navigationData.showNextButton ? View.VISIBLE : View.INVISIBLE);
+        prevButton.setVisibility(navigationData.showPrevButton ? View.VISIBLE : View.INVISIBLE);
     }
 
-    @Override
-    protected void onPostResume() {
-        super.onPostResume();
+    public void onCurrentPageIndexChange(Integer index) {
+        recyclerView.post(() -> {
+            scrollLayout.setScrollRequested(true);
+            recyclerView.smoothScrollToPosition(index);
+            smartNotebookAdapter.setNoteData(index, viewModel.getCurrentNote());
+        });
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        smartNotebookAdapter.saveNote(noteTitleText.getText().toString());
+        currentState.saveNotebook();
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    public void onStop() {
+    protected void onStop() {
         super.onStop();
-        EventBus.getDefault().unregister(this);
+        currentState.saveNotebook();
     }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    public class SmartNotebookActivityRWState implements ISmartNotebookActivityState {
+
+        @Override
+        public void initializeViews() {
+            initializeNavigationButtons();
+            initializeNewNoteButton();
+            initializeNoteTitle();
+            initializeCreatedTimeAndPageNum();
+        }
+
+        @Override
+        public void finalizeState() {
+
+        }
+
+        @Override
+        public void setupObservers() {
+            SmartNotebookActivity owner = SmartNotebookActivity.this;
+            // Observe smart notebook data changes
+            viewModel.getSmartNotebook().observe(owner, notebookUpdate -> {
+                onSmartNotebookUpdate(notebookUpdate);
+                if (notebookUpdate != null) {
+                    // clean up existing observers
+                    viewModel.getSmartNotebook().removeObservers(owner);
+
+                    // Set up all the observers
+                    // this clean up and setting is done so that, the navigation and current page
+                    // listeners do not experience null reference error because
+                    // smartNotebook is still null.
+                    viewModel.getSmartNotebook().observe(owner, owner::onSmartNotebookUpdate);
+                    // Observe page number text
+                    viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
+                    // Observe current page index (for scrolling)
+                    viewModel.getCurrentPageIndexLive().observe(owner, owner::onCurrentPageIndexChange);
+
+                }
+            });
+        }
+
+        @Override
+        public void saveNotebook() {
+            viewModel.updateTitle(noteTitleText.getText().toString());
+            NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
+            BackgroundOps.execute(() -> {
+                viewModel.saveCurrentNote(noteHolderData);
+                viewModel.saveCurrentSmartNotebook();
+            });
+        }
+    }
+
+    public class SmartNotebookActivityVirtualNotebook implements ISmartNotebookActivityState {
+
+        private IStateManager stateManager;
+
+        public SmartNotebookActivityVirtualNotebook(IStateManager stateManager) {
+            this.stateManager = stateManager;
+        }
+
+        @Override
+        public void initializeViews() {
+            initializeNavigationButtons();
+            initializeSaveButton_VirtualNotebook();
+            initializeNoteTitle_VirtualNotebook();
+            initializeCreatedTimeAndPageNum();
+        }
+
+        @Override
+        public void finalizeState() {
+
+        }
+
+        @Override
+        public void setupObservers() {
+            SmartNotebookActivity owner = SmartNotebookActivity.this;
+            // Observe smart notebook data changes
+            viewModel.getSmartNotebook().observe(owner, notebookUpdate -> {
+                onSmartNotebookUpdate_VirtualNotebook(notebookUpdate);
+                if (notebookUpdate != null) {
+                    // clean up existing observers
+                    viewModel.getSmartNotebook().removeObservers(owner);
+
+                    // Set up all the observers
+                    // this clean up and setting is done so that, the navigation and current page
+                    // listeners do not experience null reference error because
+                    // smartNotebook is still null.
+                    viewModel.getSmartNotebook().observe(owner, this::onSmartNotebookUpdate_VirtualNotebook);
+                    // Observe page number text
+                    viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
+                    // Observe current page index (for scrolling)
+                    viewModel.getCurrentPageIndexLive().observe(owner, owner::onCurrentPageIndexChange);
+
+                }
+            });
+
+            // Observe page number text
+            viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
+
+            // Observe current page index (for scrolling)
+            viewModel.getCurrentPageIndexLive().observe(owner, owner::onCurrentPageIndexChange);
+        }
+
+        private void onSmartNotebookUpdate_VirtualNotebook(SmartNotebookViewModel.SmartNotebookUpdate smartNotebookUpdate) {
+            SmartNotebook notebook = smartNotebookUpdate.smartNotebook;
+            if (notebook != null) {
+                long bookId = notebook.getSmartBook().getBookId();
+                if (bookId != -1) {
+                    stateManager.changeState();
+                }
+            }
+
+            onSmartNotebookUpdate(smartNotebookUpdate);
+        }
+
+        @Override
+        public void saveNotebook() {
+            viewModel.updateTitle(noteTitleText.getText().toString());
+            NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteHolderData));
+        }
+
+        private void initializeSaveButton_VirtualNotebook() {
+            newNotePageBtn = findViewById(R.id.fab_add_note);
+            newNotePageBtn.setImageResource(R.drawable.ic_save);
+            newNotePageBtn.setOnClickListener(view -> {
+                viewModel.saveCurrentSmartNotebook();
+                stateManager.changeState();
+            });
+        }
+
+        private void initializeNoteTitle_VirtualNotebook() {
+            noteTitleText = findViewById(R.id.smart_note_title);
+            noteTitleText.setFocusable(false);
+            noteTitleText.setCursorVisible(false);
+            noteTitleText.setInputType(InputType.TYPE_NULL);
+        }
+    }
+
+
 }
 

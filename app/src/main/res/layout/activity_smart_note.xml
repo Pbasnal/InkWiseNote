@@ -71,12 +71,12 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center">
-
+<!--                android:layout_margin="4dp"-->
                 <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/fab_prev_note"
                         android:layout_width="40dp"
+                        android:scaleType="fitCenter"
                         android:layout_height="40dp"
-                        android:layout_margin="4dp"
                         app:fabCustomSize="40dp"
                         android:contentDescription="previous note"
                         android:src="@drawable/ic_arrow_back"
@@ -109,7 +109,6 @@
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-    <!--    android:layout_weight="1"-->
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/smart_note_page_view"
             android:layout_width="match_parent"

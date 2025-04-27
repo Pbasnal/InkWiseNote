@@ -30,7 +30,8 @@ public class QueryResultsActivity extends AppCompatActivity {
     private Spinner querySpinner;
     private TextView emptyStateText;
     private String initialQueryName;
-    
+    private String selectedQuery;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,7 +117,7 @@ public class QueryResultsActivity extends AppCompatActivity {
         querySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedQuery = queryNames.get(position);
+                selectedQuery = queryNames.get(position);
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(selectedQuery);
                 }
@@ -138,7 +139,7 @@ public class QueryResultsActivity extends AppCompatActivity {
         } else {
             resultsRecyclerView.setVisibility(View.VISIBLE);
             emptyStateText.setVisibility(View.GONE);
-            notesAdapter.setNotes(results);
+            notesAdapter.setNotes(selectedQuery, results);
         }
     }
     

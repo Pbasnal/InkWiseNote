@@ -51,7 +51,7 @@ public class QueryResultsAdapter extends RecyclerView.Adapter<QueryResultsAdapte
 
         Set<QueryNoteResult> results = queryResults.get(queryName);
         if (results != null) {
-            holder.notesAdapter.setNotes(results);
+            holder.notesAdapter.setNotes(queryName, results);
         }
 
         if (position == 0) {

@@ -1,5 +1,6 @@
 package com.originb.inkwisenote2.modules.repositories;
 
+import android.app.Application;
 import android.content.Context;
 import com.originb.inkwisenote2.common.ListUtils;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
@@ -48,20 +49,26 @@ public class SmartNotebookRepository {
         smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+
+        EventBus.getDefault().post(new Events.NotebookDeleted(smartNotebook));
     }
 
     public void deleteNoteFromBook(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
         // will pages allow this to be deleted first?
-        atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
-        smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
+        if (smartNotebook.getAtomicNotes().size() <= 1) deleteSmartNotebook(smartNotebook);
+        else {
 
-        getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
-                .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
-                .ifPresent(updatedSmartNotebook -> {
-                    smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
-                    smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
-                });
+            atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
+            smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
 
+            getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
+                    .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
+                    .ifPresent(updatedSmartNotebook -> {
+                        smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
+                        smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+                    });
+            EventBus.getDefault().post(new Events.NoteDeleted(smartNotebook, atomicNote));
+        }
     }
 
     public void updateNotebook(SmartNotebook smartNotebook, Context context) {
@@ -84,6 +91,30 @@ public class SmartNotebookRepository {
 
         int updateResult = smartBookPagesDao.updateSmartBookPage(smartNotebook.getSmartBookPages());
         EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));
+    }
+
+    public SmartNotebook saveSmartNotebook(SmartNotebook smartNotebook, Application context) {
+        long updateTime = System.currentTimeMillis();
+        SmartBookEntity smartBookEntity = smartNotebook.getSmartBook();
+        // means this is not a new notebook
+        if (smartBookEntity.getBookId() > -1) {
+            return smartNotebook;
+        }
+
+        smartBookEntity.setCreatedTimeMillis(updateTime);
+        smartBookEntity.setLastModifiedTimeMillis(updateTime);
+
+        long bookId = smartBooksDao.insertSmartBook(smartBookEntity);
+        smartBookEntity.setBookId(bookId);
+
+        for (SmartBookPage smartBookPage : smartNotebook.getSmartBookPages()) {
+            smartBookPage.setBookId(bookId);
+            long id = smartBookPagesDao.insertSmartBookPage(smartBookPage);
+            smartBookPage.setId(id);
+        }
+        EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));
+
+        return smartNotebook;
     }
 
     public Optional<SmartNotebook> getSmartNotebookContainingNote(long noteId) {
@@ -147,7 +178,7 @@ public class SmartNotebookRepository {
         return smartNotebooks;
     }
 
-    public Optional<SmartNotebook> getVirtualSmartNotebooks(Set<Long> noteIds) {
+    public Optional<SmartNotebook> getVirtualSmartNotebooks(String bookTitle, Set<Long> noteIds) {
         List<AtomicNoteEntity> atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds);
         List<SmartBookPage> smartBookPages = new ArrayList<>();
 
@@ -158,7 +189,7 @@ public class SmartNotebookRepository {
                     pageIndex));
             pageIndex++;
         }
-        SmartBookEntity smartBook = new SmartBookEntity(-1, "",
+        SmartBookEntity smartBook = new SmartBookEntity(-1, bookTitle,
                 System.currentTimeMillis(),
                 System.currentTimeMillis());
 
@@ -245,6 +276,13 @@ public class SmartNotebookRepository {
     }
 
 
+    public boolean bookExists(SmartNotebook notebook) {
+        SmartBookEntity smartBook = notebook.getSmartBook();
+        if (smartBook == null) return false;
+        long bookId = smartBook.getBookId();
+        SmartBookEntity bookInDb = smartBooksDao.getSmartbook(bookId);
+        return bookInDb != null;
+    }
 }
 
 

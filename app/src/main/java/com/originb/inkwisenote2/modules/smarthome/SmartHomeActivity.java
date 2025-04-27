@@ -147,10 +147,6 @@ public class SmartHomeActivity extends AppCompatActivity {
 
             smartNoteGridAdapter = new SmartNoteGridAdapter(activity, new ArrayList<>(), true);
 
-//        BackgroundOps.execute(() -> noteRelationDao.getAllNoteRelations(),
-//                AppState::updatedRelatedNotes
-//        );
-
             userNotebooksRecyclerView.setAdapter(smartNoteGridAdapter);
         }
 

@@ -12,6 +12,17 @@ public class Events {
     }
 
     @AllArgsConstructor
+    public static class DeleteNotebookCommand extends EventData {
+        public SmartNotebook smartNotebook;
+    }
+
+    @AllArgsConstructor
+    public static class DeleteNoteCommand extends EventData {
+        public SmartNotebook smartNotebook;
+        public AtomicNoteEntity atomicNote;
+    }
+
+    @AllArgsConstructor
     public static class NotebookDeleted extends EventData {
         public SmartNotebook smartNotebook;
     }
