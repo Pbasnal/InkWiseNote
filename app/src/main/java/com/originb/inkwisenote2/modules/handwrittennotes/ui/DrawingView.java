@@ -8,6 +8,8 @@ import android.view.View;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.RuledPageBackground;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.Stroke;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.StrokePoint;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -37,6 +39,11 @@ public class DrawingView extends View {
     private WriteablePath path;
     private List<WriteablePath> paths;
     private List<Paint> paints;
+    
+    // Collection of strokes for markdown export
+    private List<Stroke> strokes;
+    private Stroke currentStroke;
+    private float lastPressure = 1.0f;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -61,6 +68,9 @@ public class DrawingView extends View {
         path = new WriteablePath();
         paths = new ArrayList<>();
         paints = new ArrayList<>();
+        
+        // Initialize strokes collection
+        strokes = new ArrayList<>();
 
         userDrawingBitmap = getDefaultBitmap();
 
@@ -168,17 +178,36 @@ public class DrawingView extends View {
 
         float y = event.getY();
         float x = event.getX();
+        float pressure = event.getPressure();
+        // If pressure reading isn't supported, use 1.0f
+        if (pressure <= 0) {
+            pressure = lastPressure;
+        } else {
+            lastPressure = pressure;
+        }
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 path.moveTo(x, y);
+                // Start a new stroke for markdown export
+                currentStroke = new Stroke(paint.getColor(), paint.getStrokeWidth());
+                currentStroke.addPoint(x, y, pressure);
                 break;
             case MotionEvent.ACTION_MOVE:
                 path.lineTo(x, y);
+                // Add point to current stroke
+                if (currentStroke != null) {
+                    currentStroke.addPoint(x, y, pressure);
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 userDrwaingCanvas.drawPath(path, paint); // Draw the current path onto the bitmap
                 path = new WriteablePath(); // Create a new path for the next touch event
+                // Finalize the current stroke and add to collection
+                if (currentStroke != null) {
+                    strokes.add(currentStroke);
+                    currentStroke = null;
+                }
                 break;
             default:
                 return false;
@@ -186,6 +215,65 @@ public class DrawingView extends View {
 
         invalidate();
         return true;
+    }
+
+    /**
+     * Gets all strokes recorded for markdown export
+     * @return List of strokes
+     */
+    public List<Stroke> getStrokes() {
+        return strokes;
+    }
+    
+    /**
+     * Clears all strokes
+     */
+    public void clearStrokes() {
+        strokes.clear();
+        invalidate();
+    }
+    
+    /**
+     * Sets strokes list from external source (when loading from markdown)
+     * @param loadedStrokes List of strokes to set
+     */
+    public void setStrokes(List<Stroke> loadedStrokes) {
+        if (loadedStrokes != null) {
+            strokes = new ArrayList<>(loadedStrokes);
+            redrawStrokesOnBitmap();
+            invalidate();
+        }
+    }
+    
+    /**
+     * Redraws all strokes on the bitmap
+     */
+    private void redrawStrokesOnBitmap() {
+        // Clear current bitmap
+        userDrawingBitmap = getNewBitmap();
+        userDrwaingCanvas = new Canvas(userDrawingBitmap);
+        
+        // Redraw each stroke
+        for (Stroke stroke : strokes) {
+            Paint strokePaint = new Paint(paint);
+            strokePaint.setColor(stroke.getColor());
+            strokePaint.setStrokeWidth(stroke.getWidth());
+            
+            Path strokePath = new Path();
+            List<StrokePoint> points = stroke.getPoints();
+            
+            if (points.size() > 0) {
+                StrokePoint firstPoint = points.get(0);
+                strokePath.moveTo(firstPoint.getX(), firstPoint.getY());
+                
+                for (int i = 1; i < points.size(); i++) {
+                    StrokePoint point = points.get(i);
+                    strokePath.lineTo(point.getX(), point.getY());
+                }
+                
+                userDrwaingCanvas.drawPath(strokePath, strokePaint);
+            }
+        }
     }
 
     public PageTemplate getNewPageTemplate() {

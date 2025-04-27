@@ -107,6 +107,16 @@ public class HandwrittenNoteFragment extends NoteFragment {
                 }
         );
 
+        // Load strokes from markdown file
+        BackgroundOps.execute(
+                () -> handwrittenNoteRepository.readHandwrittenNoteMarkdown(atomicNote),
+                strokes -> {
+                    if (drawingView != null && strokes != null && !strokes.isEmpty()) {
+                        drawingView.setStrokes(strokes);
+                    }
+                }
+        );
+
         // Load the page template
         BackgroundOps.execute(
                 () -> handwrittenNoteRepository.getPageTemplate(atomicNote),
@@ -138,7 +148,8 @@ public class HandwrittenNoteFragment extends NoteFragment {
         
         return NoteHolderData.handWrittenNoteData(
                 drawingView.getBitmap(), 
-                drawingView.getPageTemplate()
+                drawingView.getPageTemplate(),
+                drawingView.getStrokes()
         );
     }
 

@@ -247,6 +247,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                         getCurrentNote(),
                         noteHolderData.bitmap,
                         noteHolderData.pageTemplate,
+                        noteHolderData.strokes,
                         getApplication());
                 break;
             case TEXT_NOTE:

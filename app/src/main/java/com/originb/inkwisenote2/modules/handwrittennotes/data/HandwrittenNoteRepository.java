@@ -11,10 +11,19 @@ import com.originb.inkwisenote2.common.BytesFileIoUtils;
 import com.originb.inkwisenote2.common.HashUtils;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -54,9 +63,11 @@ public class HandwrittenNoteRepository {
                                         AtomicNoteEntity atomicNote,
                                         Bitmap bitmap,
                                         PageTemplate pageTemplate,
+                                        List<Stroke> strokes,
                                         Context context) {
         String bitmapHash = getBitmapHash(bitmap);
         String pageTemplateHash = getPageTemplateHash(pageTemplate);
+        String strokesHash = getStrokesHash(strokes);
 
         boolean noteUpdated = false;
 
@@ -74,12 +85,14 @@ public class HandwrittenNoteRepository {
             handwrittenNoteEntity.setCreatedTimeMillis(System.currentTimeMillis());
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
             saveHandwrittenNoteImage(atomicNote, bitmap);
+            saveHandwrittenNoteMarkdown(atomicNote, strokes);
             handwrittenNotesDao.insertHandwrittenNote(handwrittenNoteEntity);
             noteUpdated = true;
         } else if (bitmapHash != null && !bitmapHash.equals(handwrittenNoteEntity.getBitmapHash())) {
             handwrittenNoteEntity.setBitmapHash(bitmapHash);
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
             saveHandwrittenNoteImage(atomicNote, bitmap);
+            saveHandwrittenNoteMarkdown(atomicNote, strokes);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
             noteUpdated = true;
         }
@@ -103,6 +116,14 @@ public class HandwrittenNoteRepository {
 
         return noteUpdated;
     }
+
+//    public boolean saveHandwrittenNotes(long bookId,
+//                                       AtomicNoteEntity atomicNote,
+//                                       Bitmap bitmap,
+//                                       PageTemplate pageTemplate,
+//                                       Context context) {
+//        return saveHandwrittenNotes(bookId, atomicNote, bitmap, pageTemplate, null, context);
+//    }
 
     public HandwrittenNoteWithImage getNoteImage(AtomicNoteEntity atomicNote, BitmapScale imageScale) {
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNotesDao.getHandwrittenNoteForNote(atomicNote.getNoteId());
@@ -131,9 +152,14 @@ public class HandwrittenNoteRepository {
         String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
         BitmapFileIoUtils.deleteBitmap(thumbnailPath);
 
-        String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".pt";
-        File noteFile = new File(fullPath);
+        String templPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".pt";
+        File noteFile = new File(templPath);
         noteFile.delete();
+        
+        // Delete markdown file
+        String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
+        File markdownFile = new File(markdownPath);
+        markdownFile.delete();
     }
 
     private String getBitmapHash(Bitmap bitmap) {
@@ -153,6 +179,193 @@ public class HandwrittenNoteRepository {
             ex.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * Saves handwritten note strokes to a markdown file with custom "inkwise" fenced code blocks
+     * @param atomicNote The note entity
+     * @param strokes The list of strokes to save
+     * @return true if successfully saved, false otherwise
+     */
+    public boolean saveHandwrittenNoteMarkdown(AtomicNoteEntity atomicNote, List<Stroke> strokes) {
+        if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath()) || strokes == null) {
+            return false;
+        }
+
+        String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
+        return writeStrokesToMarkdown(markdownPath, strokes);
+    }
+
+    /**
+     * Writes strokes to a markdown file with custom "inkwise" fenced code blocks
+     * @param filePath The path to save the markdown file
+     * @param strokes The list of strokes to save
+     * @return true if successfully saved, false otherwise
+     */
+    private boolean writeStrokesToMarkdown(String filePath, List<Stroke> strokes) {
+        try (FileWriter writer = new FileWriter(filePath)) {
+            StringBuilder markdown = new StringBuilder();
+            
+            // Add markdown header
+            markdown.append("# Handwritten Note\n\n");
+            
+            // Begin inkwise code block
+            markdown.append("```inkwise\n");
+            
+            // Convert strokes to JSON-like format within the code block
+            for (Stroke stroke : strokes) {
+                markdown.append(serializeStroke(stroke)).append("\n");
+            }
+            
+            // End inkwise code block
+            markdown.append("```\n");
+            
+            writer.write(markdown.toString());
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Serializes a stroke to a string format that can be stored in markdown
+     * @param stroke The stroke to serialize
+     * @return String representation of the stroke
+     */
+    private String serializeStroke(Stroke stroke) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        
+        // Add stroke properties
+        builder.append("\"color\":").append(stroke.getColor()).append(",");
+        builder.append("\"width\":").append(stroke.getWidth()).append(",");
+        
+        // Add points
+        builder.append("\"points\":[");
+        List<StrokePoint> points = stroke.getPoints();
+        for (int i = 0; i < points.size(); i++) {
+            StrokePoint point = points.get(i);
+            builder.append("{")
+                  .append("\"x\":").append(point.getX()).append(",")
+                  .append("\"y\":").append(point.getY()).append(",")
+                  .append("\"p\":").append(point.getPressure())
+                  .append("}");
+            
+            if (i < points.size() - 1) {
+                builder.append(",");
+            }
+        }
+        builder.append("]");
+        
+        builder.append("}");
+        return builder.toString();
+    }
+
+    private String getStrokesHash(List<Stroke> strokes) {
+        if (strokes == null || strokes.isEmpty()) {
+            return null;
+        }
+        
+        try {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            try (ObjectOutputStream objectStream = new ObjectOutputStream(byteStream)) {
+                objectStream.writeObject(strokes);
+            }
+            return HashUtils.calculateSha256(byteStream.toByteArray());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Reads strokes from a markdown file with custom "inkwise" fenced code blocks
+     * @param atomicNote The note entity containing file information
+     * @return List of strokes or empty list if file doesn't exist or is invalid
+     */
+    public List<Stroke> readHandwrittenNoteMarkdown(AtomicNoteEntity atomicNote) {
+        if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath())) {
+            return new ArrayList<>();
+        }
+
+        String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
+        File file = new File(markdownPath);
+        if (!file.exists() || !file.isFile()) {
+            return new ArrayList<>();
+        }
+
+        return readStrokesFromMarkdown(markdownPath);
+    }
+
+    /**
+     * Reads strokes from a markdown file containing "inkwise" fenced code blocks
+     * @param filePath Path to the markdown file
+     * @return List of strokes or empty list if file doesn't exist or parsing fails
+     */
+    private List<Stroke> readStrokesFromMarkdown(String filePath) {
+        List<Stroke> strokes = new ArrayList<>();
+        boolean inCodeBlock = false;
+        
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Check for beginning of inkwise code block
+                if (line.trim().equals("```inkwise")) {
+                    inCodeBlock = true;
+                    continue;
+                }
+                
+                // Check for end of code block
+                if (line.trim().equals("```")) {
+                    inCodeBlock = false;
+                    continue;
+                }
+                
+                // Parse stroke data if within code block
+                if (inCodeBlock && !line.trim().isEmpty()) {
+                    try {
+                        Stroke stroke = deserializeStroke(line);
+                        if (stroke != null) {
+                            strokes.add(stroke);
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        return strokes;
+    }
+    
+    /**
+     * Deserializes a stroke from its string representation
+     * @param strokeStr String representation of the stroke
+     * @return Deserialized Stroke object
+     * @throws JSONException if parsing fails
+     */
+    private Stroke deserializeStroke(String strokeStr) throws JSONException {
+        JSONObject strokeJson = new JSONObject(strokeStr);
+        
+        Stroke stroke = new Stroke();
+        stroke.setColor(strokeJson.getInt("color"));
+        stroke.setWidth((float) strokeJson.getDouble("width"));
+        
+        JSONArray pointsArray = strokeJson.getJSONArray("points");
+        for (int i = 0; i < pointsArray.length(); i++) {
+            JSONObject pointJson = pointsArray.getJSONObject(i);
+            StrokePoint point = new StrokePoint(
+                    (float) pointJson.getDouble("x"),
+                    (float) pointJson.getDouble("y"),
+                    (float) pointJson.getDouble("p")
+            );
+            stroke.addPoint(point);
+        }
+        
+        return stroke;
     }
 
 }
