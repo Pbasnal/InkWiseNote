@@ -8,6 +8,7 @@ import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.functionalUtils.Function2;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
@@ -23,6 +24,7 @@ import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +38,7 @@ public class TextProcessingWorker extends Worker {
     private NoteTfIdfLogic noteTfIdfLogic;
     private NoteOcrTextDao noteOcrTextDao;
     private TextNotesDao textNotesDao;
+    private final AtomicNotesDomain atomicNotesDomain;
 
     private final Logger logger = new Logger("TextProcessingWorker");
 
@@ -45,15 +48,25 @@ public class TextProcessingWorker extends Worker {
         super(context, workerParams);
         this.noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
         this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-
+        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
         this.textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
         noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+    }
+
+    @AllArgsConstructor
+    private class ProcessingInput {
+        public long bookId;
+        public long noteId;
     }
 
     @NotNull
     @Override
     public Result doWork() {
-        Try.to(() -> getInputData().getLong("book_id", -1), logger)
+        Try.to(() -> {
+                    long bookId = getInputData().getLong("book_id", -1);
+                    long noteId = getInputData().getLong("note_id", -1);
+                    return new ProcessingInput(bookId, noteId);
+                }, logger)
                 .get()
                 .filter(this::isNoteIdGreaterThan0)
                 .ifPresent(this::processTextForNotebook);
@@ -61,25 +74,29 @@ public class TextProcessingWorker extends Worker {
         return Result.success();
     }
 
-    private void processTextForNotebook(long bookId) {
-        logger.debug("Processing text of book (new flow). noteId: " + bookId);
+    private void processTextForNotebook(ProcessingInput processingInput) {
+        long bookId = processingInput.bookId;
+        long noteId = processingInput.noteId;
+        logger.debug("Processing text of book (new flow). noteId: " + noteId);
         Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
         if (!smartBookOpt.isPresent()) return;
         SmartNotebook smartNotebook = smartBookOpt.get();
 
-        EventBus.getDefault().post(new Events.NoteStatus(smartNotebook, TextProcessingStage.TOKENIZATION));
-        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
-        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
-            String text;
-            if (NoteType.HANDWRITTEN_PNG.toString().equals(atomicNote.getNoteType())) {
-                text = getHandwrittenNoteText(atomicNote);
-            } else {
-                text = getTextNoteText(atomicNote.getNoteId());
-            }
-            processTextForHandwrittenNote(atomicNote, text);
-        }
+        AtomicNoteEntity atomicNote = atomicNotesDomain.getAtomicNote(noteId);
 
-        WorkManagerBus.scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId);
+//        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
+//        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
+        String text;
+        if (NoteType.HANDWRITTEN_PNG.toString().equals(atomicNote.getNoteType())) {
+            text = getHandwrittenNoteText(atomicNote);
+        } else {
+            text = getTextNoteText(atomicNote.getNoteId());
+        }
+        processTextForHandwrittenNote(atomicNote, text);
+//        }
+
+        EventBus.getDefault().post(new Events.NoteStatus(bookId, TextProcessingStage.TOKENIZATION));
+        WorkManagerBus.scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId, noteId);
     }
 
     private String getTextNoteText(long bookId) {
@@ -101,9 +118,10 @@ public class TextProcessingWorker extends Worker {
         handleException(this::createBiRelationalGraph, atomicNote.getNoteId(), eitherTerms.result);
     }
 
-    private boolean isNoteIdGreaterThan0(long noteId) {
-        if (noteId == -1) {
-            logger.error("Got incorrect note id (-1) as input");
+    private boolean isNoteIdGreaterThan0(ProcessingInput processingInput) {
+        if (processingInput.bookId == -1 || processingInput.noteId == -1) {
+            logger.error("Got incorrect note id (-1) as input: bookId: "
+                    + processingInput.bookId + ", noteId: " + processingInput.noteId);
             return false;
         }
         return true;

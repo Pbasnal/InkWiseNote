@@ -9,9 +9,10 @@ import com.originb.inkwisenote2.modules.noterelation.worker.TextProcessingWorker
 import com.originb.inkwisenote2.modules.ocr.worker.TextParsingWorker;
 
 public class WorkManagerBus {
-    public static void scheduleWorkForTextParsingForBook(Context context, Long bookId) {
+    public static void scheduleWorkForTextParsingForBook(Context context, long bookId, long noteId) {
         Data inputData = new Data.Builder()
                 .putLong("book_id", bookId) // Path of the image file
+                .putLong("note_id", noteId)
                 .build();
 
         OneTimeWorkRequest textParsingWork = new OneTimeWorkRequest.Builder(TextParsingWorker.class)
@@ -33,9 +34,10 @@ public class WorkManagerBus {
         WorkManager.getInstance(context).enqueue(textProcessingWork);
     }
 
-    public static void scheduleWorkForFindingRelatedNotesForBook(Context context, Long bookId) {
+    public static void scheduleWorkForFindingRelatedNotesForBook(Context context, long bookId, long noteId) {
         Data inputData = new Data.Builder()
                 .putLong("book_id", bookId) // Path of the image file
+                .putLong("note_id", noteId)
                 .build();
 
         OneTimeWorkRequest noteRelationWorker = new OneTimeWorkRequest.Builder(NoteRelationWorker.class)

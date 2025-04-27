@@ -46,4 +46,8 @@ public class AtomicNotesDomain {
     public List<AtomicNoteEntity> getAtomicNotes(Set<Long> noteIds) {
         return atomicNoteEntitiesDao.getAtomicNotes(noteIds);
     }
+
+    public AtomicNoteEntity getAtomicNote(long noteId) {
+        return atomicNoteEntitiesDao.getAtomicNote(noteId);
+    }
 }

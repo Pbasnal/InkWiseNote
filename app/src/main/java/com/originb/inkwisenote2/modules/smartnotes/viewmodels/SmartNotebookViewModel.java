@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.backgroundjobs.WorkManagerBus;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
@@ -245,7 +246,8 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                 handwrittenNoteRepository.saveHandwrittenNotes(notebook.smartBook.getBookId(),
                         getCurrentNote(),
                         noteHolderData.bitmap,
-                        noteHolderData.pageTemplate);
+                        noteHolderData.pageTemplate,
+                        getApplication());
                 break;
             case TEXT_NOTE:
                 AtomicNoteEntity atomicNote = getCurrentNote();
@@ -259,6 +261,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                     textNoteEntity.setNoteText(noteHolderData.noteText);
                     textNotesDao.updateTextNote(textNoteEntity);
                 }
+                // TODO: should be in text note repository
+                EventBus.getDefault().post(new Events.TextNoteSaved(notebook.smartBook.getBookId(),
+                        atomicNote,
+                        getApplication()));
                 break;
             default:
         }

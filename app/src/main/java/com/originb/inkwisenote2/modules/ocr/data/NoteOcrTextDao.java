@@ -7,7 +7,7 @@ import java.util.List;
 @Dao
 public interface NoteOcrTextDao {
     @Query("SELECT * FROM note_text WHERE note_id = :noteId")
-    NoteOcrText readTextFromDb(Long noteId);
+    NoteOcrText readTextFromDb(long noteId);
 
     @Query("SELECT * FROM note_text")
     List<NoteOcrText> getAllNoteText();

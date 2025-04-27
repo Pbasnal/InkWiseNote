@@ -3,21 +3,28 @@ package com.originb.inkwisenote2.modules.smartnotes.ui;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
@@ -41,6 +48,7 @@ public class NoteDebugDialog extends Dialog {
 
     private final SmartNotebookRepository smartNotebookRepository;
     private final TextNotesDao textNotesDao;
+    private final NoteOcrTextDao noteOcrTextDao;
 
     public NoteDebugDialog(@NonNull Context context, AtomicNoteEntity atomicNote, SmartNotebook currentSmartNotebook) {
         super(context);
@@ -50,6 +58,7 @@ public class NoteDebugDialog extends Dialog {
         // Get repositories
         this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         this.textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
+        this.noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
     }
 
     @Override
@@ -57,25 +66,37 @@ public class NoteDebugDialog extends Dialog {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_note_debug_info);
 
-        // Initialize views
-        noteInfoTable = findViewById(R.id.note_info_table);
-        relatedNotesTable = findViewById(R.id.related_notes_table);
-        smartbooksTable = findViewById(R.id.smartbooks_table);
-        parsedTextContent = findViewById(R.id.parsed_text_content);
+        // Set dialog to use full width and almost full height
+        if (getWindow() != null) {
+            getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            getWindow().setGravity(Gravity.CENTER);
+        }
 
+        // Initialize tables
+        noteInfoTable = findViewById(R.id.tableNoteInfo);
+        relatedNotesTable = findViewById(R.id.relatedNotesTable);
+        smartbooksTable = findViewById(R.id.smartbooksTable);
+        parsedTextContent = findViewById(R.id.parsedTextContent);
+
+        // Set close button click listener
         Button closeButton = findViewById(R.id.close_button);
         closeButton.setOnClickListener(v -> dismiss());
 
-        // Set dialog title
-        setTitle("Note Debug Information");
-
-        // Load debug data
-        loadDebugData();
+        // Load note info if available
+        if (atomicNote != null) {
+            loadNoteInfo();
+        }
     }
 
-    private void loadDebugData() {
+    private void loadNoteInfo() {
         // Load basic note info
         addBasicNoteInfo();
+
+        // Add loading indicator to tables before background loading
+        addRowToTable(relatedNotesTable, "Loading related notes...", "");
+        addRowToTable(smartbooksTable, "Loading smartbooks...", "");
+        parsedTextContent.setText("Loading parsed text...");
 
         // Load related notes and smartbooks in background
         BackgroundOps.execute(this::collectDebugData, this::updateDebugUI);
@@ -96,16 +117,35 @@ public class NoteDebugDialog extends Dialog {
                 .stream().map(SmartNotebook::getSmartBook)
                 .collect(Collectors.toList());
 
-        // Get parsed text if it's a text note
-        TextNoteEntity textNote = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
-        if (textNote != null) {
-            data.parsedText = textNote.getNoteText();
+        NoteType noteType = NoteType.fromString(atomicNote.getNoteType());
+        switch (noteType) {
+            case TEXT_NOTE:
+                // Get parsed text if it's a text note
+                TextNoteEntity textNote = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
+                if (textNote != null) {
+                    data.parsedText = textNote.getNoteText();
+                }
+                break;
+            case HANDWRITTEN_PNG:
+                // Get parsed text if it's a text note
+                NoteOcrText noteOcrText = noteOcrTextDao.readTextFromDb(atomicNote.getNoteId());
+                if (noteOcrText != null) {
+                    data.parsedText = noteOcrText.getExtractedText();
+                }
+                break;
+            default:
+                data.parsedText = "Note doesn't have text";
+                break;
         }
 
         return data;
     }
 
     private void updateDebugUI(DebugData data) {
+        // Clear existing tables
+        relatedNotesTable.removeAllViews();
+        smartbooksTable.removeAllViews();
+
         // Update related notes table
         if (data.relatedNotes != null && !data.relatedNotes.isEmpty()) {
             for (AtomicNoteEntity relatedNote : data.relatedNotes) {
@@ -150,17 +190,31 @@ public class NoteDebugDialog extends Dialog {
 
     private void addRowToTable(TableLayout table, String key, String value) {
         TableRow row = new TableRow(getContext());
+        row.setLayoutParams(new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT,
+                TableLayout.LayoutParams.WRAP_CONTENT));
 
         // Create key TextView
         TextView keyView = new TextView(getContext());
         keyView.setText(key);
         keyView.setPadding(8, 8, 16, 8);
         keyView.setTextColor(getContext().getResources().getColor(android.R.color.black));
+        // Set layout params with weight
+        TableRow.LayoutParams keyParams = new TableRow.LayoutParams(
+                0, TableRow.LayoutParams.WRAP_CONTENT, 0.3f);
+        keyView.setLayoutParams(keyParams);
+        keyView.setGravity(Gravity.START | Gravity.TOP);
 
         // Create value TextView
         TextView valueView = new TextView(getContext());
         valueView.setText(value);
         valueView.setPadding(16, 8, 8, 8);
+        // Set layout params with weight
+        TableRow.LayoutParams valueParams = new TableRow.LayoutParams(
+                0, TableRow.LayoutParams.WRAP_CONTENT, 0.7f);
+        valueView.setLayoutParams(valueParams);
+        valueView.setGravity(Gravity.START | Gravity.TOP);
+        valueView.setSingleLine(false);
 
         // Add views to row
         row.addView(keyView);
@@ -172,9 +226,20 @@ public class NoteDebugDialog extends Dialog {
 
     private void addSeparatorToTable(TableLayout table) {
         TableRow row = new TableRow(getContext());
+        row.setLayoutParams(new TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT,
+                TableLayout.LayoutParams.WRAP_CONTENT));
+
         View separator = new View(getContext());
         separator.setBackgroundColor(getContext().getResources().getColor(android.R.color.darker_gray));
-        separator.setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.MATCH_PARENT, 1, 2));
+
+        TableRow.LayoutParams params = new TableRow.LayoutParams(
+                TableRow.LayoutParams.MATCH_PARENT, 1);
+        params.span = 2;
+        params.topMargin = 4;
+        params.bottomMargin = 4;
+        separator.setLayoutParams(params);
+
         row.addView(separator);
         table.addView(row);
     }

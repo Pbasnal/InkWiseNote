@@ -1,13 +1,16 @@
 package com.originb.inkwisenote2.modules.handwrittennotes.data;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote2.common.BitmapScale;
+import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.common.BitmapFileIoUtils;
 import com.originb.inkwisenote2.common.BytesFileIoUtils;
 import com.originb.inkwisenote2.common.HashUtils;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,7 +50,11 @@ public class HandwrittenNoteRepository {
         BytesFileIoUtils.writeDataToDisk(fullPath, pageTemplate);
     }
 
-    public boolean saveHandwrittenNotes(long bookId, AtomicNoteEntity atomicNote, Bitmap bitmap, PageTemplate pageTemplate) {
+    public boolean saveHandwrittenNotes(long bookId,
+                                        AtomicNoteEntity atomicNote,
+                                        Bitmap bitmap,
+                                        PageTemplate pageTemplate,
+                                        Context context) {
         String bitmapHash = getBitmapHash(bitmap);
         String pageTemplateHash = getPageTemplateHash(pageTemplate);
 
@@ -88,6 +95,10 @@ public class HandwrittenNoteRepository {
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
             saveHandwrittenNotePageTemplate(atomicNote, pageTemplate);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
+        }
+
+        if (noteUpdated) {
+            EventBus.getDefault().post(new Events.HandwrittenNoteSaved(bookId, atomicNote, context));
         }
 
         return noteUpdated;

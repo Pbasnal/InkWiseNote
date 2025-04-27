@@ -37,20 +37,19 @@ public class NoteOcrEventListener {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onSmartNotebookSaved(Events.SmartNotebookSaved smartNotebookSaved) {
-        long bookId = smartNotebookSaved.smartNotebook.smartBook.getBookId();
+    public void onHandwrittenNoteSaved(Events.HandwrittenNoteSaved handwrittenNoteSaved) {
+        long bookId = handwrittenNoteSaved.bookId;
+        WorkManagerBus.scheduleWorkForTextParsingForBook(handwrittenNoteSaved.context,
+                bookId,
+                handwrittenNoteSaved.atomicNote.getNoteId());
+        EventBus.getDefault().post(new Events.NoteStatus(handwrittenNoteSaved.bookId, TextProcessingStage.TEXT_PARSING));
+    }
 
-        if (smartNotebookSaved.smartNotebook.atomicNotes.get(0).getNoteType()
-                .equals(NoteType.HANDWRITTEN_PNG.toString())) {
-            logger.debug("Scheduling text parsing work for bookId: " + bookId);
-            WorkManagerBus.scheduleWorkForTextParsingForBook(smartNotebookSaved.context, bookId);
-            return;
-        } else {
-            WorkManagerBus.scheduleWorkForTextProcessingForBook(smartNotebookSaved.context, bookId);
-        }
-
-
-        EventBus.getDefault().post(new Events.NoteStatus(smartNotebookSaved.smartNotebook, TextProcessingStage.TEXT_PARSING));
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onTextNoteSaved(Events.TextNoteSaved textNoteSaved) {
+        long bookId = textNoteSaved.bookId;
+        WorkManagerBus.scheduleWorkForTextProcessingForBook(textNoteSaved.context, bookId);
+        EventBus.getDefault().post(new Events.NoteStatus(textNoteSaved.bookId, TextProcessingStage.TEXT_PARSING));
     }
 }
 

@@ -22,17 +22,20 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteWit
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote2.modules.repositories.*;
+import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Optional;
 
 public class TextParsingWorker extends Worker {
     private final HandwrittenNoteRepository handwrittenNoteRepository;
 
-    private final SmartNotebookRepository smartNotebookRepository;
+    //    private final SmartNotebookRepository smartNotebookRepository;
+    private final AtomicNotesDomain atomicNotesDomain;
 
     private final AppSecrets appSecrets;
     private final NoteOcrTextDao noteOcrTextDao;
@@ -41,37 +44,50 @@ public class TextParsingWorker extends Worker {
 
     public TextParsingWorker(@NotNull Context context, @NotNull WorkerParameters workerParams) {
         super(context, workerParams);
-        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+//        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         this.handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
 
         noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
 
         appSecrets = ConfigReader.getInstance().getAppConfig().getAppSecrets();
     }
 
+    @AllArgsConstructor
+    private class ParsingInput {
+        public long bookId;
+        public long noteId;
+    }
+
     @NotNull
     @Override
     public Result doWork() {
-        Try.to(() -> getInputData().getLong("book_id", -1), logger).get()
+        Try.to(() -> {
+                    long bookId = getInputData().getLong("book_id", -1);
+                    long noteId = getInputData().getLong("note_id", -1);
+                    return new ParsingInput(bookId, noteId);
+                }, logger)
+                .get()
                 .filter(this::isNoteIdGreaterThan0)
                 .ifPresent(this::parseTextForNotebook);
 
         return Result.success();
     }
 
-    public void parseTextForNotebook(long bookId) {
+    public void parseTextForNotebook(ParsingInput input) {
+        long bookId = input.bookId;
+        long noteId = input.noteId;
         logger.debug("Parsing text from a notebook (new flow): " + bookId);
 
-        Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
-        if (!smartBookOpt.isPresent()) return;
-        SmartNotebook smartNotebook = smartBookOpt.get();
+        AtomicNoteEntity atomicNote = atomicNotesDomain.getAtomicNote(noteId);
+        if (atomicNote == null) return;
 
-        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
-        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
-            if(!parseTextForHandwrittenNote(atomicNote)) {
-                onFailure(bookId);
-            }
+//        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
+//        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
+        if (!parseTextForHandwrittenNote(atomicNote)) {
+            onFailure(bookId, noteId);
         }
+//        }
 
         logger.debug("Scheduling text processing work for book: " + bookId);
 
@@ -112,14 +128,15 @@ public class TextParsingWorker extends Worker {
         return true;
     }
 
-    private Result onFailure(Long bookId) {
-        WorkManagerBus.scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId);
+    private Result onFailure(Long bookId, long noteId) {
+        WorkManagerBus.scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId, noteId);
         return ListenableWorker.Result.failure();
     }
 
-    private boolean isNoteIdGreaterThan0(long noteId) {
-        if (noteId == -1) {
-            logger.error("Got incorrect note id (-1) as input: " + noteId);
+    private boolean isNoteIdGreaterThan0(ParsingInput parsingInput) {
+        if (parsingInput.bookId == -1 || parsingInput.noteId == -1) {
+            logger.error("Got incorrect note id (-1) as input: bookId"
+                    + parsingInput.bookId + " noteId: " + parsingInput.noteId);
             return false;
         }
         return true;
