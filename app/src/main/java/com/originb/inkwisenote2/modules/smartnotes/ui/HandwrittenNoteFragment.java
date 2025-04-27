@@ -6,8 +6,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.BitmapScale;
 import com.originb.inkwisenote2.config.ConfigReader;
@@ -22,8 +24,14 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
+import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
+import com.originb.inkwisenote2.modules.smartnotes.ui.NoteFragment;
+
 import org.greenrobot.eventbus.EventBus;
 
+/**
+ * Fragment for displaying and editing handwritten notes
+ */
 public class HandwrittenNoteFragment extends NoteFragment {
 
     private View fragmentView;
@@ -52,46 +60,94 @@ public class HandwrittenNoteFragment extends NoteFragment {
         deleteNote = fragmentView.findViewById(R.id.delete_note);
         debugButton = fragmentView.findViewById(R.id.debug_button);
 
-        deleteNote.setOnClickListener(view ->
-                EventBus.getDefault()
-                        .post(new Events.DeleteNoteCommand(smartNotebook,
-                                atomicNote))
-        );
-        
+        return fragmentView;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        deleteNote.setOnClickListener(v -> {
+            BackgroundOps.execute(() -> {
+                EventBus.getDefault().post(new Events.NoteDeleted(
+                        smartNotebook,
+                        atomicNote
+                ));
+            });
+        });
         debugButton.setOnClickListener(v -> {
             showDebugDialog();
         });
+        loadNote();
+    }
 
-        BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
-                (bitmapOpt) -> {
+    protected void loadNote() {
+        if (atomicNote == null) return;
+
+        // Load the note image
+        BackgroundOps.execute(
+                () -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
+                bitmapOpt -> {
                     if (bitmapOpt.isPresent()) {
-                        bitmapOpt.ifPresent(drawingView::setBitmap);
+                        if (drawingView != null) {
+                            drawingView.setBitmap(bitmapOpt.get());
+                        }
                         return;
                     }
+
+                    // Create a new bitmap if none exists
                     Bitmap newBitmap;
                     if (useDefaultBitmap()) {
                         newBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
                     } else {
-                        newBitmap = Bitmap.createBitmap(drawingView.currentWidth, drawingView.currentHeight, Bitmap.Config.ARGB_8888);
+                        newBitmap = Bitmap.createBitmap(
+                                drawingView.currentWidth,
+                                drawingView.currentHeight,
+                                Bitmap.Config.ARGB_8888
+                        );
                     }
-                    BackgroundOps.execute(() -> handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap));
-                    drawingView.setBitmap(newBitmap);
-                });
 
-        BackgroundOps.execute(() -> handwrittenNoteRepository.getPageTemplate(atomicNote),
+                    if (drawingView != null) {
+                        drawingView.setBitmap(newBitmap);
+                    }
+
+                    BackgroundOps.execute(() ->
+                            handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap)
+                    );
+                }
+        );
+
+        // Load strokes from markdown file
+        BackgroundOps.execute(
+                () -> handwrittenNoteRepository.readHandwrittenNoteMarkdown(atomicNote),
+                strokes -> {
+                    if (drawingView != null && strokes != null && !strokes.isEmpty()) {
+                        drawingView.setStrokes(strokes);
+                    }
+                }
+        );
+
+        // Load the page template
+        BackgroundOps.execute(
+                () -> handwrittenNoteRepository.getPageTemplate(atomicNote),
                 pageTemplateOpt -> {
-                    if (pageTemplateOpt.isPresent()) {
-                        pageTemplateOpt.ifPresent(drawingView::setPageTemplate);
+                    if (pageTemplateOpt.isPresent() && drawingView != null) {
+                        drawingView.setPageTemplate(pageTemplateOpt.get());
                         return;
                     }
+
+                    // Create a new page template if none exists
                     PageTemplate pageTemplate = configReader.getAppConfig().getPageTemplates()
                             .get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name());
-                    BackgroundOps.execute(() -> handwrittenNoteRepository.saveHandwrittenNotePageTemplate(atomicNote, pageTemplate));
 
-                    drawingView.setPageTemplate(pageTemplate);
-                });
+                    if (drawingView != null) {
+                        drawingView.setPageTemplate(pageTemplate);
+                    }
 
-        return fragmentView;
+                    BackgroundOps.execute(() ->
+                            handwrittenNoteRepository.saveHandwrittenNotePageTemplate(atomicNote, pageTemplate)
+                    );
+                }
+        );
     }
 
     /**
@@ -106,11 +162,18 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     @Override
     public NoteHolderData getNoteHolderData() {
-        if (drawingView == null) return NoteHolderData.handWrittenNoteData(null, null);
-        return NoteHolderData.handWrittenNoteData(drawingView.getBitmap(), drawingView.getPageTemplate());
+        if (drawingView == null) {
+            return NoteHolderData.handWrittenNoteData(null, null);
+        }
+
+        return NoteHolderData.handWrittenNoteData(
+                drawingView.getBitmap(),
+                drawingView.getPageTemplate(),
+                drawingView.getStrokes()
+        );
     }
 
-    public boolean useDefaultBitmap() {
-        return drawingView.currentWidth * drawingView.currentHeight == 0;
+    private boolean useDefaultBitmap() {
+        return drawingView == null || drawingView.currentWidth * drawingView.currentHeight == 0;
     }
 }

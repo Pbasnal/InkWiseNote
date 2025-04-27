@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
@@ -29,6 +30,10 @@ import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,10 +50,12 @@ public class NoteDebugDialog extends Dialog {
     private TableLayout relatedNotesTable;
     private TableLayout smartbooksTable;
     private TextView parsedTextContent;
+    private TextView markdownStrokesContent;
 
     private final SmartNotebookRepository smartNotebookRepository;
     private final TextNotesDao textNotesDao;
     private final NoteOcrTextDao noteOcrTextDao;
+    private final HandwrittenNoteRepository handwrittenNoteRepository;
 
     public NoteDebugDialog(@NonNull Context context, AtomicNoteEntity atomicNote, SmartNotebook currentSmartNotebook) {
         super(context);
@@ -59,6 +66,7 @@ public class NoteDebugDialog extends Dialog {
         this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         this.textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
         this.noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        this.handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
     }
 
     @Override
@@ -78,6 +86,7 @@ public class NoteDebugDialog extends Dialog {
         relatedNotesTable = findViewById(R.id.relatedNotesTable);
         smartbooksTable = findViewById(R.id.smartbooksTable);
         parsedTextContent = findViewById(R.id.parsedTextContent);
+        markdownStrokesContent = findViewById(R.id.markdownStrokesContent);
 
         // Set close button click listener
         Button closeButton = findViewById(R.id.close_button);
@@ -97,6 +106,7 @@ public class NoteDebugDialog extends Dialog {
         addRowToTable(relatedNotesTable, "Loading related notes...", "");
         addRowToTable(smartbooksTable, "Loading smartbooks...", "");
         parsedTextContent.setText("Loading parsed text...");
+        markdownStrokesContent.setText("Loading markdown strokes data...");
 
         // Load related notes and smartbooks in background
         BackgroundOps.execute(this::collectDebugData, this::updateDebugUI);
@@ -132,6 +142,9 @@ public class NoteDebugDialog extends Dialog {
                 if (noteOcrText != null) {
                     data.parsedText = noteOcrText.getExtractedText();
                 }
+                
+                // Get markdown strokes content
+                data.markdownContent = readMarkdownFile(atomicNote);
                 break;
             default:
                 data.parsedText = "Note doesn't have text";
@@ -139,6 +152,33 @@ public class NoteDebugDialog extends Dialog {
         }
 
         return data;
+    }
+
+    /**
+     * Reads the markdown file containing strokes data
+     * @param note The note entity to read markdown for
+     * @return The markdown file content or a message if not found
+     */
+    private String readMarkdownFile(AtomicNoteEntity note) {
+        String markdownPath = note.getFilepath() + "/" + note.getFilename() + ".md";
+        File file = new File(markdownPath);
+        
+        if (!file.exists() || !file.isFile()) {
+            return "No markdown file found at: " + markdownPath;
+        }
+        
+        try {
+            StringBuilder content = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    content.append(line).append("\n");
+                }
+            }
+            return content.toString();
+        } catch (IOException e) {
+            return "Error reading markdown file: " + e.getMessage();
+        }
     }
 
     private void updateDebugUI(DebugData data) {
@@ -178,6 +218,13 @@ public class NoteDebugDialog extends Dialog {
         } else {
             parsedTextContent.setText("No parsed text available");
         }
+        
+        // Update markdown strokes content
+        if (data.markdownContent != null && !data.markdownContent.isEmpty()) {
+            markdownStrokesContent.setText(data.markdownContent);
+        } else {
+            markdownStrokesContent.setText("No markdown strokes data available");
+        }
     }
 
     private void addBasicNoteInfo() {
@@ -186,6 +233,14 @@ public class NoteDebugDialog extends Dialog {
         addRowToTable(noteInfoTable, "Created", DateTimeUtils.msToDateTime(atomicNote.getCreatedTimeMillis()));
         addRowToTable(noteInfoTable, "Last Modified", DateTimeUtils.msToDateTime(atomicNote.getLastModifiedTimeMillis()));
         addRowToTable(noteInfoTable, "Working Note Path", atomicNote.getFilepath() + "/" + atomicNote.getFilename());
+        
+        // Add markdown file path if it's a handwritten note
+        if (NoteType.HANDWRITTEN_PNG.name().equals(atomicNote.getNoteType())) {
+            String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
+            File markdownFile = new File(markdownPath);
+            String markdownStatus = markdownFile.exists() ? "Exists" : "Not created yet";
+            addRowToTable(noteInfoTable, "Markdown File", markdownPath + " (" + markdownStatus + ")");
+        }
     }
 
     private void addRowToTable(TableLayout table, String key, String value) {
@@ -251,5 +306,6 @@ public class NoteDebugDialog extends Dialog {
         List<AtomicNoteEntity> relatedNotes;
         List<SmartBookEntity> smartbooks;
         String parsedText;
+        String markdownContent;
     }
 } 

@@ -6,8 +6,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
@@ -16,56 +18,63 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
+import com.originb.inkwisenote2.modules.smartnotes.ui.NoteDebugDialog;
+import com.originb.inkwisenote2.modules.smartnotes.ui.NoteFragment;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+
 import org.greenrobot.eventbus.EventBus;
 
-import java.util.Optional;
-
+/**
+ * Fragment for displaying and editing text notes
+ */
 public class TextNoteFragment extends NoteFragment {
+
     private EditText noteEditText;
     private ImageButton deleteBtn;
     private ImageButton debugButton;
-
-    private final TextNotesDao textNotesDao;
-    private SmartNotebookRepository smartNotebookRepository;
+    private TextNotesDao textNotesDao;
     private TextNoteEntity textNoteEntity;
-    private SmartNotebook notebook;
+    private SmartNotebookRepository smartNotebookRepository;
 
-    public TextNoteFragment(SmartNotebook notebook, AtomicNoteEntity atomicNote) {
-        super(notebook, atomicNote);
+    public TextNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+        super(smartNotebook, atomicNote);
         textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
         smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
     }
 
-    @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+//        textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
         // Inflate the layout for this fragment
         View itemView = inflater.inflate(R.layout.note_text_fragment, container, false);
         noteEditText = itemView.findViewById(R.id.note_edit_text);
         deleteBtn = itemView.findViewById(R.id.delete_note);
         debugButton = itemView.findViewById(R.id.debug_button);
-        debugButton.setOnClickListener(v -> {
-            showDebugDialog();
-        });
 
-        BackgroundOps.execute(() -> textNotesDao.getTextNoteForNote(atomicNote.getNoteId()),
-                textNoteEntity -> {
-                    if (textNoteEntity == null) return;
-                    this.textNoteEntity = textNoteEntity;
-                    noteEditText.setText(textNoteEntity.getNoteText());
-                });
+        return itemView;
+    }
 
+    @Override
+    public void onViewCreated(@NonNull View itemView, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(itemView, savedInstanceState);
         deleteBtn.setOnClickListener(view ->
                 EventBus.getDefault()
                         .post(new Events.DeleteNoteCommand(smartNotebook,
                                 atomicNote))
         );
 
-        return itemView;
+        debugButton.setOnClickListener(v -> {
+            showDebugDialog();
+        });
+
+        loadNote();
     }
 
+    /**
+     * Show the debug dialog with note information
+     */
     private void showDebugDialog() {
         if (getContext() != null) {
             NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
@@ -73,13 +82,27 @@ public class TextNoteFragment extends NoteFragment {
         }
     }
 
+    protected void loadNote() {
+        BackgroundOps.execute(() -> {
+            // Get or create the text note entity
+            textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
+            if (textNoteEntity == null) {
+                textNoteEntity = new TextNoteEntity(atomicNote.getNoteId(), smartNotebook.smartBook.getBookId());
+                textNotesDao.insertTextNote(textNoteEntity);
+                return "";
+            }
+
+            return textNoteEntity.getNoteText();
+        }, noteText -> {
+            if (noteEditText != null) {
+                noteEditText.setText(noteText);
+            }
+        });
+    }
+
     @Override
     public NoteHolderData getNoteHolderData() {
-        String noteText = "";
-        if (noteEditText != null) {
-            noteText = noteEditText.getText().toString().trim();
-        }
-
-        return NoteHolderData.textNoteData(noteText);
+        String text = noteEditText != null ? noteEditText.getText().toString().trim() : "";
+        return NoteHolderData.textNoteData(text);
     }
 }
