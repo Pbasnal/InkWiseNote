@@ -5,6 +5,7 @@ import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
+import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import lombok.AllArgsConstructor;
 
 public class Events {
@@ -35,13 +36,29 @@ public class Events {
 
     @AllArgsConstructor
     public static class NoteStatus extends EventData {
-        public SmartNotebook smartNotebook;
+//        public SmartNotebook smartNotebook;
+        public long bookId;
         public TextProcessingStage status;
     }
 
     @AllArgsConstructor
     public static class SmartNotebookSaved extends EventData {
         public SmartNotebook smartNotebook;
+        public Context context;
+    }
+
+    @AllArgsConstructor
+    public static class HandwrittenNoteSaved extends EventData {
+        public long bookId;
+        public AtomicNoteEntity atomicNote;
+        public Context context;
+    }
+
+
+    @AllArgsConstructor
+    public static class TextNoteSaved extends EventData {
+        public long bookId;
+        public AtomicNoteEntity atomicNote;
         public Context context;
     }
 

@@ -25,6 +25,7 @@ import java.util.Optional;
 public class TextNoteFragment extends NoteFragment {
     private EditText noteEditText;
     private ImageButton deleteBtn;
+    private ImageButton debugButton;
 
     private final TextNotesDao textNotesDao;
     private SmartNotebookRepository smartNotebookRepository;
@@ -44,6 +45,10 @@ public class TextNoteFragment extends NoteFragment {
         View itemView = inflater.inflate(R.layout.note_text_fragment, container, false);
         noteEditText = itemView.findViewById(R.id.note_edit_text);
         deleteBtn = itemView.findViewById(R.id.delete_note);
+        debugButton = itemView.findViewById(R.id.debug_button);
+        debugButton.setOnClickListener(v -> {
+            showDebugDialog();
+        });
 
         BackgroundOps.execute(() -> textNotesDao.getTextNoteForNote(atomicNote.getNoteId()),
                 textNoteEntity -> {
@@ -61,6 +66,12 @@ public class TextNoteFragment extends NoteFragment {
         return itemView;
     }
 
+    private void showDebugDialog() {
+        if (getContext() != null) {
+            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
+            dialog.show();
+        }
+    }
 
     @Override
     public NoteHolderData getNoteHolderData() {

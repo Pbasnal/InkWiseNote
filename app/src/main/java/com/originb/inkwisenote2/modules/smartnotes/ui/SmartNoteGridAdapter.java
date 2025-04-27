@@ -45,7 +45,7 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNoteStatusChange(Events.NoteStatus noteStatus) {
-        long bookId = noteStatus.smartNotebook.getSmartBook().getBookId();
+        long bookId = noteStatus.bookId;
 
         if (bookCards.containsKey(bookId)) {
             GridNoteCardHolder holder = bookCards.get(bookId);

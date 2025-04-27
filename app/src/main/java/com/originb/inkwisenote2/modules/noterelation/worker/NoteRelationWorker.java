@@ -15,6 +15,7 @@ import com.originb.inkwisenote2.modules.noterelation.data.NoteRelationDao;
 import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
+import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPagesDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
@@ -24,6 +25,7 @@ import com.originb.inkwisenote2.functionalUtils.Try;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import lombok.AllArgsConstructor;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +38,7 @@ public class NoteRelationWorker extends Worker {
     private final NoteRelationDao noteRelationDao;
     private final SmartNotebookRepository smartNotebookRepository;
     private final SmartBookPagesDao smartBookPagesDao;
+    private final AtomicNotesDomain atomicNotesDomain;
 
     private final Handler mainHandler;
 
@@ -47,6 +50,7 @@ public class NoteRelationWorker extends Worker {
         super(context, workerParams);
         this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
+        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
 
         noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
         noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
@@ -57,16 +61,28 @@ public class NoteRelationWorker extends Worker {
     }
 
 
+    @AllArgsConstructor
+    private class RelationInput {
+        public long bookId;
+        public long noteId;
+    }
+
     @NotNull
     @Override
     public Result doWork() {
-        Try.to(() -> getInputData().getLong("book_id", -1), logger).get()
+        Try.to(() -> {
+                    long bookId = getInputData().getLong("book_id", -1);
+                    long noteId = getInputData().getLong("note_id", -1);
+                    return new RelationInput(bookId, noteId);
+                }, logger).get()
                 .ifPresent(this::findRelatedNotesOfSmartBook);
 
         return Result.success();
     }
 
-    public void findRelatedNotesOfSmartBook(long bookId) {
+    public void findRelatedNotesOfSmartBook(RelationInput relationInput) {
+        long bookId = relationInput.bookId;
+        long noteId = relationInput.noteId;
         logger.debug("Find related notes for bookId (new flow): " + bookId);
 
         Optional<SmartNotebook> smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId);
@@ -75,13 +91,15 @@ public class NoteRelationWorker extends Worker {
             return;
         }
 
-        SmartNotebook smartNotebook = smartBookOpt.get();
-        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
-        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
-            findRelatedNotes(smartNotebook.getSmartBook().getBookId(), atomicNote);
-        }
+        AtomicNoteEntity atomicNote = atomicNotesDomain.getAtomicNote(noteId);
 
-        EventBus.getDefault().post(new Events.NoteStatus(smartNotebook, TextProcessingStage.NOTE_READY));
+//        SmartNotebook smartNotebook = smartBookOpt.get();
+//        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
+//        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
+        findRelatedNotes(bookId, atomicNote);
+//        }
+
+        EventBus.getDefault().post(new Events.NoteStatus(bookId, TextProcessingStage.NOTE_READY));
     }
 
     public void findRelatedNotes(long bookId, AtomicNoteEntity noteEntity) {

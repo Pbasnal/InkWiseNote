@@ -117,14 +117,17 @@ public class SmartNotebookRepository {
         return smartNotebook;
     }
 
-    public Optional<SmartNotebook> getSmartNotebookContainingNote(long noteId) {
+    public List<SmartNotebook> getSmartNotebookContainingNote(long noteId) {
         List<SmartBookPage> pagesOfNote = smartBookPagesDao.getSmartBookPagesOfNote(noteId);
-        if (pagesOfNote == null || pagesOfNote.isEmpty()) return Optional.empty();
+        if (pagesOfNote == null || pagesOfNote.isEmpty()) return new ArrayList<>();
 
-        // TODO: only get the first page for now. We will fetch more later
-        long bookId = pagesOfNote.stream().findFirst().map(SmartBookPage::getBookId).get();
+        List<SmartNotebook> smartNotebooks = pagesOfNote.stream().map(SmartBookPage::getBookId)
+                .map(this::getSmartNotebooks)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
 
-        return getSmartNotebooks(bookId);
+        return smartNotebooks;
     }
 
     public List<SmartNotebook> getAllSmartNotebooks() {

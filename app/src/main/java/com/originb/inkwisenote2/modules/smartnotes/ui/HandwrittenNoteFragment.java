@@ -29,6 +29,7 @@ public class HandwrittenNoteFragment extends NoteFragment {
     private View fragmentView;
     private DrawingView drawingView;
     private ImageButton deleteNote;
+    private ImageButton debugButton;
 
     private final SmartNotebookRepository smartNotebookRepository;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
@@ -49,13 +50,17 @@ public class HandwrittenNoteFragment extends NoteFragment {
         fragmentView = inflater.inflate(R.layout.note_drawing_fragment, container, false);
         drawingView = fragmentView.findViewById(R.id.smart_drawing_view);
         deleteNote = fragmentView.findViewById(R.id.delete_note);
-
+        debugButton = fragmentView.findViewById(R.id.debug_button);
 
         deleteNote.setOnClickListener(view ->
                 EventBus.getDefault()
                         .post(new Events.DeleteNoteCommand(smartNotebook,
                                 atomicNote))
         );
+        
+        debugButton.setOnClickListener(v -> {
+            showDebugDialog();
+        });
 
         BackgroundOps.execute(() -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
                 (bitmapOpt) -> {
@@ -87,6 +92,16 @@ public class HandwrittenNoteFragment extends NoteFragment {
                 });
 
         return fragmentView;
+    }
+
+    /**
+     * Show the debug dialog with note information
+     */
+    private void showDebugDialog() {
+        if (getContext() != null) {
+            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
+            dialog.show();
+        }
     }
 
     @Override
