@@ -1,5 +1,6 @@
 package com.originb.inkwisenote2.modules.repositories;
 
+import android.app.Application;
 import android.content.Context;
 import com.originb.inkwisenote2.common.ListUtils;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
@@ -90,6 +91,30 @@ public class SmartNotebookRepository {
 
         int updateResult = smartBookPagesDao.updateSmartBookPage(smartNotebook.getSmartBookPages());
         EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));
+    }
+
+    public SmartNotebook saveSmartNotebook(SmartNotebook smartNotebook, Application context) {
+        long updateTime = System.currentTimeMillis();
+        SmartBookEntity smartBookEntity = smartNotebook.getSmartBook();
+        // means this is not a new notebook
+        if (smartBookEntity.getBookId() > -1) {
+            return smartNotebook;
+        }
+
+        smartBookEntity.setCreatedTimeMillis(updateTime);
+        smartBookEntity.setLastModifiedTimeMillis(updateTime);
+
+        long bookId = smartBooksDao.insertSmartBook(smartBookEntity);
+        smartBookEntity.setBookId(bookId);
+
+        for (SmartBookPage smartBookPage : smartNotebook.getSmartBookPages()) {
+            smartBookPage.setBookId(bookId);
+            long id = smartBookPagesDao.insertSmartBookPage(smartBookPage);
+            smartBookPage.setId(id);
+        }
+        EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));
+
+        return smartNotebook;
     }
 
     public Optional<SmartNotebook> getSmartNotebookContainingNote(long noteId) {
@@ -251,6 +276,13 @@ public class SmartNotebookRepository {
     }
 
 
+    public boolean bookExists(SmartNotebook notebook) {
+        SmartBookEntity smartBook = notebook.getSmartBook();
+        if (smartBook == null) return false;
+        long bookId = smartBook.getBookId();
+        SmartBookEntity bookInDb = smartBooksDao.getSmartbook(bookId);
+        return bookInDb != null;
+    }
 }
 
 

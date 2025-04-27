@@ -19,17 +19,17 @@ import static com.originb.inkwisenote2.modules.smartnotes.data.NoteType.*;
 
 class FragmentViewHolder extends RecyclerView.ViewHolder {
     private final Logger logger = new Logger(FragmentViewHolder.class.getName());
-    private final SmartNotebookAdapter smartNotebookAdapter;
+
     FrameLayout fragmentContainer;
     NoteFragment noteFragment;
     SmartNotebookAdapter adapter;
     FragmentManager fragmentManager;
 
-    public FragmentViewHolder(SmartNotebookAdapter smartNotebookAdapter, @NonNull View itemView, SmartNotebookAdapter adapter, AppCompatActivity parentActivity) {
+    public FragmentViewHolder(SmartNotebookAdapter smartNotebookAdapter, @NonNull View itemView,
+                              AppCompatActivity parentActivity) {
         super(itemView);
-        this.smartNotebookAdapter = smartNotebookAdapter;
         fragmentContainer = itemView.findViewById(R.id.note_fragment_container);
-        this.adapter = adapter;
+        this.adapter = smartNotebookAdapter;
         this.fragmentManager = parentActivity.getSupportFragmentManager();
     }
 

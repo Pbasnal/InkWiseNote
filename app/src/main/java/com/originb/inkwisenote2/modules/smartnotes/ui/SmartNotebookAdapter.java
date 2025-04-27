@@ -61,7 +61,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<FragmentViewHolde
                 .inflate(R.layout.fragment_note_page, parent, false);
 
         // Create a truly unique ID for the fragment container
-        FragmentViewHolder holder = new FragmentViewHolder(this, view, this, parentActivity);
+        FragmentViewHolder holder = new FragmentViewHolder(this, view, parentActivity);
         holder.fragmentContainer.setId(viewType + 1);
 
         return holder;

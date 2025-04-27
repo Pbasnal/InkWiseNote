@@ -25,6 +25,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SmartNotebookViewModel extends AndroidViewModel {
@@ -41,6 +42,16 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private final MutableLiveData<String> notebookTitle = new MutableLiveData<>("");
     private final MutableLiveData<NotebookNavigationData> navigationDataLive = new MutableLiveData<>(new NotebookNavigationData());
     private final MutableLiveData<Long> createdTimeMillis = new MutableLiveData<>();
+
+    public void onNotebookIsInDb(Consumer<Boolean> ifNotebookIsSaved) {
+        SmartNotebookViewModel.SmartNotebookUpdate smartNotebookUpdate = getSmartNotebook().getValue();
+        if (smartNotebookUpdate == null) return;
+        SmartNotebook notebook = smartNotebookUpdate.smartNotebook;
+        if (notebook == null) return;
+
+        BackgroundOps.execute(() -> smartNotebookRepository.bookExists(notebook),
+                ifNotebookIsSaved);
+    }
 
     public static class SmartNotebookUpdate {
         public SmartNotebookUpdateType notbookUpdateType = SmartNotebookUpdateType.NOTE_UPDATE;
@@ -219,7 +230,11 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         if (notebook == null || title == null) return;
 
         notebook.getSmartBook().setTitle(title);
-        BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()));
+        if (notebook.smartBook.getBookId() > -1) {
+            BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()));
+        } else {
+            BackgroundOps.execute(() -> smartNotebookRepository.saveSmartNotebook(notebook, getApplication()));
+        }
     }
 
     public void saveCurrentNote(NoteHolderData noteHolderData) {
@@ -255,7 +270,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         return notebook.getAtomicNotes().get(currentNoteIndex);
     }
 
-    private Optional<SmartNotebook> getSmartNotebook(Long bookIdToOpen, String workingPath, String bookTitle, String noteIdsString) {
+    private Optional<SmartNotebook> getSmartNotebook(Long bookIdToOpen,
+                                                     String workingPath,
+                                                     String bookTitle,
+                                                     String noteIdsString) {
         workingNotePath = workingPath;
 
         if (bookIdToOpen != null && bookIdToOpen != -1) {
@@ -265,6 +283,12 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             Set<Long> noteIdsSet = Arrays.stream(noteIds)
                     .map(Long::parseLong)
                     .collect(Collectors.toSet());
+
+            Set<SmartNotebook> smartNotebooks = smartNotebookRepository.getSmartNotebooksForNoteIds(noteIdsSet);
+            if (smartNotebooks.size() == 1) {
+                return smartNotebooks.stream().findFirst();
+            }
+
             return smartNotebookRepository.getVirtualSmartNotebooks(bookTitle, noteIdsSet);
         }
 
@@ -279,7 +303,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
         String text = (index + 1) + "/" + notebook.getAtomicNotes().size();
 
-        NotebookNavigationData navigationData   = navigationDataLive.getValue();
+        NotebookNavigationData navigationData = navigationDataLive.getValue();
         navigationData.pageNumbeText = text;
 
         int totalPages = notebook.getAtomicNotes().size();
