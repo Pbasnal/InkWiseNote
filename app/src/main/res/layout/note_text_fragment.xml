@@ -13,17 +13,32 @@
             android:background="?attr/colorSurface"
             android:padding="8dp">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/delete_note"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="end"
-                android:layout_marginBottom="8dp"
-                app:fabCustomSize="40dp"
-                android:contentDescription="Delete Note"
-                android:src="@drawable/ic_delete"
-                app:tint="@color/white"
-                app:backgroundTint="@color/red"/>
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="right"
+                android:orientation="horizontal">
+
+            <ImageButton
+                    android:id="@+id/debug_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/circle_button_background"
+                    android:src="@drawable/ic_debug"
+                    android:contentDescription="Debug Note"/>
+
+            <ImageButton
+                    android:id="@+id/delete_note"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/circle_button_background"
+                    android:src="@drawable/ic_delete"
+                    app:backgroundTint="@color/red"
+                    android:contentDescription="Debug Note"/>
+        </LinearLayout>
+
 
         <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"

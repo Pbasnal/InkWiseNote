@@ -17,6 +17,7 @@ import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
+import com.originb.inkwisenote2.modules.smartnotes.ui.NoteDebugDialog;
 import com.originb.inkwisenote2.modules.smartnotes.ui.NoteFragment;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
@@ -30,6 +31,7 @@ public class TextNoteFragment extends NoteFragment {
 
     private EditText noteEditText;
     private ImageButton deleteBtn;
+    private ImageButton debugBtn;
     private TextNotesDao textNotesDao;
     private TextNoteEntity textNoteEntity;
 
@@ -54,6 +56,7 @@ public class TextNoteFragment extends NoteFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         noteEditText = view.findViewById(R.id.note_edit_text);
         deleteBtn = view.findViewById(R.id.delete_note);
+        debugBtn = view.findViewById(R.id.debug_button);
 
         deleteBtn.setOnClickListener(v -> {
             BackgroundOps.execute(() -> {
@@ -63,9 +66,23 @@ public class TextNoteFragment extends NoteFragment {
                 ));
             });
         });
+        
+        debugBtn.setOnClickListener(v -> {
+            showDebugDialog();
+        });
 
         loadNote();
         super.onViewCreated(view, savedInstanceState);
+    }
+    
+    /**
+     * Show the debug dialog with note information
+     */
+    private void showDebugDialog() {
+        if (getContext() != null) {
+            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
+            dialog.show();
+        }
     }
 
     protected void loadNote() {
