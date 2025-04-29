@@ -35,18 +35,16 @@ public class TextNoteFragment extends NoteFragment {
     private ImageButton debugButton;
     private TextNotesDao textNotesDao;
     private TextNoteEntity textNoteEntity;
-    private SmartNotebookRepository smartNotebookRepository;
 
     public TextNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
         super(smartNotebook, atomicNote);
         textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
+
         // Inflate the layout for this fragment
         View itemView = inflater.inflate(R.layout.note_text_fragment, container, false);
         noteEditText = itemView.findViewById(R.id.note_edit_text);

@@ -16,6 +16,7 @@ import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteEntity;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView;
@@ -28,6 +29,8 @@ import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.smartnotes.ui.NoteFragment;
 
 import org.greenrobot.eventbus.EventBus;
+
+import java.util.Optional;
 
 /**
  * Fragment for displaying and editing handwritten notes
@@ -84,37 +87,30 @@ public class HandwrittenNoteFragment extends NoteFragment {
         if (atomicNote == null) return;
 
         // Load the note image
-        BackgroundOps.execute(
-                () -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
-                bitmapOpt -> {
-                    if (bitmapOpt.isPresent()) {
-                        if (drawingView != null) {
-                            drawingView.setBitmap(bitmapOpt.get());
-                        }
-                        return;
-                    }
-
-                    // Create a new bitmap if none exists
-                    Bitmap newBitmap;
-                    if (useDefaultBitmap()) {
-                        newBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-                    } else {
-                        newBitmap = Bitmap.createBitmap(
-                                drawingView.currentWidth,
-                                drawingView.currentHeight,
-                                Bitmap.Config.ARGB_8888
-                        );
-                    }
-
-                    if (drawingView != null) {
-                        drawingView.setBitmap(newBitmap);
-                    }
-
-                    BackgroundOps.execute(() ->
-                            handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap)
-                    );
-                }
-        );
+//        BackgroundOps.execute(
+//                () -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
+//                bitmapOpt -> {
+//                    Bitmap bitmap = bitmapOpt.orElseGet(() -> {
+//                        Bitmap newBitmap;
+//                        if (useDefaultBitmap()) {
+//                            newBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+//                        } else {
+//                            newBitmap = Bitmap.createBitmap(
+//                                    drawingView.currentWidth,
+//                                    drawingView.currentHeight,
+//                                    Bitmap.Config.ARGB_8888
+//                            );
+//                        }
+//                        BackgroundOps.execute(() ->
+//                                handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap)
+//                        );
+//                        return newBitmap;
+//                    });
+//                    if (drawingView != null) {
+//                        drawingView.setBitmap(bitmap);
+//                    }
+//                }
+//        );
 
         // Load strokes from markdown file
         BackgroundOps.execute(

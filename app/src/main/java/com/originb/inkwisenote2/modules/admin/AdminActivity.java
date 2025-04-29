@@ -3,6 +3,7 @@ package com.originb.inkwisenote2.modules.admin;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.view.Gravity;
+import android.view.View;
 import android.widget.*;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -25,6 +26,9 @@ import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -66,6 +70,7 @@ public class AdminActivity extends AppCompatActivity {
         tablePopulators.put("Smart Books", this::showSmartBooks);
         tablePopulators.put("Smart Book Pages", this::showSmartBookPages);
         tablePopulators.put("Handwritten Notes", this::showHandWrittenNotes);
+        tablePopulators.put("Files", this::showFilesData);
 
         TabLayout tabLayout = findViewById(R.id.table_selector_tabs);
         tabLayout.addOnTabSelectedListener(new TableSelector() {
@@ -84,6 +89,198 @@ public class AdminActivity extends AppCompatActivity {
             Long noteId = Long.parseLong(editText.getText().toString());
             tablePopulators.get(selectedTab).accept(noteId);
         });
+    }
+
+    /**
+     * Shows files in the app's files directory with delete option
+     */
+    private void showFilesData(Long noteId) {
+        tableLayout.removeAllViews();
+
+        // Add header and navigation row
+        TableRow navigationRow = new TableRow(this);
+        
+        // Create current path text display
+        TextView currentPathView = new TextView(this);
+        currentPathView.setPadding(16, 16, 16, 16);
+        currentPathView.setTypeface(null, Typeface.BOLD);
+        
+        // Default to app's files directory
+        File currentDir = getFilesDir();
+        currentPathView.setText("Current Path: " + currentDir.getAbsolutePath());
+        
+        // Create a layout for buttons
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
+        
+        // Add parent directory button
+        Button upButton = new Button(this);
+        upButton.setText("↑ Up");
+        upButton.setOnClickListener(v -> {
+            File parentDir = currentDir.getParentFile();
+            if (parentDir != null && parentDir.canRead()) {
+                displayFilesInDirectory(parentDir);
+                currentPathView.setText("Current Path: " + parentDir.getAbsolutePath());
+            } else {
+                Toast.makeText(this, "Cannot access parent directory", Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        // Add refresh button
+        Button refreshButton = new Button(this);
+        refreshButton.setText("🔄 Refresh");
+        refreshButton.setOnClickListener(v -> {
+            displayFilesInDirectory(currentDir);
+            currentPathView.setText("Current Path: " + currentDir.getAbsolutePath());
+        });
+        
+        // Add buttons to layout
+        buttonLayout.addView(upButton);
+        buttonLayout.addView(refreshButton);
+        
+        // Add views to navigation row with proper layout
+        TableRow.LayoutParams pathParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.7f);
+        navigationRow.addView(currentPathView, pathParams);
+        
+        TableRow.LayoutParams buttonParams = new TableRow.LayoutParams(0, TableRow.LayoutParams.WRAP_CONTENT, 0.3f);
+        navigationRow.addView(buttonLayout, buttonParams);
+        
+        tableLayout.addView(navigationRow);
+        
+        // Add headers row
+        TableRow headerRow = new TableRow(this);
+        addHeaderCell(headerRow, "Filename");
+        addHeaderCell(headerRow, "Path");
+        addHeaderCell(headerRow, "Size (Bytes)");
+        addHeaderCell(headerRow, "Type");
+        addHeaderCell(headerRow, "Actions");
+        tableLayout.addView(headerRow);
+
+        // Display files in the directory
+        displayFilesInDirectory(currentDir);
+    }
+
+    /**
+     * Display files from a specific directory
+     */
+    private void displayFilesInDirectory(File directory) {
+        // Remove existing file rows but keep the header
+        for (int i = tableLayout.getChildCount() - 1; i >= 2; i--) {
+            tableLayout.removeViewAt(i);
+        }
+        
+        File[] files = directory.listFiles();
+        
+        // Sort files by name
+        if (files != null && files.length > 0) {
+            // Sort directories first, then files alphabetically
+            Arrays.sort(files, (f1, f2) -> {
+                if (f1.isDirectory() && !f2.isDirectory()) {
+                    return -1;
+                } else if (!f1.isDirectory() && f2.isDirectory()) {
+                    return 1;
+                } else {
+                    return f1.getName().compareToIgnoreCase(f2.getName());
+                }
+            });
+
+            for (File file : files) {
+                addFileRow(file, directory);
+            }
+        } else {
+            TableRow row = new TableRow(this);
+            TextView emptyText = new TextView(this);
+            emptyText.setText("No files found in this directory");
+            emptyText.setPadding(16, 16, 16, 16);
+            emptyText.setGravity(Gravity.CENTER);
+            TableRow.LayoutParams params = new TableRow.LayoutParams();
+            params.span = 5; // Span across all columns
+            emptyText.setLayoutParams(params);
+            row.addView(emptyText);
+            tableLayout.addView(row);
+        }
+    }
+
+    /**
+     * Adds a row to the table for a file with delete button
+     */
+    private void addFileRow(File file, File currentDir) {
+        TableRow row = new TableRow(this);
+
+        // Add file information
+        addCell(row, file.getName());
+        addCell(row, file.getAbsolutePath());
+        addCell(row, String.valueOf(file.length()));
+        
+        // Determine file type
+        String fileType = "File";
+        if (file.isDirectory()) {
+            fileType = "Directory";
+        } else {
+            String name = file.getName().toLowerCase();
+            if (name.endsWith(".png")) {
+                fileType = "Image (PNG)";
+            } else if (name.endsWith(".md")) {
+                fileType = "Markdown";
+            } else if (name.endsWith(".pt")) {
+                fileType = "Page Template";
+            } else if (name.endsWith(".db")) {
+                fileType = "Database";
+            }
+        }
+        addCell(row, fileType);
+
+        // Add action buttons
+        LinearLayout actionLayout = new LinearLayout(this);
+        actionLayout.setOrientation(LinearLayout.HORIZONTAL);
+        
+        // If it's a directory, add an Open button
+        if (file.isDirectory()) {
+            Button openButton = new Button(this);
+            openButton.setText("Open");
+            openButton.setOnClickListener(v -> {
+                displayFilesInDirectory(file);
+                
+                // Update the current path in the UI
+                for (int i = 0; i < tableLayout.getChildCount(); i++) {
+                    View view = tableLayout.getChildAt(i);
+                    if (view instanceof TableRow && i == 0) {
+                        TableRow navRow = (TableRow) view;
+                        if (navRow.getChildCount() > 0 && navRow.getChildAt(0) instanceof TextView) {
+                            TextView pathView = (TextView) navRow.getChildAt(0);
+                            pathView.setText("Current Path: " + file.getAbsolutePath());
+                        }
+                        break;
+                    }
+                }
+            });
+            actionLayout.addView(openButton);
+        }
+        
+        // Add Delete button for all files and directories
+        Button deleteButton = new Button(this);
+        deleteButton.setText("Delete");
+        deleteButton.setOnClickListener(v -> {
+            if (file.isDirectory()) {
+                // Check if directory is empty
+                File[] contents = file.listFiles();
+                if (contents != null && contents.length > 0) {
+                    Toast.makeText(this, "Cannot delete non-empty directory", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+            
+            if (file.delete()) {
+                tableLayout.removeView(row);
+                Toast.makeText(this, "Deleted: " + file.getName(), Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Failed to delete: " + file.getName(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        
+        actionLayout.addView(deleteButton);
+        row.addView(actionLayout);
+        tableLayout.addView(row);
     }
 
     private void showHandWrittenNotes(Long noteId) {

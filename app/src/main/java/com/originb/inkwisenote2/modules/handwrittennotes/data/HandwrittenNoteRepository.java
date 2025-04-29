@@ -117,14 +117,6 @@ public class HandwrittenNoteRepository {
         return noteUpdated;
     }
 
-//    public boolean saveHandwrittenNotes(long bookId,
-//                                       AtomicNoteEntity atomicNote,
-//                                       Bitmap bitmap,
-//                                       PageTemplate pageTemplate,
-//                                       Context context) {
-//        return saveHandwrittenNotes(bookId, atomicNote, bitmap, pageTemplate, null, context);
-//    }
-
     public HandwrittenNoteWithImage getNoteImage(AtomicNoteEntity atomicNote, BitmapScale imageScale) {
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNotesDao.getHandwrittenNoteForNote(atomicNote.getNoteId());
         HandwrittenNoteWithImage handwrittenNoteWithImage = new HandwrittenNoteWithImage();
@@ -155,7 +147,7 @@ public class HandwrittenNoteRepository {
         String templPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".pt";
         File noteFile = new File(templPath);
         noteFile.delete();
-        
+
         // Delete markdown file
         String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
         File markdownFile = new File(markdownPath);
@@ -183,8 +175,9 @@ public class HandwrittenNoteRepository {
 
     /**
      * Saves handwritten note strokes to a markdown file with custom "inkwise" fenced code blocks
+     *
      * @param atomicNote The note entity
-     * @param strokes The list of strokes to save
+     * @param strokes    The list of strokes to save
      * @return true if successfully saved, false otherwise
      */
     public boolean saveHandwrittenNoteMarkdown(AtomicNoteEntity atomicNote, List<Stroke> strokes) {
@@ -193,33 +186,23 @@ public class HandwrittenNoteRepository {
         }
 
         String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
-        return writeStrokesToMarkdown(markdownPath, strokes);
-    }
-
-    /**
-     * Writes strokes to a markdown file with custom "inkwise" fenced code blocks
-     * @param filePath The path to save the markdown file
-     * @param strokes The list of strokes to save
-     * @return true if successfully saved, false otherwise
-     */
-    private boolean writeStrokesToMarkdown(String filePath, List<Stroke> strokes) {
-        try (FileWriter writer = new FileWriter(filePath)) {
+        try (FileWriter writer = new FileWriter(markdownPath)) {
             StringBuilder markdown = new StringBuilder();
-            
+
             // Add markdown header
             markdown.append("# Handwritten Note\n\n");
-            
+
             // Begin inkwise code block
             markdown.append("```inkwise\n");
-            
+
             // Convert strokes to JSON-like format within the code block
             for (Stroke stroke : strokes) {
                 markdown.append(serializeStroke(stroke)).append("\n");
             }
-            
+
             // End inkwise code block
             markdown.append("```\n");
-            
+
             writer.write(markdown.toString());
             return true;
         } catch (IOException e) {
@@ -227,37 +210,38 @@ public class HandwrittenNoteRepository {
             return false;
         }
     }
-    
+
     /**
      * Serializes a stroke to a string format that can be stored in markdown
+     *
      * @param stroke The stroke to serialize
      * @return String representation of the stroke
      */
     private String serializeStroke(Stroke stroke) {
         StringBuilder builder = new StringBuilder();
         builder.append("{");
-        
+
         // Add stroke properties
         builder.append("\"color\":").append(stroke.getColor()).append(",");
         builder.append("\"width\":").append(stroke.getWidth()).append(",");
-        
+
         // Add points
         builder.append("\"points\":[");
         List<StrokePoint> points = stroke.getPoints();
         for (int i = 0; i < points.size(); i++) {
             StrokePoint point = points.get(i);
             builder.append("{")
-                  .append("\"x\":").append(point.getX()).append(",")
-                  .append("\"y\":").append(point.getY()).append(",")
-                  .append("\"p\":").append(point.getPressure())
-                  .append("}");
-            
+                    .append("\"x\":").append(point.getX()).append(",")
+                    .append("\"y\":").append(point.getY()).append(",")
+                    .append("\"p\":").append(point.getPressure())
+                    .append("}");
+
             if (i < points.size() - 1) {
                 builder.append(",");
             }
         }
         builder.append("]");
-        
+
         builder.append("}");
         return builder.toString();
     }
@@ -266,7 +250,7 @@ public class HandwrittenNoteRepository {
         if (strokes == null || strokes.isEmpty()) {
             return null;
         }
-        
+
         try {
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
             try (ObjectOutputStream objectStream = new ObjectOutputStream(byteStream)) {
@@ -281,6 +265,7 @@ public class HandwrittenNoteRepository {
 
     /**
      * Reads strokes from a markdown file with custom "inkwise" fenced code blocks
+     *
      * @param atomicNote The note entity containing file information
      * @return List of strokes or empty list if file doesn't exist or is invalid
      */
@@ -300,13 +285,14 @@ public class HandwrittenNoteRepository {
 
     /**
      * Reads strokes from a markdown file containing "inkwise" fenced code blocks
+     *
      * @param filePath Path to the markdown file
      * @return List of strokes or empty list if file doesn't exist or parsing fails
      */
     private List<Stroke> readStrokesFromMarkdown(String filePath) {
         List<Stroke> strokes = new ArrayList<>();
         boolean inCodeBlock = false;
-        
+
         try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -315,13 +301,13 @@ public class HandwrittenNoteRepository {
                     inCodeBlock = true;
                     continue;
                 }
-                
+
                 // Check for end of code block
                 if (line.trim().equals("```")) {
                     inCodeBlock = false;
                     continue;
                 }
-                
+
                 // Parse stroke data if within code block
                 if (inCodeBlock && !line.trim().isEmpty()) {
                     try {
@@ -337,23 +323,24 @@ public class HandwrittenNoteRepository {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
         return strokes;
     }
-    
+
     /**
      * Deserializes a stroke from its string representation
+     *
      * @param strokeStr String representation of the stroke
      * @return Deserialized Stroke object
      * @throws JSONException if parsing fails
      */
     private Stroke deserializeStroke(String strokeStr) throws JSONException {
         JSONObject strokeJson = new JSONObject(strokeStr);
-        
+
         Stroke stroke = new Stroke();
         stroke.setColor(strokeJson.getInt("color"));
         stroke.setWidth((float) strokeJson.getDouble("width"));
-        
+
         JSONArray pointsArray = strokeJson.getJSONArray("points");
         for (int i = 0; i < pointsArray.length(); i++) {
             JSONObject pointJson = pointsArray.getJSONObject(i);
@@ -364,7 +351,7 @@ public class HandwrittenNoteRepository {
             );
             stroke.addPoint(point);
         }
-        
+
         return stroke;
     }
 

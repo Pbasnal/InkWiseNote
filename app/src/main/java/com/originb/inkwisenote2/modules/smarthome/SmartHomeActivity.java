@@ -180,7 +180,10 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotebooksRecyclerView.setAdapter(queryResultsAdapter);
 
             activity.smartHomePageViewModel.getLiveQueryResults().observe(activity, results -> {
-                if (results == null) return;
+                if (results == null) {
+                    queriedNotesText.setVisibility(View.GONE);
+                    return;
+                }
                 queryResultsAdapter.setData(results);
                 queriedNotesText.setVisibility(View.VISIBLE);
             });
