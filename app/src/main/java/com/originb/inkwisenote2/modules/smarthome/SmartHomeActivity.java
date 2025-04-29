@@ -1,5 +1,6 @@
 package com.originb.inkwisenote2.modules.smarthome;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -17,6 +18,7 @@ import com.google.android.material.navigation.NavigationView;
 import com.originb.inkwisenote2.AppMainActivity;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Routing;
+import com.originb.inkwisenote2.modules.fileexplorer.DirectoryExplorerActivity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
 
@@ -110,7 +112,16 @@ public class SmartHomeActivity extends AppCompatActivity {
                 return true;
             }
             if (itemId == R.id.admin_button) {
+                drawerLayout.closeDrawer(GravityCompat.START);
                 Routing.AdminActivity.openAdminActivity(this);
+                return true;
+            }
+            if (itemId == R.id.nav_file_explorer) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+                // Open DirectoryExplorerActivity
+                Intent intent = new Intent(this, DirectoryExplorerActivity.class);
+                startActivity(intent);
+                return true;
             }
             return false;
         });

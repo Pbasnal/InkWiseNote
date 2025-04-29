@@ -25,6 +25,10 @@
                 android:name=".modules.smartnotes.ui.SmartNotebookActivity"
                 android:screenOrientation="portrait"/>
         <activity
+                android:name=".modules.fileexplorer.DirectoryExplorerActivity"
+                android:label="File Explorer"
+                android:exported="false"/>
+        <activity
                 android:name=".AppMainActivity"
                 android:exported="true">
             <intent-filter>

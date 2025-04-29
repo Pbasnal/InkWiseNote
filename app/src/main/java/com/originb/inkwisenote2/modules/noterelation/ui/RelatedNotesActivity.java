@@ -116,7 +116,7 @@ public class RelatedNotesActivity extends AppCompatActivity {
             });
             smartNotebookRepository.deleteSmartNotebook(notesDataOfFirstNote.smartNotebook);
 
-            Routing.HomePageActivity.openHomePageAndStartFresh(this);
+            Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
         });
     }
 
