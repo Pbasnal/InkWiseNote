@@ -42,14 +42,12 @@ public class HandwrittenNoteFragment extends NoteFragment {
     private ImageButton deleteNote;
     private ImageButton debugButton;
 
-    private final SmartNotebookRepository smartNotebookRepository;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private ConfigReader configReader;
 
 
     public HandwrittenNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
         super(smartNotebook, atomicNote);
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
         handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
         configReader = ConfigReader.getInstance();
     }
@@ -85,32 +83,6 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     protected void loadNote() {
         if (atomicNote == null) return;
-
-        // Load the note image
-//        BackgroundOps.execute(
-//                () -> handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE).noteImage,
-//                bitmapOpt -> {
-//                    Bitmap bitmap = bitmapOpt.orElseGet(() -> {
-//                        Bitmap newBitmap;
-//                        if (useDefaultBitmap()) {
-//                            newBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-//                        } else {
-//                            newBitmap = Bitmap.createBitmap(
-//                                    drawingView.currentWidth,
-//                                    drawingView.currentHeight,
-//                                    Bitmap.Config.ARGB_8888
-//                            );
-//                        }
-//                        BackgroundOps.execute(() ->
-//                                handwrittenNoteRepository.saveHandwrittenNoteImage(atomicNote, newBitmap)
-//                        );
-//                        return newBitmap;
-//                    });
-//                    if (drawingView != null) {
-//                        drawingView.setBitmap(bitmap);
-//                    }
-//                }
-//        );
 
         // Load strokes from markdown file
         BackgroundOps.execute(
