@@ -23,6 +23,9 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
@@ -240,6 +243,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public void saveCurrentNote(NoteHolderData noteHolderData) {
         SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        if (notebook == null) return;
 
         switch (noteHolderData.noteType) {
             case HANDWRITTEN_PNG:
@@ -247,27 +251,56 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                         getCurrentNote(),
                         noteHolderData.bitmap,
                         noteHolderData.pageTemplate,
+                        noteHolderData.strokes,
                         getApplication());
                 break;
             case TEXT_NOTE:
                 AtomicNoteEntity atomicNote = getCurrentNote();
+                
+                // Save to database
                 TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
                 if (textNoteEntity == null) {
                     textNoteEntity = new TextNoteEntity(
                             atomicNote.getNoteId(),
                             notebook.smartBook.getBookId());
                     textNotesDao.insertTextNote(textNoteEntity);
-                } else {
-                    textNoteEntity.setNoteText(noteHolderData.noteText);
-                    textNotesDao.updateTextNote(textNoteEntity);
                 }
-                // TODO: should be in text note repository
+                textNoteEntity.setNoteText(noteHolderData.noteText);
+                textNotesDao.updateTextNote(textNoteEntity);
+                
+                // Save to markdown file
+                saveNoteToMarkdownFile(atomicNote, noteHolderData.noteText);
+                
+                // Post event
                 EventBus.getDefault().post(new Events.TextNoteSaved(notebook.smartBook.getBookId(),
                         atomicNote,
                         getApplication()));
                 break;
             default:
+                // Do nothing
         }
+    }
+    
+    /**
+     * Save note text to a markdown file
+     */
+    private void saveNoteToMarkdownFile(AtomicNoteEntity note, String noteText) {
+        BackgroundOps.execute(() -> {
+            String filename = note.getFilename() + ".md";
+            File file = new File(getApplication().getFilesDir(), filename);
+            
+            try (FileWriter writer = new FileWriter(file)) {
+                writer.write(noteText);
+                return true;
+            } catch (IOException e) {
+                logger.exception("Error saving markdown file", e);
+                return false;
+            }
+        }, success -> {
+            if (!success) {
+                logger.error("Failed to save markdown file for note: " + note.getNoteId());
+            }
+        });
     }
 
     public AtomicNoteEntity getCurrentNote() {
