@@ -13,6 +13,7 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.StrokePoint;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,6 +45,11 @@ public class DrawingView extends View {
     private List<Stroke> strokes;
     private Stroke currentStroke;
     private float lastPressure = 1.0f;
+    
+    // Eraser mode flag and properties
+    private boolean eraserMode = false;
+    private float eraserSize = 30f;
+    private Paint eraserPaint;
 
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -58,6 +64,14 @@ public class DrawingView extends View {
         paint.setStrokeJoin(Paint.Join.ROUND); // Smooth line joins
 //        paint.setAlpha(200); // Slight transparency
 
+        // Initialize eraser paint
+        eraserPaint = new Paint();
+        eraserPaint.setColor(Color.TRANSPARENT);
+        eraserPaint.setStyle(Paint.Style.STROKE);
+        eraserPaint.setStrokeWidth(eraserSize);
+        eraserPaint.setAntiAlias(true);
+        eraserPaint.setStrokeCap(Paint.Cap.ROUND);
+        eraserPaint.setStrokeJoin(Paint.Join.ROUND);
 
         // Add shader for texture
         paint.setShader(createPencilShader());
@@ -186,6 +200,14 @@ public class DrawingView extends View {
             lastPressure = pressure;
         }
 
+        if (eraserMode) {
+            return handleEraserTouch(event, x, y);
+        } else {
+            return handleDrawingTouch(event, x, y, pressure);
+        }
+    }
+
+    private boolean handleDrawingTouch(MotionEvent event, float x, float y, float pressure) {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 path.moveTo(x, y);
@@ -215,6 +237,87 @@ public class DrawingView extends View {
 
         invalidate();
         return true;
+    }
+
+    private boolean handleEraserTouch(MotionEvent event, float x, float y) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                eraseStrokesAt(x, y);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                eraseStrokesAt(x, y);
+                break;
+            case MotionEvent.ACTION_UP:
+                // Nothing special to do on up for eraser
+                break;
+            default:
+                return false;
+        }
+
+        invalidate();
+        return true;
+    }
+
+    private void eraseStrokesAt(float x, float y) {
+        boolean strokesErased = false;
+        
+        // Create a touch area for eraser
+        RectF eraserRect = new RectF(
+                x - eraserSize/2,
+                y - eraserSize/2,
+                x + eraserSize/2,
+                y + eraserSize/2
+        );
+        
+        // Iterate through strokes and remove those that intersect with eraser
+        Iterator<Stroke> strokeIterator = strokes.iterator();
+        while (strokeIterator.hasNext()) {
+            Stroke stroke = strokeIterator.next();
+            List<StrokePoint> points = stroke.getPoints();
+            
+            // Check if any point in the stroke is within eraser area
+            for (StrokePoint point : points) {
+                if (eraserRect.contains(point.getX(), point.getY())) {
+                    strokeIterator.remove();
+                    strokesErased = true;
+                    break;
+                }
+            }
+        }
+        
+        // If we erased any strokes, redraw the bitmap
+        if (strokesErased) {
+            redrawStrokesOnBitmap();
+        }
+    }
+
+    /**
+     * Set eraser mode on or off
+     * @param enabled true to enable eraser mode, false for drawing mode
+     */
+    public void setEraserMode(boolean enabled) {
+        this.eraserMode = enabled;
+        // Clear current path when switching modes
+        path = new WriteablePath();
+        currentStroke = null;
+        invalidate();
+    }
+
+    /**
+     * Check if eraser mode is currently active
+     * @return true if in eraser mode, false if in drawing mode
+     */
+    public boolean isEraserMode() {
+        return eraserMode;
+    }
+
+    /**
+     * Set the eraser size
+     * @param size diameter of the eraser in pixels
+     */
+    public void setEraserSize(float size) {
+        this.eraserSize = size;
+        eraserPaint.setStrokeWidth(size);
     }
 
     /**

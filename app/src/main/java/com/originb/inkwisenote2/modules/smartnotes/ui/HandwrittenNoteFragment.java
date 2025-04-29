@@ -41,6 +41,8 @@ public class HandwrittenNoteFragment extends NoteFragment {
     private DrawingView drawingView;
     private ImageButton deleteNote;
     private ImageButton debugButton;
+    private ImageButton eraserButton;
+    private ImageButton pencilButton;
 
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private ConfigReader configReader;
@@ -60,6 +62,8 @@ public class HandwrittenNoteFragment extends NoteFragment {
         drawingView = fragmentView.findViewById(R.id.smart_drawing_view);
         deleteNote = fragmentView.findViewById(R.id.delete_note);
         debugButton = fragmentView.findViewById(R.id.debug_button);
+        eraserButton = fragmentView.findViewById(R.id.eraser_button);
+        pencilButton = fragmentView.findViewById(R.id.pencil_button);
 
         return fragmentView;
     }
@@ -67,6 +71,8 @@ public class HandwrittenNoteFragment extends NoteFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        
+        // Delete note button listener
         deleteNote.setOnClickListener(v -> {
             BackgroundOps.execute(() -> {
                 EventBus.getDefault().post(new Events.NoteDeleted(
@@ -75,10 +81,52 @@ public class HandwrittenNoteFragment extends NoteFragment {
                 ));
             });
         });
+        
+        // Debug button listener
         debugButton.setOnClickListener(v -> {
             showDebugDialog();
         });
+        
+        // Set up eraser button listener
+        eraserButton.setOnClickListener(v -> {
+            activateEraserMode();
+        });
+        
+        // Set up pencil button listener
+        pencilButton.setOnClickListener(v -> {
+            activatePencilMode();
+        });
+        
+        // Start in pencil mode by default
+        activatePencilMode();
+        
         loadNote();
+    }
+    
+    /**
+     * Switch to eraser mode
+     */
+    private void activateEraserMode() {
+        if (drawingView != null) {
+            drawingView.setEraserMode(true);
+            
+            // Highlight eraser button, unhighlight pencil button
+            eraserButton.setAlpha(1.0f);
+            pencilButton.setAlpha(0.5f);
+        }
+    }
+    
+    /**
+     * Switch to pencil (drawing) mode
+     */
+    private void activatePencilMode() {
+        if (drawingView != null) {
+            drawingView.setEraserMode(false);
+            
+            // Highlight pencil button, unhighlight eraser button
+            pencilButton.setAlpha(1.0f);
+            eraserButton.setAlpha(0.5f);
+        }
     }
 
     protected void loadNote() {
