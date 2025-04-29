@@ -31,17 +31,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Comparator;
+import java.util.Map;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DirectoryExplorerActivity extends AppCompatActivity
-        implements FileAdapter.OnFileClickListener, FileAdapter.OnFileDeleteListener {
+        implements FileGroupAdapter.OnFileGroupClickListener, FileGroupAdapter.OnFileGroupDeleteListener {
 
     private RecyclerView recyclerView;
-    private FileAdapter fileAdapter;
+    private FileGroupAdapter fileGroupAdapter;
     private SwipeRefreshLayout swipeRefreshLayout;
     private TextView emptyView;
     private Toolbar toolbar;
@@ -54,6 +56,9 @@ public class DirectoryExplorerActivity extends AppCompatActivity
     private static final int FILE_TYPE_IMAGE = 1;
     private static final int FILE_TYPE_MARKDOWN = 2;
     private static final int FILE_TYPE_UNKNOWN = 0;
+
+    // Timestamp pattern regex
+    private static final Pattern TIMESTAMP_PATTERN = Pattern.compile("^(\\d{8,14})(?:[\\.-]|$)");
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -96,8 +101,8 @@ public class DirectoryExplorerActivity extends AppCompatActivity
         recyclerView.setLayoutManager(layoutManager);
 
         // Create and set adapter
-        fileAdapter = new FileAdapter(this, new ArrayList<>(), this, this);
-        recyclerView.setAdapter(fileAdapter);
+        fileGroupAdapter = new FileGroupAdapter(this, new ArrayList<>(), this, this);
+        recyclerView.setAdapter(fileGroupAdapter);
     }
 
     private void loadCurrentDirectory() {
@@ -116,24 +121,14 @@ public class DirectoryExplorerActivity extends AppCompatActivity
                     fileItems.add(new FileItem(file));
                 }
 
-                // Sort: directories first, then files, both alphabetically
-                Collections.sort(fileItems, (o1, o2) -> {
-                    if (o1.isDirectory() && !o2.isDirectory()) {
-                        return -1;
-                    } else if (!o1.isDirectory() && o2.isDirectory()) {
-                        return 1;
-                    } else {
-                        return o1.getName().compareToIgnoreCase(o2.getName());
-                    }
-                });
-
-                return fileItems;
+                // Group files by timestamp
+                return groupFilesByTimestamp(fileItems);
             }
 
-            return fileItems;
+            return new ArrayList<FileGroup>();
         }, result -> {
             swipeRefreshLayout.setRefreshing(false);
-            fileAdapter.updateFiles(result);
+            fileGroupAdapter.updateFileGroups(result);
 
             // Show empty view if no files
             if (result.isEmpty()) {
@@ -146,28 +141,232 @@ public class DirectoryExplorerActivity extends AppCompatActivity
         });
     }
 
-    @Override
-    public void onFileClick(FileItem fileItem) {
-        if (fileItem.isDirectory()) {
-            // Navigate into directory
-            navigationHistory.push(currentDirectory);
-            currentDirectory = fileItem.getFile();
-            loadCurrentDirectory();
-        } else {
-            // Handle file click based on file type
-            int fileType = getFileType(fileItem.getName());
-            switch (fileType) {
-                case FILE_TYPE_IMAGE:
-                    showImageFile(fileItem.getFile());
-                    break;
-                case FILE_TYPE_MARKDOWN:
-                    showMarkdownFile(fileItem.getFile());
-                    break;
-                default:
-                    showUnknownFileError(fileItem.getName());
-                    break;
+    /**
+     * Group files by timestamp prefix in their names
+     *
+     * @param fileItems List of individual file items
+     * @return List of file groups
+     */
+    private List<FileGroup> groupFilesByTimestamp(List<FileItem> fileItems) {
+        Map<String, List<FileItem>> groupMap = new HashMap<>();
+        List<FileItem> ungroupedFiles = new ArrayList<>();
+
+        // First pass: group files by timestamp
+        for (FileItem item : fileItems) {
+            if (item.isDirectory()) {
+                // Directories are treated as individual items
+                ungroupedFiles.add(item);
+                continue;
+            }
+
+            String timestamp = extractTimestamp(item.getName());
+            if (timestamp.isEmpty()) {
+                // Files without timestamp are treated as individual items
+                ungroupedFiles.add(item);
+            } else {
+                // Add file to its timestamp group
+                if (!groupMap.containsKey(timestamp)) {
+                    groupMap.put(timestamp, new ArrayList<>());
+                }
+                groupMap.get(timestamp).add(item);
             }
         }
+
+        // Second pass: create FileGroup objects
+        List<FileGroup> result = new ArrayList<>();
+
+        // Add grouped files
+        for (Map.Entry<String, List<FileItem>> entry : groupMap.entrySet()) {
+            result.add(new FileGroup(entry.getKey(), entry.getValue()));
+        }
+
+        // Add ungrouped files as individual items
+        for (FileItem item : ungroupedFiles) {
+            result.add(new FileGroup(item));
+        }
+
+        // Sort groups: directories first, then groups, then individual files
+        Collections.sort(result, (a, b) -> {
+            // Directories come first
+            if (a.isDirectory() && !b.isDirectory()) {
+                return -1;
+            } else if (!a.isDirectory() && b.isDirectory()) {
+                return 1;
+            }
+
+            // Groups come before individual files
+            if (a.isGroup() && !b.isGroup()) {
+                return -1;
+            } else if (!a.isGroup() && b.isGroup()) {
+                return 1;
+            }
+
+            // Sort groups by timestamp (descending to show newest first)
+            if (a.isGroup() && b.isGroup()) {
+                return b.getTimestamp().compareTo(a.getTimestamp());
+            }
+
+            // Sort individual files by name
+            return a.getGroupName().compareToIgnoreCase(b.getGroupName());
+        });
+
+        return result;
+    }
+
+    /**
+     * Extract timestamp from a filename
+     *
+     * @param filename The filename to analyze
+     * @return The timestamp string, or empty string if no timestamp found
+     */
+    private String extractTimestamp(String filename) {
+        if (filename == null) {
+            return "";
+        }
+
+        // Try to extract timestamp using regex
+        Matcher matcher = TIMESTAMP_PATTERN.matcher(filename);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        return "";
+    }
+
+    @Override
+    public void onFileGroupClick(FileGroup fileGroup) {
+        if (fileGroup.isDirectory()) {
+            // Navigate into directory (single file group representing a directory)
+            navigationHistory.push(currentDirectory);
+            currentDirectory = fileGroup.getPrimaryFile().getFile();
+            loadCurrentDirectory();
+        } else if (fileGroup.isGroup()) {
+            // For a group, show a list of files in the group
+            showFileGroupContents(fileGroup);
+        } else {
+            // For a single file, show the file
+            FileItem singleFile = fileGroup.getPrimaryFile();
+            if (singleFile != null) {
+                showFileByType(singleFile);
+            }
+        }
+    }
+
+    /**
+     * Display a dialog showing the list of files in a file group
+     *
+     * @param fileGroup The file group to display
+     */
+    private void showFileGroupContents(FileGroup fileGroup) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Files in " + fileGroup.getGroupName());
+
+        List<FileItem> files = fileGroup.getFiles();
+        String[] fileNames = new String[files.size()];
+        for (int i = 0; i < files.size(); i++) {
+            fileNames[i] = files.get(i).getName();
+        }
+
+        builder.setItems(fileNames, (dialog, which) -> {
+            // When a file is selected, show it
+            showFileByType(files.get(which));
+        });
+
+        builder.setPositiveButton("Close", null);
+        builder.show();
+    }
+
+    /**
+     * Show a file based on its type
+     *
+     * @param fileItem The file to show
+     */
+    private void showFileByType(FileItem fileItem) {
+        int fileType = getFileType(fileItem.getName());
+        switch (fileType) {
+            case FILE_TYPE_IMAGE:
+                showImageFile(fileItem.getFile());
+                break;
+            case FILE_TYPE_MARKDOWN:
+                showMarkdownFile(fileItem.getFile());
+                break;
+            default:
+                showUnknownFileError(fileItem.getName());
+                break;
+        }
+    }
+
+    @Override
+    public void onFileGroupDelete(FileGroup fileGroup) {
+        String message;
+        if (fileGroup.isGroup()) {
+            message = "Are you sure you want to delete all " + fileGroup.getFileCount() +
+                    " files in group '" + fileGroup.getGroupName() + "'?";
+        } else {
+            FileItem singleFile = fileGroup.getPrimaryFile();
+            if (singleFile == null) return;
+
+            String itemType = singleFile.isDirectory() ? "directory" : "file";
+            message = "Are you sure you want to delete " + itemType + " '" + singleFile.getName() + "'?";
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Confirmation")
+                .setMessage(message)
+                .setPositiveButton("Delete", (dialog, which) -> deleteFileGroup(fileGroup))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteFileGroup(FileGroup fileGroup) {
+        BackgroundOps.execute(() -> {
+            boolean success = true;
+
+            if (fileGroup.isGroup()) {
+                // Delete all files in the group
+                List<File> files = fileGroup.getAllRawFiles();
+                for (File file : files) {
+                    if (!file.delete()) {
+                        success = false;
+                    }
+                }
+            } else {
+                // Delete a single file or directory
+                FileItem singleFile = fileGroup.getPrimaryFile();
+                if (singleFile != null) {
+                    if (singleFile.isDirectory()) {
+                        success = deleteDirectory(singleFile.getFile());
+                    } else {
+                        success = singleFile.getFile().delete();
+                    }
+                }
+            }
+
+            return success;
+        }, success -> {
+            if (success) {
+                Toast.makeText(this, "Deleted successfully", Toast.LENGTH_SHORT).show();
+                loadCurrentDirectory();
+            } else {
+                Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private boolean deleteDirectory(File directory) {
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    if (!file.delete()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return directory.delete();
     }
 
     /**
@@ -323,51 +522,6 @@ public class DirectoryExplorerActivity extends AppCompatActivity
                 .setMessage("The file type of '" + fileName + "' is unknown or not supported.")
                 .setPositiveButton("OK", null)
                 .show();
-    }
-
-    @Override
-    public void onFileDelete(FileItem fileItem) {
-        new AlertDialog.Builder(this)
-                .setTitle("Delete " + (fileItem.isDirectory() ? "Directory" : "File"))
-                .setMessage("Are you sure you want to delete " + fileItem.getName() + "?")
-                .setPositiveButton("Delete", (dialog, which) -> deleteFile(fileItem))
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void deleteFile(FileItem fileItem) {
-        BackgroundOps.execute(() -> {
-            boolean success;
-            if (fileItem.isDirectory()) {
-                success = deleteDirectory(fileItem.getFile());
-            } else {
-                success = fileItem.getFile().delete();
-            }
-            return success;
-        }, success -> {
-            if (success) {
-                Toast.makeText(this, "Deleted successfully", Toast.LENGTH_SHORT).show();
-                loadCurrentDirectory();
-            } else {
-                Toast.makeText(this, "Failed to delete", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private boolean deleteDirectory(File directory) {
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    deleteDirectory(file);
-                } else {
-                    if (!file.delete()) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return directory.delete();
     }
 
     @Override
