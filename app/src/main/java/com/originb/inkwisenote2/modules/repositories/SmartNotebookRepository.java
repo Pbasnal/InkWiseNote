@@ -112,6 +112,7 @@ public class SmartNotebookRepository {
             long id = smartBookPagesDao.insertSmartBookPage(smartBookPage);
             smartBookPage.setId(id);
         }
+        // TODO: Shouldn't I save atomic notes as well?
         EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));
 
         return smartNotebook;

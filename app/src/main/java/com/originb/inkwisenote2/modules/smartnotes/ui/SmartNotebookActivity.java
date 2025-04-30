@@ -1,7 +1,9 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -129,10 +131,37 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
     public void initializeNoteTitle() {
         noteTitleText = findViewById(R.id.smart_note_title);
-
         noteTitleText.setOnClickListener((view) -> noteTitleText.selectAll());
+        noteTitleText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                viewModel.setNotebookTitle(noteTitleText.getText().toString().trim());
+            }
+        });
+
         noteTitleText.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) noteTitleText.selectAll();
+        });
+
+        viewModel.getSmartNotebookUpdate().observe(this, notebookUpdate -> {
+            if(notebookUpdate.notbookUpdateType != SmartNotebookUpdateType.NOTEBOOK_TITLE_UPDATED) return;
+
+            SmartNotebook notebook = notebookUpdate.smartNotebook;
+            String notebookTitle = notebook.smartBook.getTitle();
+            notebookTitle = notebookTitle == null ? "" : notebookTitle.trim();
+            String titleEditText = noteTitleText.getText().toString();
+
+            if(!notebookTitle.equals(titleEditText)) {
+                noteTitleText.setText(titleEditText);
+            }
         });
     }
 
@@ -160,8 +189,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         }
         String createdTime = DateTimeUtils.msToDateTime(notebookUpdate.smartNotebook.smartBook.getLastModifiedTimeMillis());
         noteCreatedTime.setText(createdTime);
-        noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
-
+//        noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
     }
 
     public void onNavigationDataChange(NotebookNavigationData navigationData) {
@@ -214,17 +242,17 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
             // Observe smart notebook data changes
-            viewModel.getSmartNotebook().observe(owner, notebookUpdate -> {
+            viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
                 onSmartNotebookUpdate(notebookUpdate);
                 if (notebookUpdate != null) {
                     // clean up existing observers
-                    viewModel.getSmartNotebook().removeObservers(owner);
+                    viewModel.getSmartNotebookUpdate().removeObservers(owner);
 
                     // Set up all the observers
                     // this clean up and setting is done so that, the navigation and current page
                     // listeners do not experience null reference error because
                     // smartNotebook is still null.
-                    viewModel.getSmartNotebook().observe(owner, owner::onSmartNotebookUpdate);
+                    viewModel.getSmartNotebookUpdate().observe(owner, owner::onSmartNotebookUpdate);
                     // Observe page number text
                     viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
                     // Observe current page index (for scrolling)
@@ -270,17 +298,17 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
             // Observe smart notebook data changes
-            viewModel.getSmartNotebook().observe(owner, notebookUpdate -> {
+            viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
                 onSmartNotebookUpdate_VirtualNotebook(notebookUpdate);
                 if (notebookUpdate != null) {
                     // clean up existing observers
-                    viewModel.getSmartNotebook().removeObservers(owner);
+                    viewModel.getSmartNotebookUpdate().removeObservers(owner);
 
                     // Set up all the observers
                     // this clean up and setting is done so that, the navigation and current page
                     // listeners do not experience null reference error because
                     // smartNotebook is still null.
-                    viewModel.getSmartNotebook().observe(owner, this::onSmartNotebookUpdate_VirtualNotebook);
+                    viewModel.getSmartNotebookUpdate().observe(owner, this::onSmartNotebookUpdate_VirtualNotebook);
                     // Observe page number text
                     viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
                     // Observe current page index (for scrolling)

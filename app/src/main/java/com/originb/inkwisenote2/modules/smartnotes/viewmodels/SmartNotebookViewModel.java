@@ -9,7 +9,6 @@ import androidx.lifecycle.MutableLiveData;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
-import com.originb.inkwisenote2.modules.backgroundjobs.WorkManagerBus;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
@@ -42,19 +41,27 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     private String workingNotePath;
     private final MutableLiveData<Integer> currentPageIndexLive = new MutableLiveData<>(0);
-    private final MutableLiveData<SmartNotebookUpdate> smartNotebook = new MutableLiveData<>();
+    private final MutableLiveData<SmartNotebookUpdate> smartNotebookUpdate = new MutableLiveData<>();
     private final MutableLiveData<String> notebookTitle = new MutableLiveData<>("");
     private final MutableLiveData<NotebookNavigationData> navigationDataLive = new MutableLiveData<>(new NotebookNavigationData());
     private final MutableLiveData<Long> createdTimeMillis = new MutableLiveData<>();
 
     public void onNotebookIsInDb(Consumer<Boolean> ifNotebookIsSaved) {
-        SmartNotebookViewModel.SmartNotebookUpdate smartNotebookUpdate = getSmartNotebook().getValue();
+        SmartNotebookViewModel.SmartNotebookUpdate smartNotebookUpdate = getSmartNotebookUpdate().getValue();
         if (smartNotebookUpdate == null) return;
         SmartNotebook notebook = smartNotebookUpdate.smartNotebook;
         if (notebook == null) return;
 
         BackgroundOps.execute(() -> smartNotebookRepository.bookExists(notebook),
                 ifNotebookIsSaved);
+    }
+
+    public void setNotebookTitle(String notebookTitle) {
+        SmartNotebookUpdate notebookUpdate = smartNotebookUpdate.getValue();
+        notebookUpdate.smartNotebook.smartBook.setTitle(notebookTitle);
+        notebookUpdate.notbookUpdateType = SmartNotebookUpdateType.NOTEBOOK_TITLE_UPDATED;
+
+        smartNotebookUpdate.setValue(notebookUpdate);
     }
 
     public static class SmartNotebookUpdate {
@@ -107,8 +114,8 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         return currentPageIndexLive;
     }
 
-    public LiveData<SmartNotebookUpdate> getSmartNotebook() {
-        return smartNotebook;
+    public LiveData<SmartNotebookUpdate> getSmartNotebookUpdate() {
+        return smartNotebookUpdate;
     }
 
     public LiveData<String> getNotebookTitle() {
@@ -128,7 +135,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         BackgroundOps.executeOpt(
                 () -> getSmartNotebook(bookId, workingPath, bookTitle, noteIdsString),
                 notebook -> {
-                    smartNotebook.setValue(SmartNotebookUpdate.fromNotebook(notebook));
+                    smartNotebookUpdate.setValue(SmartNotebookUpdate.fromNotebook(notebook));
                     notebookTitle.setValue(notebook.smartBook.getTitle());
                     createdTimeMillis.setValue(notebook.smartBook.getCreatedTimeMillis());
                     updatePageNumberText();
@@ -137,7 +144,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public void navigateToNextPage() {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         int currentIndex = currentPageIndexLive.getValue();
@@ -149,7 +156,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public void navigateToPreviousPage() {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         int currentIndex = currentPageIndexLive.getValue();
@@ -162,7 +169,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public void addNewPage() {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         int currentIndex = currentPageIndexLive.getValue();
@@ -170,7 +177,9 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
         BackgroundOps.execute(() -> {
             AtomicNoteEntity newAtomicNote = atomicNotesDomain.saveAtomicNote(
-                    AtomicNotesDomain.constructAtomicNote("", workingNotePath, NoteType.NOT_SET)
+                    AtomicNotesDomain.constructAtomicNote("",
+                            workingNotePath,
+                            NoteType.NOT_SET)
             );
 
             SmartBookPage newSmartPage = smartNotebookRepository.newSmartBookPage(
@@ -180,7 +189,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             notebook.insertAtomicNoteAndPage(indexToInsertAt, newAtomicNote, newSmartPage);
             return notebook;
         }, updatedNotebook -> {
-            smartNotebook.setValue(SmartNotebookUpdate.fromNoteAndBook(updatedNotebook, indexToInsertAt));
+            smartNotebookUpdate.setValue(SmartNotebookUpdate.fromNoteAndBook(updatedNotebook, indexToInsertAt));
             currentPageIndexLive.setValue(indexToInsertAt);
             updatePageNumberText();
         });
@@ -188,16 +197,16 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNotebookDelete(Events.NotebookDeleted notebookDeleted) {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         SmartNotebook deletedNotebook = notebookDeleted.smartNotebook;
         if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId()) return;
 
-        smartNotebook.setValue(SmartNotebookUpdate.notebookDeleted(deletedNotebook));
+        smartNotebookUpdate.setValue(SmartNotebookUpdate.notebookDeleted(deletedNotebook));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNoteDelete(Events.NoteDeleted noteDeleted) {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         long noteId = noteDeleted.atomicNote.getNoteId();
@@ -208,7 +217,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             return;
         }
 
-        smartNotebook.setValue(SmartNotebookUpdate.noteDeleted(notebook, noteDeleted.atomicNote));
+        smartNotebookUpdate.setValue(SmartNotebookUpdate.noteDeleted(notebook, noteDeleted.atomicNote));
 
         int currentPageIndex = currentPageIndexLive.getValue();
         if (currentPageIndex == notebook.getAtomicNotes().size()) {
@@ -219,7 +228,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public void updateTitle(String title) {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         notebook.getSmartBook().setTitle(title);
@@ -229,7 +238,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public void saveCurrentSmartNotebook() {
         // This method is called when the activity is paused or stopped
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         String title = notebookTitle.getValue();
         if (notebook == null || title == null) return;
 
@@ -242,7 +251,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public void saveCurrentNote(NoteHolderData noteHolderData) {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         switch (noteHolderData.noteType) {
@@ -256,7 +265,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                 break;
             case TEXT_NOTE:
                 AtomicNoteEntity atomicNote = getCurrentNote();
-                
+
                 // Save to database
                 TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
                 if (textNoteEntity == null) {
@@ -267,10 +276,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                 }
                 textNoteEntity.setNoteText(noteHolderData.noteText);
                 textNotesDao.updateTextNote(textNoteEntity);
-                
+
                 // Save to markdown file
                 saveNoteToMarkdownFile(atomicNote, noteHolderData.noteText);
-                
+
                 // Post event
                 EventBus.getDefault().post(new Events.TextNoteSaved(notebook.smartBook.getBookId(),
                         atomicNote,
@@ -280,15 +289,15 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                 // Do nothing
         }
     }
-    
+
     /**
      * Save note text to a markdown file
      */
     private void saveNoteToMarkdownFile(AtomicNoteEntity note, String noteText) {
         BackgroundOps.execute(() -> {
             String filename = note.getFilename() + ".md";
-            File file = new File(getApplication().getFilesDir(), filename);
-            
+            File file = new File(note.getFilepath(), filename);
+
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(noteText);
                 return true;
@@ -305,7 +314,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public AtomicNoteEntity getCurrentNote() {
         int currentNoteIndex = currentPageIndexLive.getValue();
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         return notebook.getAtomicNotes().get(currentNoteIndex);
     }
 
@@ -336,7 +345,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     private void updatePageNumberText() {
-        SmartNotebook notebook = smartNotebook.getValue().smartNotebook;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         Integer index = currentPageIndexLive.getValue();
         if (notebook == null || index == null) return;
 
