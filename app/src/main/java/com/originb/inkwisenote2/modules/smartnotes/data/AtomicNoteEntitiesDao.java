@@ -23,7 +23,7 @@ public interface AtomicNoteEntitiesDao {
     int updateAtomicNote(AtomicNoteEntity atomicNoteEntity);
 
     @Update
-    int updateAtomicNote(List<AtomicNoteEntity> atomicNoteEntity);
+    int updateAtomicNotes(List<AtomicNoteEntity> atomicNoteEntity);
 
     @Query("DELETE FROM atomic_note_entities WHERE note_id = :noteId")
     void deleteAtomicNote(Long noteId);

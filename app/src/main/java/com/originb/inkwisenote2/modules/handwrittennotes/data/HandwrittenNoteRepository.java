@@ -22,6 +22,9 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -281,6 +284,17 @@ public class HandwrittenNoteRepository {
         }
 
         return readStrokesFromMarkdown(markdownPath);
+    }
+
+    public void deleteHandwrittenNoteMarkdown(AtomicNoteEntity atomicNote) {
+        if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath())) return;
+        Path path = Paths.get(atomicNote.getFilepath(), atomicNote.getFilename());
+        Path pathWithExtension = Paths.get(path.toString() + ".md");
+        try {
+            Files.delete(pathWithExtension);
+        } catch (Exception e) {
+            System.out.println("Failed to delete the file: " + e.getMessage());
+        }
     }
 
     /**

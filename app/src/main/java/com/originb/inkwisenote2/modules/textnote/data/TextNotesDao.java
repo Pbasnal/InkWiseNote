@@ -29,6 +29,9 @@ public interface TextNotesDao {
     @Update
     int updateTextNotes(List<TextNoteEntity> TextNoteEntities);
 
+    @Query("DELETE FROM text_notes WHERE note_id = :noteId")
+    void deleteTextNote(long noteId);
+
     @Query("DELETE FROM text_notes WHERE book_id = :bookId")
     void deleteTextNotes(long bookId);
 }

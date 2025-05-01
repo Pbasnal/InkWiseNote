@@ -1,7 +1,9 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -129,8 +131,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
     public void initializeNoteTitle() {
         noteTitleText = findViewById(R.id.smart_note_title);
-
         noteTitleText.setOnClickListener((view) -> noteTitleText.selectAll());
+
         noteTitleText.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) noteTitleText.selectAll();
         });
@@ -160,8 +162,10 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         }
         String createdTime = DateTimeUtils.msToDateTime(notebookUpdate.smartNotebook.smartBook.getLastModifiedTimeMillis());
         noteCreatedTime.setText(createdTime);
-        noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
-
+        String noteTitle = noteTitleText.getText().toString().trim();
+        if (Strings.isNullOrWhitespace(noteTitle)) {
+            noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+        }
     }
 
     public void onNavigationDataChange(NotebookNavigationData navigationData) {
@@ -214,17 +218,17 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
             // Observe smart notebook data changes
-            viewModel.getSmartNotebook().observe(owner, notebookUpdate -> {
+            viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
                 onSmartNotebookUpdate(notebookUpdate);
                 if (notebookUpdate != null) {
                     // clean up existing observers
-                    viewModel.getSmartNotebook().removeObservers(owner);
+                    viewModel.getSmartNotebookUpdate().removeObservers(owner);
 
                     // Set up all the observers
                     // this clean up and setting is done so that, the navigation and current page
                     // listeners do not experience null reference error because
                     // smartNotebook is still null.
-                    viewModel.getSmartNotebook().observe(owner, owner::onSmartNotebookUpdate);
+                    viewModel.getSmartNotebookUpdate().observe(owner, owner::onSmartNotebookUpdate);
                     // Observe page number text
                     viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
                     // Observe current page index (for scrolling)
@@ -236,7 +240,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void saveNotebook() {
-            viewModel.updateTitle(noteTitleText.getText().toString());
+            viewModel.updateTitle(noteTitleText.getText().toString().trim());
             NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
             BackgroundOps.execute(() -> {
                 viewModel.saveCurrentNote(noteHolderData);
@@ -270,17 +274,17 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
             // Observe smart notebook data changes
-            viewModel.getSmartNotebook().observe(owner, notebookUpdate -> {
+            viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
                 onSmartNotebookUpdate_VirtualNotebook(notebookUpdate);
                 if (notebookUpdate != null) {
                     // clean up existing observers
-                    viewModel.getSmartNotebook().removeObservers(owner);
+                    viewModel.getSmartNotebookUpdate().removeObservers(owner);
 
                     // Set up all the observers
                     // this clean up and setting is done so that, the navigation and current page
                     // listeners do not experience null reference error because
                     // smartNotebook is still null.
-                    viewModel.getSmartNotebook().observe(owner, this::onSmartNotebookUpdate_VirtualNotebook);
+                    viewModel.getSmartNotebookUpdate().observe(owner, this::onSmartNotebookUpdate_VirtualNotebook);
                     // Observe page number text
                     viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
                     // Observe current page index (for scrolling)
@@ -310,9 +314,9 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void saveNotebook() {
-            viewModel.updateTitle(noteTitleText.getText().toString());
             NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
             BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteHolderData));
+            // SmartNotebook is not saved
         }
 
         private void initializeSaveButton_VirtualNotebook() {

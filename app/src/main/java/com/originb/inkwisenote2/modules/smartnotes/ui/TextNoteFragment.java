@@ -12,15 +12,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.originb.inkwisenote2.R;
+import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
-import com.originb.inkwisenote2.modules.smartnotes.ui.NoteDebugDialog;
-import com.originb.inkwisenote2.modules.smartnotes.ui.NoteFragment;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 
@@ -77,9 +75,6 @@ public class TextNoteFragment extends NoteFragment {
         loadNote();
     }
 
-    /**
-     * Show the debug dialog with note information
-     */
     private void showDebugDialog() {
         if (getContext() != null) {
             NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
@@ -89,21 +84,23 @@ public class TextNoteFragment extends NoteFragment {
 
     protected void loadNote() {
         BackgroundOps.execute(() -> {
+            // Check for markdown file first
+            String markdownContent = loadMarkdownFile();
             // Get or create the text note entity for metadata
             textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
             if (textNoteEntity == null) {
                 textNoteEntity = new TextNoteEntity(atomicNote.getNoteId(), smartNotebook.smartBook.getBookId());
                 textNotesDao.insertTextNote(textNoteEntity);
             }
-
-            // Check for markdown file first
-            String markdownContent = loadMarkdownFile();
-            if (markdownContent != null) {
-                return markdownContent;
+            if (Strings.isNotEmpty(markdownContent) && !markdownContent.equals(textNoteEntity.getNoteText())) {
+                textNoteEntity.setNoteText(markdownContent);
+                textNotesDao.updateTextNote(textNoteEntity);
+            } else if (Strings.isNullOrWhitespace(markdownContent)
+                    && Strings.isNotEmpty(textNoteEntity.getNoteText())) {
+                markdownContent = textNoteEntity.getNoteText();
             }
 
-            // Fall back to database content if file doesn't exist
-            return textNoteEntity.getNoteText();
+            return markdownContent;
         }, noteText -> {
             if (noteEditText != null) {
                 noteEditText.setText(noteText);
@@ -115,11 +112,11 @@ public class TextNoteFragment extends NoteFragment {
      * Load text from markdown file if it exists
      */
     private String loadMarkdownFile() {
-        if (getContext() == null) return null;
+        if (getContext() == null || Strings.isNullOrWhitespace(atomicNote.getFilepath())) return null;
 
-        // Create markdown filename based on note ID
-        String filename = atomicNote.getFilename() + ".md";
-        markdownFile = new File(getContext().getFilesDir(), filename);
+        // Create markdown file path using notebook directory structure
+        String markdownPath = getMarkdownFilePath();
+        markdownFile = new File(markdownPath);
 
         if (!markdownFile.exists()) {
             return null;
@@ -131,12 +128,14 @@ public class TextNoteFragment extends NoteFragment {
             while ((line = reader.readLine()) != null) {
                 content.append(line).append("\n");
             }
-            content.deleteCharAt(content.length() - 1);
+            if (content.length() > 0) {
+                content.deleteCharAt(content.length() - 1);
+            }
             return content.toString();
         } catch (IOException e) {
             e.printStackTrace();
             if (getContext() != null) {
-                Toast.makeText(getContext(), "Error reading note file " + filename, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Error reading note file", Toast.LENGTH_SHORT).show();
             }
             return null;
         }
@@ -146,5 +145,9 @@ public class TextNoteFragment extends NoteFragment {
     public NoteHolderData getNoteHolderData() {
         String text = noteEditText != null ? noteEditText.getText().toString().trim() : "";
         return NoteHolderData.textNoteData(text);
+    }
+
+    private String getMarkdownFilePath() {
+        return atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
     }
 }

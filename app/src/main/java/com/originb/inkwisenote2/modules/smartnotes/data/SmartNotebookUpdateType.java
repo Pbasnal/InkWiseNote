@@ -3,7 +3,8 @@ package com.originb.inkwisenote2.modules.smartnotes.data;
 public enum SmartNotebookUpdateType {
     NOTE_UPDATE(0),
     NOTE_DELETED(1),
-    NOTEBOOK_DELETED(2);
+    NOTEBOOK_DELETED(2),
+    NOTEBOOK_TITLE_UPDATED(3),;
 
     private final int updateType;
 
