@@ -132,36 +132,9 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     public void initializeNoteTitle() {
         noteTitleText = findViewById(R.id.smart_note_title);
         noteTitleText.setOnClickListener((view) -> noteTitleText.selectAll());
-        noteTitleText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                viewModel.setNotebookTitle(noteTitleText.getText().toString().trim());
-            }
-        });
 
         noteTitleText.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) noteTitleText.selectAll();
-        });
-
-        viewModel.getSmartNotebookUpdate().observe(this, notebookUpdate -> {
-            if(notebookUpdate.notbookUpdateType != SmartNotebookUpdateType.NOTEBOOK_TITLE_UPDATED) return;
-
-            SmartNotebook notebook = notebookUpdate.smartNotebook;
-            String notebookTitle = notebook.smartBook.getTitle();
-            notebookTitle = notebookTitle == null ? "" : notebookTitle.trim();
-            String titleEditText = noteTitleText.getText().toString();
-
-            if(!notebookTitle.equals(titleEditText)) {
-                noteTitleText.setText(titleEditText);
-            }
         });
     }
 
@@ -189,7 +162,10 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         }
         String createdTime = DateTimeUtils.msToDateTime(notebookUpdate.smartNotebook.smartBook.getLastModifiedTimeMillis());
         noteCreatedTime.setText(createdTime);
-//        noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+        String noteTitle = noteTitleText.getText().toString().trim();
+        if (Strings.isNullOrWhitespace(noteTitle)) {
+            noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+        }
     }
 
     public void onNavigationDataChange(NotebookNavigationData navigationData) {
@@ -264,7 +240,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void saveNotebook() {
-            viewModel.updateTitle(noteTitleText.getText().toString());
+            viewModel.updateTitle(noteTitleText.getText().toString().trim());
             NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
             BackgroundOps.execute(() -> {
                 viewModel.saveCurrentNote(noteHolderData);
@@ -338,9 +314,9 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void saveNotebook() {
-            viewModel.updateTitle(noteTitleText.getText().toString());
             NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
             BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteHolderData));
+            // SmartNotebook is not saved
         }
 
         private void initializeSaveButton_VirtualNotebook() {

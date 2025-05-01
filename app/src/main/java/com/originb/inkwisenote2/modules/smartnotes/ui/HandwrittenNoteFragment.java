@@ -75,7 +75,7 @@ public class HandwrittenNoteFragment extends NoteFragment {
         // Delete note button listener
         deleteNote.setOnClickListener(v -> {
             BackgroundOps.execute(() -> {
-                EventBus.getDefault().post(new Events.NoteDeleted(
+                EventBus.getDefault().post(new Events.DeleteNoteCommand(
                         smartNotebook,
                         atomicNote
                 ));

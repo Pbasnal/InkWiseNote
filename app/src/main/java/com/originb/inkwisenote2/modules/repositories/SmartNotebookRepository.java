@@ -87,7 +87,7 @@ public class SmartNotebookRepository {
         for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
             atomicNote.setLastModifiedTimeMillis(updateTime);
         }
-        atomicNoteEntitiesDao.updateAtomicNote(smartNotebook.getAtomicNotes());
+        atomicNotesDomain.updateAtomicNotes(smartNotebook.getAtomicNotes());
 
         int updateResult = smartBookPagesDao.updateSmartBookPage(smartNotebook.getSmartBookPages());
         EventBus.getDefault().post(new Events.SmartNotebookSaved(smartNotebook, context));

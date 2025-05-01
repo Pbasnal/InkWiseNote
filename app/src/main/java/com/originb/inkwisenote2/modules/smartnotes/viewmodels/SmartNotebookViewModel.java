@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.originb.inkwisenote2.common.Logger;
+import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
@@ -133,7 +134,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     public void loadSmartNotebook(Long bookId, String workingPath, String bookTitle, String noteIdsString) {
         this.workingNotePath = workingPath;
         BackgroundOps.executeOpt(
-                () -> getSmartNotebook(bookId, workingPath, bookTitle, noteIdsString),
+                () -> getSmartNotebook(bookId, bookTitle, noteIdsString),
                 notebook -> {
                     smartNotebookUpdate.setValue(SmartNotebookUpdate.fromNotebook(notebook));
                     notebookTitle.setValue(notebook.smartBook.getTitle());
@@ -231,9 +232,32 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
-        notebook.getSmartBook().setTitle(title);
+        String currentTitleOfTheNotebook = notebook.smartBook.getTitle();
+        if (Strings.isNotEmpty(title)) {
+            notebook.getSmartBook().setTitle(title);
+        }
         notebookTitle.setValue(title);
-        BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()));
+        BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()), () -> {
+            // rename the folder and update all the AtomicNotes filepath
+            if (currentTitleOfTheNotebook.equals(title)) return;
+
+            String newNotebookPath = workingNotePath + "/" + title;
+            File oldFolder = new File(workingNotePath + "/" + currentTitleOfTheNotebook);
+            File newFolder = new File(newNotebookPath);
+
+            boolean success = oldFolder.renameTo(newFolder);
+            if (success) {
+                logger.debug("Folder renamed successfully.");
+
+                for (AtomicNoteEntity atomicNote : notebook.atomicNotes) {
+                    atomicNote.setFilepath(newNotebookPath);
+                    atomicNotesDomain.saveAtomicNote(atomicNote);
+                }
+
+            } else {
+                logger.debug("Failed to rename folder.");
+            }
+        });
     }
 
     public void saveCurrentSmartNotebook() {
@@ -319,11 +343,8 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     private Optional<SmartNotebook> getSmartNotebook(Long bookIdToOpen,
-                                                     String workingPath,
                                                      String bookTitle,
                                                      String noteIdsString) {
-        workingNotePath = workingPath;
-
         if (bookIdToOpen != null && bookIdToOpen != -1) {
             return smartNotebookRepository.getSmartNotebooks(bookIdToOpen);
         } else if (noteIdsString != null && !noteIdsString.isEmpty()) {
