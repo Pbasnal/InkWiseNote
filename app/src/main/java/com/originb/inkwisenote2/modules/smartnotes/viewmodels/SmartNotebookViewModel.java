@@ -26,7 +26,11 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -201,7 +205,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         SmartNotebook deletedNotebook = notebookDeleted.smartNotebook;
         if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId()) return;
-
+        deleteNotebookFolder(notebook.smartBook.getTitle());
         smartNotebookUpdate.setValue(SmartNotebookUpdate.notebookDeleted(deletedNotebook));
     }
 
@@ -214,7 +218,8 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         notebook.removeNote(noteId);
 
         if (notebook.atomicNotes.isEmpty()) {
-            BackgroundOps.execute(() -> smartNotebookRepository.deleteSmartNotebook(notebook));
+            BackgroundOps.execute(() -> smartNotebookRepository.deleteSmartNotebook(notebook),
+                    () -> deleteNotebookFolder(notebook.smartBook.getTitle()));
             return;
         }
 
@@ -226,6 +231,26 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
 
         updatePageNumberText();
+    }
+
+    private void deleteNotebookFolder(String smartNotebookTitle) {
+
+        Path notebookPath = Paths.get(workingNotePath, smartNotebookTitle);
+        try {
+            Files.walk(notebookPath)
+                    .sorted(Comparator.reverseOrder()) // Delete children before parent
+                    .forEach(path -> {
+                        try {
+                            Files.delete(path);
+                        } catch (IOException e) {
+                            // Handle exception (file might be locked, etc)
+                            System.err.println("Unable to delete: " + path + " : " + e.getMessage());
+                        }
+                    });
+            Files.delete(notebookPath);
+        } catch (Exception e) {
+            System.out.println("Failed to delete the file: " + e.getMessage());
+        }
     }
 
     public void updateTitle(String title) {
