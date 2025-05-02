@@ -17,9 +17,7 @@
             android:theme="@style/Theme.InkWiseNote">
 
         <activity android:name=".modules.notesearch.NoteSearchActivity"/>
-        <activity android:name=".HomePageActivity"/>
         <activity android:name=".modules.smarthome.SmartHomeActivity"/>
-        <activity android:name=".modules.textnote.TextNoteActivity"/>
         <activity android:name=".modules.queries.ui.QueryResultsActivity"/>
         <activity
                 android:name=".modules.smartnotes.ui.SmartNotebookActivity"
