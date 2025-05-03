@@ -7,13 +7,16 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
+import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
@@ -86,9 +89,13 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     private void initializeRecyclerView() {
         // Initialize RecyclerView and its components
         recyclerView = findViewById(R.id.smart_note_page_view);
+        recyclerView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         scrollLayout = new SmartNotebookPageScrollLayout(this);
         recyclerView.addOnScrollListener(new SmartNotebookScrollListener(scrollLayout));
         recyclerView.setLayoutManager(scrollLayout);
+
+        recyclerView.setOnFlingListener(null);
+        recyclerView.setNestedScrollingEnabled(false);
     }
 
     public void initializeNavigationButtons() {
@@ -146,7 +153,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
     public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
         if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTEBOOK_DELETED) {
-            finish();
+            Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
+            return;
         }
         if (smartNotebookAdapter == null) {
             smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
