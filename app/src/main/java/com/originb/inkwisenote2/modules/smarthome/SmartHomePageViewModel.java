@@ -84,7 +84,7 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.postValue(mergedResultMap);
     }
 
-    @Subscribe(threadMode = ThreadMode.BACKGROUND)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void onSmartNotebookDeleted(Events.NotebookDeleted notebookDeleted) {
         List<SmartNotebook> userNotebooks = this.userNotebooks.getValue();
         if (CollectionUtils.isEmpty(userNotebooks) || notebookDeleted.smartNotebook == null) {

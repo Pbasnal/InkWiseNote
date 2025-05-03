@@ -1,6 +1,7 @@
 package com.originb.inkwisenote2.modules.smartnotes.viewmodels;
 
 import android.app.Application;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -19,6 +20,7 @@ import com.originb.inkwisenote2.modules.smartnotes.data.*;
 
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -204,7 +206,8 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     public void onNotebookDelete(Events.NotebookDeleted notebookDeleted) {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         SmartNotebook deletedNotebook = notebookDeleted.smartNotebook;
-        if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId()) return;
+        if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId())
+            return;
         deleteNotebookFolder(notebook.smartBook.getTitle());
         smartNotebookUpdate.setValue(SmartNotebookUpdate.notebookDeleted(deletedNotebook));
     }
@@ -234,7 +237,9 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     private void deleteNotebookFolder(String smartNotebookTitle) {
-
+        if (smartNotebookTitle == null) {
+            smartNotebookTitle = "";
+        }
         Path notebookPath = Paths.get(workingNotePath, smartNotebookTitle);
         try {
             Files.walk(notebookPath)

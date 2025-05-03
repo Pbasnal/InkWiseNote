@@ -153,6 +153,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
     public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
         if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTEBOOK_DELETED) {
+            currentState = new SmartNotebookDeletedNotebook();
             Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
             return;
         }
@@ -257,6 +258,28 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         }
     }
 
+    public class SmartNotebookDeletedNotebook implements ISmartNotebookActivityState {
+        @Override
+        public void initializeViews() {
+
+        }
+
+        @Override
+        public void finalizeState() {
+
+        }
+
+        @Override
+        public void setupObservers() {
+
+        }
+
+        @Override
+        public void saveNotebook() {
+
+        }
+    }
+
     public class SmartNotebookActivityVirtualNotebook implements ISmartNotebookActivityState {
 
         private IStateManager stateManager;
@@ -343,7 +366,5 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             noteTitleText.setInputType(InputType.TYPE_NULL);
         }
     }
-
-
 }
 
