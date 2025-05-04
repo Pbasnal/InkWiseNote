@@ -1,6 +1,5 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,26 +10,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.originb.inkwisenote2.R;
-import com.originb.inkwisenote2.common.BitmapScale;
+
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
-import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteEntity;
+
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.ui.NoteFragment;
 
 import org.greenrobot.eventbus.EventBus;
-
-import java.util.Optional;
 
 /**
  * Fragment for displaying and editing handwritten notes
@@ -71,7 +66,7 @@ public class HandwrittenNoteFragment extends NoteFragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        
+
         // Delete note button listener
         deleteNote.setOnClickListener(v -> {
             BackgroundOps.execute(() -> {
@@ -81,48 +76,48 @@ public class HandwrittenNoteFragment extends NoteFragment {
                 ));
             });
         });
-        
+
         // Debug button listener
         debugButton.setOnClickListener(v -> {
             showDebugDialog();
         });
-        
+
         // Set up eraser button listener
         eraserButton.setOnClickListener(v -> {
             activateEraserMode();
         });
-        
+
         // Set up pencil button listener
         pencilButton.setOnClickListener(v -> {
             activatePencilMode();
         });
-        
+
         // Start in pencil mode by default
         activatePencilMode();
-        
+
         loadNote();
     }
-    
+
     /**
      * Switch to eraser mode
      */
     private void activateEraserMode() {
         if (drawingView != null) {
             drawingView.setEraserMode(true);
-            
+
             // Highlight eraser button, unhighlight pencil button
             eraserButton.setAlpha(1.0f);
             pencilButton.setAlpha(0.5f);
         }
     }
-    
+
     /**
      * Switch to pencil (drawing) mode
      */
     private void activatePencilMode() {
         if (drawingView != null) {
             drawingView.setEraserMode(false);
-            
+
             // Highlight pencil button, unhighlight eraser button
             pencilButton.setAlpha(1.0f);
             eraserButton.setAlpha(0.5f);
