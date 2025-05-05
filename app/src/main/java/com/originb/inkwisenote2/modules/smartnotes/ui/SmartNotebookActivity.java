@@ -1,9 +1,7 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.os.Bundle;
-import android.text.Editable;
 import android.text.InputType;
-import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -28,6 +26,8 @@ import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.ISmartNoteb
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.IStateManager;
 import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModel;
 import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModelFactory;
+
+import java.util.Objects;
 
 public class SmartNotebookActivity extends AppCompatActivity implements IStateManager {
 
@@ -112,14 +112,14 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
 
-            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::navigateToNextPage);
         });
 
         prevButton.setOnClickListener(view -> {
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
-            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::navigateToPreviousPage);
         });
     }
@@ -131,7 +131,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         newNotePageBtn.setOnClickListener(view -> {
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
-            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteData),
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::addNewPage);
         });
     }
@@ -249,12 +249,43 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void saveNotebook() {
-            viewModel.updateTitle(noteTitleText.getText().toString().trim());
-            NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
-            BackgroundOps.execute(() -> {
-                viewModel.saveCurrentNote(noteHolderData);
+            String oldNotebookTitle = viewModel.getNotebookTitle().getValue();
+            String updatedTitle = noteTitleText.getText().toString().trim();
+            String createTimeMillis = String.valueOf(viewModel.getCreatedTimeMillis().getValue());
+            final String notebookTitle = Strings.isNotEmpty(updatedTitle) ? updatedTitle : createTimeMillis;
+            boolean notebookNameNotChanged = oldNotebookTitle != null && oldNotebookTitle.equals(notebookTitle);
+
+            boolean titleUpdated = !notebookNameNotChanged && viewModel.updateTitle(updatedTitle);
+
+            if (!titleUpdated) {
+                NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
+                BackgroundOps.execute(() -> {
+                    viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteHolderData);
+                    viewModel.saveCurrentSmartNotebook();
+                });
+            } else {
                 viewModel.saveCurrentSmartNotebook();
-            });
+                String newNotebookPath = workingNotePath + "/" + notebookTitle;
+                boolean isRenamed = viewModel.renameNotebookFolderName(newNotebookPath, oldNotebookTitle);
+                SmartNotebook notebook = Objects.requireNonNull(viewModel.getSmartNotebookUpdate().getValue()).smartNotebook;
+                boolean notesHaveNewPath = true;
+
+                for (AtomicNoteEntity atomicNote : notebook.atomicNotes) {
+                    String noteFilePath = atomicNote.getFilepath();
+                    notesHaveNewPath &= newNotebookPath.equals(noteFilePath);
+                }
+
+                if (isRenamed || !notesHaveNewPath) {
+                    logger.debug("Folder renamed successfully.");
+                    for (AtomicNoteEntity atomicNote : notebook.atomicNotes) {
+                        NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+                        viewModel.saveNoteInCorrectFolder(atomicNote, newNotebookPath, noteHolderData);
+                    }
+                } else {
+                    logger.debug("Failed to rename folder.");
+                }
+
+            }
         }
     }
 
@@ -345,8 +376,9 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void saveNotebook() {
-            NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(viewModel.getCurrentNote().getNoteId());
-            BackgroundOps.execute(() -> viewModel.saveCurrentNote(noteHolderData));
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            NoteHolderData noteHolderData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            BackgroundOps.execute(() -> viewModel.saveCurrentNote(atomicNote, noteHolderData));
             // SmartNotebook is not saved
         }
 

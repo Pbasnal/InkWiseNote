@@ -139,6 +139,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public void loadSmartNotebook(Long bookId, String workingPath, String bookTitle, String noteIdsString) {
         this.workingNotePath = workingPath;
+        if (!Strings.isNullOrWhitespace(bookTitle)) {
+            this.workingNotePath = Paths.get(workingPath, bookTitle).toString();
+        }
+
         BackgroundOps.executeOpt(
                 () -> getSmartNotebook(bookId, bookTitle, noteIdsString),
                 notebook -> {
@@ -258,44 +262,41 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
     }
 
-    public void updateTitle(String title) {
-        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
-        if (notebook == null) return;
-
-        String currentTitleOfTheNotebook = notebook.smartBook.getTitle();
-        if (Strings.isNotEmpty(title)) {
-            notebook.getSmartBook().setTitle(title);
-        }
-        notebookTitle.setValue(title);
+    public void saveNoteInCorrectFolder(AtomicNoteEntity atomicNote,
+                                        String newNotebookPath,
+                                        NoteHolderData noteHolderData) {
+        atomicNote.setFilepath(newNotebookPath);
         BackgroundOps.execute(() -> {
-            smartNotebookRepository.updateNotebook(notebook, getApplication());
-
-            // rename the folder and update all the AtomicNotes filepath
-            if (currentTitleOfTheNotebook != null && currentTitleOfTheNotebook.equals(title))
-                return;
-
-            String newNotebookPath = workingNotePath + "/" + title;
-            boolean updateNotesFolderName = true;
-            if (currentTitleOfTheNotebook != null) {
-                File oldFolder = new File(workingNotePath + "/" + currentTitleOfTheNotebook);
-                File newFolder = new File(newNotebookPath);
-
-                updateNotesFolderName = oldFolder.renameTo(newFolder);
-            }
-
-            if (updateNotesFolderName) {
-                logger.debug("Folder renamed successfully.");
-
-                for (AtomicNoteEntity atomicNote : notebook.atomicNotes) {
-                    atomicNote.setFilepath(newNotebookPath);
-                    atomicNotesDomain.saveAtomicNote(atomicNote);
-                }
-
-            } else {
-                logger.debug("Failed to rename folder.");
-            }
+            atomicNotesDomain.saveAtomicNote(atomicNote);
+            saveCurrentNote(atomicNote, noteHolderData);
         });
     }
+
+    public boolean updateTitle(String updatedTitle) {
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
+        if (notebook == null) return false;
+
+        if (Strings.isNotEmpty(updatedTitle)) {
+            notebook.getSmartBook().setTitle(updatedTitle);
+            notebookTitle.setValue(updatedTitle);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean renameNotebookFolderName(String newNotebookPath, String oldNotebookTitle) {
+        File newFolder = new File(newNotebookPath);
+
+        boolean updateNotesFolderName = true;
+
+        File oldFolder = new File(workingNotePath + "/" + oldNotebookTitle);
+        updateNotesFolderName = oldFolder.renameTo(newFolder);
+        if (!newFolder.exists()) {
+            updateNotesFolderName = newFolder.mkdirs();
+        }
+        return updateNotesFolderName;
+    }
+
 
     public void saveCurrentSmartNotebook() {
         // This method is called when the activity is paused or stopped
@@ -311,22 +312,20 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
     }
 
-    public void saveCurrentNote(NoteHolderData noteHolderData) {
+    public void saveCurrentNote(AtomicNoteEntity atomicNote, NoteHolderData noteHolderData) {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         switch (noteHolderData.noteType) {
             case HANDWRITTEN_PNG:
                 handwrittenNoteRepository.saveHandwrittenNotes(notebook.smartBook.getBookId(),
-                        getCurrentNote(),
+                        atomicNote,
                         noteHolderData.bitmap,
                         noteHolderData.pageTemplate,
                         noteHolderData.strokes,
                         getApplication());
                 break;
             case TEXT_NOTE:
-                AtomicNoteEntity atomicNote = getCurrentNote();
-
                 // Save to database
                 TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
                 if (textNoteEntity == null) {
@@ -357,7 +356,12 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private void saveNoteToMarkdownFile(AtomicNoteEntity note, String noteText) {
         BackgroundOps.execute(() -> {
             String filename = note.getFilename() + ".md";
-            File file = new File(note.getFilepath(), filename);
+            // Ensure we're using the notebook's directory path
+            String notebookDir = workingNotePath;
+            if (Strings.isNullOrWhitespace(notebookDir)) {
+                notebookDir = note.getFilepath();
+            }
+            File file = new File(notebookDir, filename);
 
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(noteText);

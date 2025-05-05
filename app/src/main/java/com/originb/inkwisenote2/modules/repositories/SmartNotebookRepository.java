@@ -8,6 +8,8 @@ import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.common.Strings;
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,10 +31,16 @@ public class SmartNotebookRepository {
     public Optional<SmartNotebook> initializeNewSmartNotebook(String title,
                                                               String directoryPath,
                                                               NoteType noteType) {
+        // Create a directory with the notebook title
+        String notebookDirectory = Paths.get(directoryPath, title).toString();
+        File notebookDir = new File(notebookDirectory);
+        if (!notebookDir.exists()) {
+            notebookDir.mkdirs();
+        }
 
         AtomicNoteEntity atomicNoteEntity = atomicNotesDomain.saveAtomicNote(AtomicNotesDomain.constructAtomicNote(
                 "",
-                directoryPath,
+                notebookDirectory,
                 noteType));
         SmartBookEntity smartBookEntity = newSmartBook(title, atomicNoteEntity.getCreatedTimeMillis());
         SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity, 0);
