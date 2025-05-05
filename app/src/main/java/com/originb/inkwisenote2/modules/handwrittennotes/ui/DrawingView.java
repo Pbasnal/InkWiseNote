@@ -7,6 +7,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import com.originb.inkwisenote2.config.CanvasSize;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.RuledPageBackground;
@@ -54,8 +55,14 @@ public class DrawingView extends View {
     private float eraserSize = 30f;
     private Paint eraserPaint;
 
+    private ConfigReader configReader;
+    private CanvasSize canvasSize;
+
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        configReader = ConfigReader.getInstance();
+        canvasSize = configReader.getAppConfig().getCanvasSizes().get(0);
 
         // Initialize paint with pencil-like properties
         paint = new Paint();
@@ -102,6 +109,12 @@ public class DrawingView extends View {
         vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
+                int newWidth = thisView.getWidth();
+                int newHeight = thisView.getHeight();
+
+                if (currentWidth > newWidth || currentHeight > newHeight) {
+                    return;
+                }
                 currentWidth = thisView.getWidth();
                 currentHeight = thisView.getHeight();
 
@@ -111,7 +124,7 @@ public class DrawingView extends View {
                 redrawStrokesOnBitmap();
                 ruledPageBackground.onSizeChanged(currentWidth, currentHeight, 0, 0);
                 pageTemplateBitmap = ruledPageBackground.drawTemplate();
-                thisView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+//                thisView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
             }
         });
 
@@ -143,7 +156,7 @@ public class DrawingView extends View {
     }
 
     public Bitmap getNewBitmap() {
-        if(currentWidth >0 && currentHeight > 0) {
+        if (currentWidth > 0 && currentHeight > 0) {
             return Bitmap.createBitmap(currentWidth,
                     currentHeight,
                     Bitmap.Config.ARGB_8888);

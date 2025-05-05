@@ -14,6 +14,7 @@ import java.util.Map;
 public class AppConfig {
     private List<Feature> enabledFeatures;
     private Map<String, PageTemplate> pageTemplates;
+    private List<CanvasSize> canvasSizes;
     private AppSecrets appSecrets;
 
     private Map<ConfigKeys, String> runtimeSettings;
@@ -23,6 +24,7 @@ public class AppConfig {
         pageTemplates = new HashMap<>();
         appSecrets = new AppSecrets();
         runtimeSettings = new HashMap<>();
+        canvasSizes = new ArrayList<>();
     }
 
     public static AppConfig createDefault() {

@@ -267,16 +267,23 @@ public class SmartNotebookViewModel extends AndroidViewModel {
             notebook.getSmartBook().setTitle(title);
         }
         notebookTitle.setValue(title);
-        BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()), () -> {
+        BackgroundOps.execute(() -> {
+            smartNotebookRepository.updateNotebook(notebook, getApplication());
+
             // rename the folder and update all the AtomicNotes filepath
-            if (currentTitleOfTheNotebook.equals(title)) return;
+            if (currentTitleOfTheNotebook != null && currentTitleOfTheNotebook.equals(title))
+                return;
 
             String newNotebookPath = workingNotePath + "/" + title;
-            File oldFolder = new File(workingNotePath + "/" + currentTitleOfTheNotebook);
-            File newFolder = new File(newNotebookPath);
+            boolean updateNotesFolderName = true;
+            if (currentTitleOfTheNotebook != null) {
+                File oldFolder = new File(workingNotePath + "/" + currentTitleOfTheNotebook);
+                File newFolder = new File(newNotebookPath);
 
-            boolean success = oldFolder.renameTo(newFolder);
-            if (success) {
+                updateNotesFolderName = oldFolder.renameTo(newFolder);
+            }
+
+            if (updateNotesFolderName) {
                 logger.debug("Folder renamed successfully.");
 
                 for (AtomicNoteEntity atomicNote : notebook.atomicNotes) {
