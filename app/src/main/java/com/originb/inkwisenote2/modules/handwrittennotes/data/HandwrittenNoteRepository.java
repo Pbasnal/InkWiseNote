@@ -3,12 +3,9 @@ package com.originb.inkwisenote2.modules.handwrittennotes.data;
 import android.content.Context;
 import android.graphics.Bitmap;
 import com.google.android.gms.common.util.Strings;
-import com.originb.inkwisenote2.common.BitmapScale;
+import com.originb.inkwisenote2.common.*;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote2.common.BitmapFileIoUtils;
-import com.originb.inkwisenote2.common.BytesFileIoUtils;
-import com.originb.inkwisenote2.common.HashUtils;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
@@ -31,7 +28,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class HandwrittenNoteRepository {
-
+    private final Logger logger = new Logger("HandwrittenNoteRepository");
     private final HandwrittenNotesDao handwrittenNotesDao;
 
     public HandwrittenNoteRepository() {
@@ -42,14 +39,17 @@ public class HandwrittenNoteRepository {
         if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath()) || Objects.isNull(bitmap)) {
             return;
         }
+        try {
+            String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
+            String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
 
-        String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
-        String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
+            Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
 
-        Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
-
-        BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
-        BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
+            BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
+            BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
+        } catch (Exception ex) {
+            logger.exception("Error saving handwritten note for noteId: " + atomicNote.getNoteId(), ex);
+        }
     }
 
     public void saveHandwrittenNotePageTemplate(AtomicNoteEntity atomicNote, PageTemplate pageTemplate) {
@@ -70,7 +70,7 @@ public class HandwrittenNoteRepository {
                                         Context context) {
         String bitmapHash = getBitmapHash(bitmap);
         String pageTemplateHash = getPageTemplateHash(pageTemplate);
-        String strokesHash = getStrokesHash(strokes);
+//        String strokesHash = getStrokesHash(strokes);
 
         boolean noteUpdated = false;
 

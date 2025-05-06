@@ -221,10 +221,13 @@ public class SmartHomePageViewModel extends ViewModel {
 
     public List<SmartNotebook> fetchUserCreatedNotebooks() {
 
-        if (smartNotebookRepository == null) ;
+        if (smartNotebookRepository == null) {
+            return Collections.emptyList();
+        }
         List<SmartNotebook> notebooks = smartNotebookRepository.getAllSmartNotebooks();
-        if (notebooks == null) notebooks = new ArrayList<>();
-
+        if (CollectionUtils.isEmpty(notebooks)) {
+            return Collections.emptyList();
+        }
         // Sort notebooks by last updated time in descending order (most recent first)
         notebooks.sort((n1, n2) -> {
             // Assuming getLastUpdatedTime() returns a long timestamp

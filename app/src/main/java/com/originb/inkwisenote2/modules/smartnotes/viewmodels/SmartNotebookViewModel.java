@@ -31,10 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -273,6 +270,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public boolean updateTitle(String updatedTitle) {
+        if (smartNotebookUpdate.getValue() == null) return false;
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return false;
 
@@ -378,6 +376,11 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public AtomicNoteEntity getCurrentNote() {
+        // todo: handle this null case
+        if (smartNotebookUpdate.getValue() == null) {
+            return null;
+        }
+
         int currentNoteIndex = currentPageIndexLive.getValue();
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         return notebook.getAtomicNotes().get(currentNoteIndex);

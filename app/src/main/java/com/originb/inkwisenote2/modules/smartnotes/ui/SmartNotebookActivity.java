@@ -18,15 +18,13 @@ import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
-import com.originb.inkwisenote2.modules.smartnotes.data.NotebookNavigationData;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartNotebookUpdateType;
+import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.ISmartNotebookActivityState;
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.IStateManager;
 import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModel;
 import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModelFactory;
 
+import java.util.List;
 import java.util.Objects;
 
 public class SmartNotebookActivity extends AppCompatActivity implements IStateManager {
@@ -284,7 +282,6 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
                 } else {
                     logger.debug("Failed to rename folder.");
                 }
-
             }
         }
     }
