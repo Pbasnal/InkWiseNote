@@ -48,6 +48,11 @@ public class AtomicNotesDomain {
         return numberOfUpdatedNotes;
     }
 
+    public int updateAtomicNote(AtomicNoteEntity atomicNote) {
+        int numberOfUpdatedNotes = atomicNoteEntitiesDao.updateAtomicNote(atomicNote);
+        return numberOfUpdatedNotes;
+    }
+
     public List<AtomicNoteEntity> getAtomicNotes(Set<Long> noteIds) {
         return atomicNoteEntitiesDao.getAtomicNotes(noteIds);
     }

@@ -264,7 +264,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                                         NoteHolderData noteHolderData) {
         atomicNote.setFilepath(newNotebookPath);
         BackgroundOps.execute(() -> {
-            atomicNotesDomain.saveAtomicNote(atomicNote);
+            atomicNotesDomain.updateAtomicNote(atomicNote);
             saveCurrentNote(atomicNote, noteHolderData);
         });
     }

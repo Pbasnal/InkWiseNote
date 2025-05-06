@@ -16,11 +16,11 @@ import lombok.Setter;
                 @ForeignKey(entity = SmartBookEntity.class,
                         parentColumns = "book_id",
                         childColumns = "book_id",
-                        onDelete = ForeignKey.CASCADE),
+                        onDelete = ForeignKey.RESTRICT),
                 @ForeignKey(entity = AtomicNoteEntity.class,
                         parentColumns = "note_id",
                         childColumns = "note_id",
-                        onDelete = ForeignKey.CASCADE)
+                        onDelete = ForeignKey.RESTRICT)
         })
 public class SmartBookPage {
     @PrimaryKey(autoGenerate = true)
