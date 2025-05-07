@@ -66,8 +66,8 @@ public class SmartNotebookRepository {
         if (smartNotebook.getAtomicNotes().size() <= 1) deleteSmartNotebook(smartNotebook);
         else {
 
-            atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
             smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
+            atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
 
             // TODO: this is a clean up job. Why do here?
 //            getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
