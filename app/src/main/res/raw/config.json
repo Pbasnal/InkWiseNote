@@ -1,7 +1,6 @@
 {
   "enabledFeatures": [
     "HOME_PAGE_NAVIGATION_SIDEBAR",
-    "AZURE_OCR",
     "MARKDOWN_EDITOR",
     "ADMIN_VIEW"
   ],

@@ -49,12 +49,11 @@ public class SmartNotebookRepository {
     }
 
     public void deleteSmartNotebook(SmartNotebook smartNotebook) {
-        // will pages allow this to be deleted first?
+        smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
+
         smartNotebook.getAtomicNotes()
                 .stream().map(AtomicNoteEntity::getNoteId)
                 .forEach(atomicNoteEntitiesDao::deleteAtomicNote);
-
-        smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
 

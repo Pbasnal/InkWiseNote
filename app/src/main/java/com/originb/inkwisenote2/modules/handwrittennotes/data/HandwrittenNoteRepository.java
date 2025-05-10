@@ -236,7 +236,8 @@ public class HandwrittenNoteRepository {
             builder.append("{")
                     .append("\"x\":").append(point.getX()).append(",")
                     .append("\"y\":").append(point.getY()).append(",")
-                    .append("\"p\":").append(point.getPressure())
+                    .append("\"p\":").append(point.getPressure()).append(",")
+                    .append("\"t\":").append(point.getTimestamp())
                     .append("}");
 
             if (i < points.size() - 1) {
@@ -358,15 +359,31 @@ public class HandwrittenNoteRepository {
         JSONArray pointsArray = strokeJson.getJSONArray("points");
         for (int i = 0; i < pointsArray.length(); i++) {
             JSONObject pointJson = pointsArray.getJSONObject(i);
-            StrokePoint point = new StrokePoint(
-                    (float) pointJson.getDouble("x"),
-                    (float) pointJson.getDouble("y"),
-                    (float) pointJson.getDouble("p")
-            );
+            float x = (float) pointJson.getDouble("x");
+            float y = (float) pointJson.getDouble("y");
+            float p = (float) pointJson.getDouble("p");
+            long t = pointJson.has("t") ? pointJson.getLong("t") : System.currentTimeMillis();
+            StrokePoint point = new StrokePoint(x, y, p, t);
             stroke.addPoint(point);
         }
 
         return stroke;
+    }
+
+    /**
+     * Gets strokes for a specific note ID
+     * 
+     * @param noteId The ID of the note to retrieve strokes for
+     * @return List of strokes or empty list if none found
+     */
+    public List<Stroke> getStrokes(long noteId) {
+        AtomicNoteEntity note = Repositories.getInstance().getAtomicNotesDomain().getAtomicNote(noteId);
+        if (note == null) {
+            logger.error("Could not find note with ID: " + noteId);
+            return new ArrayList<>();
+        }
+        
+        return readHandwrittenNoteMarkdown(note);
     }
 
 }

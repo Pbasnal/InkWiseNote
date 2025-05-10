@@ -22,9 +22,10 @@ public class WorkManagerBus {
         WorkManager.getInstance(context).enqueue(textParsingWork);
     }
 
-    public static void scheduleWorkForTextProcessingForBook(Context context, Long bookId) {
+    public static void scheduleWorkForTextProcessingForBook(Context context, Long bookId, long noteId) {
         Data inputData = new Data.Builder()
                 .putLong("book_id", bookId) // Path of the image file
+                .putLong("note_id", noteId)
                 .build();
 
         OneTimeWorkRequest textProcessingWork = new OneTimeWorkRequest.Builder(TextProcessingWorker.class)

@@ -222,13 +222,13 @@ public class DrawingView extends View {
                 path.moveTo(x, y);
                 // Start a new stroke for markdown export
                 currentStroke = new Stroke(paint.getColor(), paint.getStrokeWidth());
-                currentStroke.addPoint(x, y, pressure);
+                currentStroke.addPoint(x, y, pressure, event.getEventTime());
                 break;
             case MotionEvent.ACTION_MOVE:
                 path.lineTo(x, y);
                 // Add point to current stroke
                 if (currentStroke != null) {
-                    currentStroke.addPoint(x, y, pressure);
+                    currentStroke.addPoint(x, y, pressure, event.getEventTime());
                 }
                 break;
             case MotionEvent.ACTION_UP:
