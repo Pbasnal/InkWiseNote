@@ -262,11 +262,45 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     public void saveNoteInCorrectFolder(AtomicNoteEntity atomicNote,
                                         String newNotebookPath,
                                         NoteHolderData noteHolderData) {
+        // Store the old path to move files
+        String oldFilePath = atomicNote.getFilepath();
+        
+        // Update the filepath
         atomicNote.setFilepath(newNotebookPath);
+        
+        // Ensure directory exists
+        File directory = new File(newNotebookPath);
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        
+        // Move existing files if they exist
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".png");
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + "-t.png");
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".pt");
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".md");
+        
         BackgroundOps.execute(() -> {
             atomicNotesDomain.updateAtomicNote(atomicNote);
             saveCurrentNote(atomicNote, noteHolderData);
         });
+    }
+    
+    /**
+     * Moves a file from source to destination if it exists
+     */
+    private void moveFileIfExists(String sourcePath, String destPath, String filename) {
+        try {
+            File sourceFile = new File(sourcePath, filename);
+            if (sourceFile.exists()) {
+                File destFile = new File(destPath, filename);
+                if (!sourceFile.renameTo(destFile)) {
+                    logger.error("Failed to move file: " + filename);
+                }
+            }
+        } catch (Exception e) {
+            logger.exception("Error moving file: " + filename, e);
+        }
     }
 
     public boolean updateTitle(String updatedTitle) {
