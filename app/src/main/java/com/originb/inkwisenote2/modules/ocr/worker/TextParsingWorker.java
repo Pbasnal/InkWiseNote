@@ -84,20 +84,124 @@ public class TextParsingWorker extends Worker {
             DigitalInkRecognitionModel model =
                     DigitalInkRecognitionModel.builder(modelIdentifier).build();
 
-            // Download model if not already available
+            // First check if model is already downloaded
             RemoteModelManager modelManager = RemoteModelManager.getInstance();
-            modelManager.download(model, new DownloadConditions.Builder().build())
-                    .addOnSuccessListener(unused ->
-                            logger.debug("Model downloaded successfully"))
-                    .addOnFailureListener(e ->
-                            logger.error("Error downloading model: " + e.getMessage()));
-
-            // Create recognizer
-            recognizer = DigitalInkRecognition.getClient(
-                    DigitalInkRecognizerOptions.builder(model).build());
+            
+            // Use CompletableFuture to wait for model download/check to complete
+            CompletableFuture<Boolean> modelReadyFuture = new CompletableFuture<>();
+            
+            // Check if model is already downloaded
+            modelManager.isModelDownloaded(model)
+                .addOnSuccessListener(isDownloaded -> {
+                    if (isDownloaded) {
+                        logger.debug("Model marked as downloaded, verifying...");
+                        // Verify the model actually works by creating a test recognizer
+                        verifyModelActuallyWorks(model, modelManager, modelReadyFuture);
+                    } else {
+                        logger.debug("Model not found, starting download");
+                        // Model not downloaded, start download
+                        modelManager.download(model, new DownloadConditions.Builder().build())
+                            .addOnSuccessListener(unused -> {
+                                logger.debug("Model downloaded successfully, verifying...");
+                                // Verify the model actually works after download
+                                verifyModelActuallyWorks(model, modelManager, modelReadyFuture);
+                            })
+                            .addOnFailureListener(e -> {
+                                logger.error("Error downloading model: " + e.getMessage());
+                                modelReadyFuture.complete(false);
+                            });
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    logger.error("Failed to check if model is downloaded: " + e.getMessage());
+                    modelReadyFuture.complete(false);
+                });
+            
+            // Wait for the model to be ready (with timeout)
+            boolean modelReady = modelReadyFuture.get(30, java.util.concurrent.TimeUnit.SECONDS);
+            
+            if (modelReady) {
+                // Create recognizer only if model is ready
+                recognizer = DigitalInkRecognition.getClient(
+                        DigitalInkRecognizerOptions.builder(model).build());
+                logger.debug("Recognizer initialized successfully");
+            } else {
+                logger.error("Model not ready, recognizer not initialized");
+            }
         } catch (Exception e) {
             logger.error("Failed to initialize ML Kit: " + e.getMessage());
         }
+    }
+    
+    /**
+     * Verifies that the model actually works by creating a test recognizer and 
+     * performing a simple operation
+     */
+    private void verifyModelActuallyWorks(DigitalInkRecognitionModel model, 
+                                         RemoteModelManager modelManager,
+                                         CompletableFuture<Boolean> resultFuture) {
+        try {
+            // Create a test recognizer
+            DigitalInkRecognizer testRecognizer = DigitalInkRecognition.getClient(
+                    DigitalInkRecognizerOptions.builder(model).build());
+            
+            // Create a simple ink with one stroke to test
+            Ink.Builder inkBuilder = Ink.builder();
+            Ink.Stroke.Builder strokeBuilder = Ink.Stroke.builder();
+            
+            // Add a simple line (two points)
+            strokeBuilder.addPoint(Ink.Point.create(0, 0, 0));
+            strokeBuilder.addPoint(Ink.Point.create(10, 10, 10));
+            inkBuilder.addStroke(strokeBuilder.build());
+            
+            // Try to recognize this simple pattern
+            testRecognizer.recognize(inkBuilder.build())
+                .addOnSuccessListener(result -> {
+                    // If we get here, the model is working correctly
+                    logger.debug("Model verification successful");
+                    resultFuture.complete(true);
+                })
+                .addOnFailureListener(e -> {
+                    logger.error("Model verification failed: " + e.getMessage());
+                    // Model is corrupt or unavailable, try force re-downloading
+                    forceRedownloadModel(model, modelManager, resultFuture);
+                });
+        } catch (Exception e) {
+            logger.error("Error during model verification: " + e.getMessage());
+            // Try force re-downloading the model
+            forceRedownloadModel(model, modelManager, resultFuture);
+        }
+    }
+    
+    /**
+     * Forces a re-download of the model by first deleting it and then downloading again
+     */
+    private void forceRedownloadModel(DigitalInkRecognitionModel model,
+                                     RemoteModelManager modelManager,
+                                     CompletableFuture<Boolean> resultFuture) {
+        logger.debug("Attempting to force re-download the model");
+        
+        // First delete the existing model if any
+        modelManager.deleteDownloadedModel(model)
+            .addOnSuccessListener(aVoid -> {
+                logger.debug("Successfully deleted existing model");
+                // Now download the model again
+                modelManager.download(model, new DownloadConditions.Builder()
+                        .requireWifi()  // Require WiFi to ensure better download
+                        .build())
+                    .addOnSuccessListener(unused -> {
+                        logger.debug("Model re-downloaded successfully");
+                        resultFuture.complete(true);
+                    })
+                    .addOnFailureListener(e -> {
+                        logger.error("Failed to re-download model: " + e.getMessage());
+                        resultFuture.complete(false);
+                    });
+            })
+            .addOnFailureListener(e -> {
+                logger.error("Failed to delete existing model: " + e.getMessage());
+                resultFuture.complete(false);
+            });
     }
 
     @NotNull
@@ -118,40 +222,63 @@ public class TextParsingWorker extends Worker {
     public void parseTextForNotebook(ParsingInput input) {
         long bookId = input.bookId;
         long noteId = input.noteId;
-        logger.debug("Parsing text from a notebook (new flow): " + bookId);
+        logger.debug("Parsing text from a notebook for bookId: " + bookId + ", noteId: " + noteId);
 
         AtomicNoteEntity atomicNote = atomicNotesDomain.getAtomicNote(noteId);
-        if (atomicNote == null) return;
+        if (atomicNote == null) {
+            logger.error("Note not found for noteId: " + noteId);
+            return;
+        }
 
         HandwrittenNoteWithImage handwrittenNoteWithImage = handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE);
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNoteWithImage.handwrittenNoteEntity;
+        if (handwrittenNoteEntity == null) {
+            logger.error("Handwritten note entity not found for noteId: " + noteId);
+            onFailure(bookId, noteId);
+            return;
+        }
 
         NoteOcrText noteOcrTextDb = noteOcrTextDao.readTextFromDb(atomicNote.getNoteId());
-        NoteOcrText noteOcrText;
-        if (ConfigReader.isAzureOcrEnabled()) {
-           noteOcrText = parseTextForHandwrittenNoteWithAzure(atomicNote,
-                   handwrittenNoteWithImage,
-                    noteOcrTextDb);
-        } else {
-            noteOcrText = parseTextForHandwrittenNote(atomicNote,
-                    handwrittenNoteEntity,
-                    noteOcrTextDb);
+        if (noteOcrTextDb != null && noteOcrTextDb.getNoteHash().equals(handwrittenNoteEntity.getBitmapHash())) {
+            logger.debug("Note already has the latest OCR text, skipping");
+            return;
+        }
+
+        // Try ML Kit first if Azure OCR is not explicitly required
+        NoteOcrText noteOcrText = null;
+        if (!ConfigReader.isAzureOcrEnabled()) {
+            logger.debug("Attempting recognition with ML Kit");
+            noteOcrText = parseTextForHandwrittenNote(atomicNote, handwrittenNoteEntity, noteOcrTextDb);
+        }
+        
+        // Fall back to Azure OCR if ML Kit fails or if Azure is explicitly required
+        if (noteOcrText == null) {
+            logger.debug("ML Kit recognition failed or Azure OCR was requested, trying Azure OCR");
+            noteOcrText = parseTextForHandwrittenNoteWithAzure(atomicNote, handwrittenNoteWithImage, noteOcrTextDb);
         }
 
         if (noteOcrText == null) {
+            logger.error("Both ML Kit and Azure OCR failed to recognize text");
+            onFailure(bookId, noteId);
+            return;
+        }
+
+        // Save the recognized text
+        try {
+            if (noteOcrTextDb == null) {
+                logger.debug("Inserting new OCR text for noteId: " + noteId);
+                noteOcrTextDao.insertTextToDb(noteOcrText);
+            } else {
+                logger.debug("Updating OCR text for noteId: " + noteId);
+                noteOcrTextDao.updateTextToDb(noteOcrText);
+            }
+            
+            logger.debug("Successfully saved OCR text for noteId: " + noteId);
+            WorkManagerBus.scheduleWorkForTextProcessingForBook(getApplicationContext(), bookId, noteId);
+        } catch (Exception e) {
+            logger.error("Failed to save OCR text: " + e.getMessage());
             onFailure(bookId, noteId);
         }
-
-        if (noteOcrTextDb == null) {
-            logger.debug("Inserting extracted text", ListUtils.listOf(noteOcrText, handwrittenNoteEntity));
-            noteOcrTextDao.insertTextToDb(noteOcrText);
-        } else {
-            logger.debug("Updating extracted text", ListUtils.listOf(noteOcrText, handwrittenNoteEntity));
-            noteOcrTextDao.updateTextToDb(noteOcrText);
-        }
-
-        logger.debug("Scheduling text processing work for book: " + bookId);
-        WorkManagerBus.scheduleWorkForTextProcessingForBook(getApplicationContext(), bookId, noteId);
     }
 
     public NoteOcrText parseTextForHandwrittenNote(AtomicNoteEntity atomicNote,
@@ -190,9 +317,16 @@ public class TextParsingWorker extends Worker {
     }
 
     private Optional<String> recognizeInkText(List<Stroke> appStrokes) {
+        // First check if recognizer is available
         if (recognizer == null) {
-            logger.error("Recognizer not initialized");
-            return Optional.empty();
+            logger.error("Recognizer not initialized, attempting to initialize it now");
+            initializeRecognizer();
+            
+            // Check again after initialization attempt
+            if (recognizer == null) {
+                logger.error("Failed to initialize recognizer, falling back to Azure OCR if available");
+                return Optional.empty();
+            }
         }
 
         try {
@@ -217,12 +351,15 @@ public class TextParsingWorker extends Worker {
             // CompletableFuture to handle async recognition
             CompletableFuture<String> future = new CompletableFuture<>();
 
-            // Recognize text
+            // Recognize text with timeout
             recognizer.recognize(ink)
                     .addOnSuccessListener(result -> {
                         String text = "";
                         if (!result.getCandidates().isEmpty()) {
                             text = result.getCandidates().get(0).getText();
+                            logger.debug("Recognition successful: " + text);
+                        } else {
+                            logger.debug("Recognition returned no candidates");
                         }
                         future.complete(text);
                     })
@@ -231,8 +368,13 @@ public class TextParsingWorker extends Worker {
                         future.completeExceptionally(e);
                     });
 
-            // Wait for result
-            return Optional.of(future.get());
+            // Wait for result with timeout
+            try {
+                return Optional.of(future.get(15, java.util.concurrent.TimeUnit.SECONDS));
+            } catch (java.util.concurrent.TimeoutException e) {
+                logger.error("Recognition timed out after 15 seconds");
+                return Optional.empty();
+            }
         } catch (Exception e) {
             logger.error("Error during ink recognition: " + e.getMessage());
             return Optional.empty();
