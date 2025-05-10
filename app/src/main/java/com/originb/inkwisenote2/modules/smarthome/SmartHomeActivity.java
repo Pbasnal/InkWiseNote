@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.ImageButton;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
@@ -73,6 +74,10 @@ public class SmartHomeActivity extends AppCompatActivity {
 
         // Add custom view to toolbar
         toolbar.addView(getLayoutInflater().inflate(R.layout.custom_toolbar, null));
+
+        // Setup search button
+        ImageButton searchButton = findViewById(R.id.search_button);
+        searchButton.setOnClickListener(v -> Routing.NoteSearchActivity.openSearchPage(this));
 
         // Setup drawer layout
         drawerLayout = findViewById(R.id.drawer_layout);
