@@ -114,9 +114,13 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     public void updateNoteStatus(Events.NoteStatus noteStatus) {
+        // Always cleanup any existing animation first
+        stopRotationAnimation();
+        
         if (!TextProcessingStage.NOTE_READY.equals(noteStatus.status)) {
+            // Start new animation for processing state
             noteStatusImg.setImageResource(R.drawable.ic_in_process);
-
+            
             // Create rotation animation programmatically
             rotateAnimator = ObjectAnimator.ofFloat(
                     noteStatusImg,
@@ -126,29 +130,42 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
             rotateAnimator.setDuration(1000); // 1 second per rotation
             rotateAnimator.setRepeatCount(ObjectAnimator.INFINITE);
             rotateAnimator.setInterpolator(new LinearInterpolator());
-
+            
             // Start animation
             rotateAnimator.start();
             isAnimationRunning = true;
-
+            
             Log.d("GridNoteCardHolder", "Starting rotation animation");
         } else {
-            // Stop animation and show ready status
-            if (rotateAnimator != null) {
-                noteStatusImg.post(() -> {
-                    rotateAnimator.end();
-                    rotateAnimator.removeAllListeners();
-                    rotateAnimator.cancel();
-                    rotateAnimator = null;
-                    noteStatusImg.clearAnimation(); // Clear any remaining animations
-                    noteStatusImg.animate().cancel(); // Cancel any ongoing ViewPropertyAnimator
-                    noteStatusImg.setRotation(0f); // Reset rotation
-                    noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
-                    isAnimationRunning = false;
-                });
+            // Set ready status image without animation
+            noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
+            isAnimationRunning = false;
+            Log.d("GridNoteCardHolder", "Set to ready status");
+        }
+    }
+    
+    /**
+     * Helper method to stop rotation animation and reset view state
+     */
+    private void stopRotationAnimation() {
+        Log.d("GridNoteCardHolder", "Stopping rotation animation");
+        
+        if (rotateAnimator != null) {
+            try {
+                rotateAnimator.cancel();
+                rotateAnimator.removeAllListeners();
+                rotateAnimator = null;
+            } catch (Exception e) {
+                Log.e("GridNoteCardHolder", "Error stopping animator", e);
             }
-
-            Log.d("GridNoteCardHolder", "Stopping rotation animation");
+        }
+        
+        try {
+            noteStatusImg.clearAnimation();
+            noteStatusImg.animate().cancel();
+            noteStatusImg.setRotation(0f); // Reset rotation
+        } catch (Exception e) {
+            Log.e("GridNoteCardHolder", "Error resetting image view", e);
         }
     }
 
@@ -206,15 +223,7 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     public void onViewRecycled() {
-        if (rotateAnimator != null) {
-            rotateAnimator.end();
-            rotateAnimator.removeAllListeners();
-            rotateAnimator.cancel();
-            rotateAnimator = null;
-        }
-        noteStatusImg.clearAnimation();
-        noteStatusImg.animate().cancel();
-        noteStatusImg.setRotation(0f);
+        stopRotationAnimation();
     }
 
 
