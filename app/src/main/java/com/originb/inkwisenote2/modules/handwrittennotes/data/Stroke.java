@@ -58,4 +58,8 @@ public class Stroke implements Serializable {
     public void addPoint(float x, float y, float pressure) {
         addPoint(new StrokePoint(x, y, pressure));
     }
+    
+    public void addPoint(float x, float y, float pressure, long timestamp) {
+        addPoint(new StrokePoint(x, y, pressure, timestamp));
+    }
 } 

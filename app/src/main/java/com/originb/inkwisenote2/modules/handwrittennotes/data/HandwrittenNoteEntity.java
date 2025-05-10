@@ -51,7 +51,9 @@ public class HandwrittenNoteEntity {
     @ColumnInfo(name = "last_modified_time_ms")
     private long lastModifiedTimeMillis;
 }
-
+// todo: Add width and height of the drawingView
+// then use logical space to create the canvas
+// check notion for details
 
 
 

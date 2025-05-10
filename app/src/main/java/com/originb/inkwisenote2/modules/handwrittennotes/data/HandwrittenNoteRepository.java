@@ -3,12 +3,10 @@ package com.originb.inkwisenote2.modules.handwrittennotes.data;
 import android.content.Context;
 import android.graphics.Bitmap;
 import com.google.android.gms.common.util.Strings;
-import com.originb.inkwisenote2.common.BitmapScale;
+import com.originb.inkwisenote2.common.*;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote2.common.BitmapFileIoUtils;
-import com.originb.inkwisenote2.common.BytesFileIoUtils;
-import com.originb.inkwisenote2.common.HashUtils;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONArray;
@@ -31,25 +29,30 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class HandwrittenNoteRepository {
-
+    private final Logger logger = new Logger("HandwrittenNoteRepository");
     private final HandwrittenNotesDao handwrittenNotesDao;
+    AtomicNotesDomain atomicNotesDomain;
 
     public HandwrittenNoteRepository() {
         this.handwrittenNotesDao = Repositories.getInstance().getNotesDb().handwrittenNotesDao();
+        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
     }
 
     public void saveHandwrittenNoteImage(AtomicNoteEntity atomicNote, Bitmap bitmap) {
         if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath()) || Objects.isNull(bitmap)) {
             return;
         }
+        try {
+            String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
+            String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
 
-        String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
-        String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
+            Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
 
-        Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
-
-        BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
-        BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
+            BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
+            BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
+        } catch (Exception ex) {
+            logger.exception("Error saving handwritten note for noteId: " + atomicNote.getNoteId(), ex);
+        }
     }
 
     public void saveHandwrittenNotePageTemplate(AtomicNoteEntity atomicNote, PageTemplate pageTemplate) {
@@ -68,53 +71,65 @@ public class HandwrittenNoteRepository {
                                         PageTemplate pageTemplate,
                                         List<Stroke> strokes,
                                         Context context) {
+        // Make a local copy of atomicNote to avoid modifying the original object
+        AtomicNoteEntity noteToSave = new AtomicNoteEntity();
+        noteToSave.setNoteId(atomicNote.getNoteId());
+        noteToSave.setFilepath(atomicNote.getFilepath());
+        noteToSave.setFilename(atomicNote.getFilename());
+        noteToSave.setNoteType(atomicNote.getNoteType());
+
         String bitmapHash = getBitmapHash(bitmap);
         String pageTemplateHash = getPageTemplateHash(pageTemplate);
-        String strokesHash = getStrokesHash(strokes);
 
         boolean noteUpdated = false;
 
         HandwrittenNoteEntity handwrittenNoteEntity = handwrittenNotesDao
-                .getHandwrittenNoteForNote(atomicNote.getNoteId());
+                .getHandwrittenNoteForNote(noteToSave.getNoteId());
         if (handwrittenNoteEntity == null) {
             handwrittenNoteEntity = new HandwrittenNoteEntity();
-            handwrittenNoteEntity.setNoteId(atomicNote.getNoteId());
+            handwrittenNoteEntity.setNoteId(noteToSave.getNoteId());
             handwrittenNoteEntity.setBookId(bookId);
 
-            String bitmapFilePath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
+            String bitmapFilePath = noteToSave.getFilepath() + "/" + noteToSave.getFilename() + ".png";
             handwrittenNoteEntity.setBitmapFilePath(bitmapFilePath);
             handwrittenNoteEntity.setBitmapHash(bitmapHash);
 
             handwrittenNoteEntity.setCreatedTimeMillis(System.currentTimeMillis());
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-            saveHandwrittenNoteImage(atomicNote, bitmap);
-            saveHandwrittenNoteMarkdown(atomicNote, strokes);
+            saveHandwrittenNoteImage(noteToSave, bitmap);
+            saveHandwrittenNoteMarkdown(noteToSave, strokes);
             handwrittenNotesDao.insertHandwrittenNote(handwrittenNoteEntity);
             noteUpdated = true;
         } else if (bitmapHash != null && !bitmapHash.equals(handwrittenNoteEntity.getBitmapHash())) {
             handwrittenNoteEntity.setBitmapHash(bitmapHash);
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-            saveHandwrittenNoteImage(atomicNote, bitmap);
-            saveHandwrittenNoteMarkdown(atomicNote, strokes);
+            saveHandwrittenNoteImage(noteToSave, bitmap);
+            saveHandwrittenNoteMarkdown(noteToSave, strokes);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
             noteUpdated = true;
         }
 
         if (handwrittenNoteEntity.getPageTemplateHash() == null
                 && pageTemplateHash != null) {
-            handwrittenNoteEntity.setPageTemplateFilePath(atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".pt");
+            handwrittenNoteEntity.setPageTemplateFilePath(noteToSave.getFilepath() + "/" + noteToSave.getFilename() + ".pt");
             handwrittenNoteEntity.setPageTemplateHash(pageTemplateHash);
-            saveHandwrittenNotePageTemplate(atomicNote, pageTemplate);
+            saveHandwrittenNotePageTemplate(noteToSave, pageTemplate);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
         } else if (pageTemplateHash != null && !pageTemplateHash.equals(handwrittenNoteEntity.getPageTemplateHash())) {
             handwrittenNoteEntity.setPageTemplateHash(bitmapHash);
             handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-            saveHandwrittenNotePageTemplate(atomicNote, pageTemplate);
+            saveHandwrittenNotePageTemplate(noteToSave, pageTemplate);
             handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
         }
 
         if (noteUpdated) {
-            EventBus.getDefault().post(new Events.HandwrittenNoteSaved(bookId, atomicNote, context));
+            // Ensure the original AtomicNoteEntity has the same filepath for consistency
+            if (!noteToSave.getFilepath().equals(atomicNote.getFilepath())) {
+                // Update the filepath in the database
+                atomicNotesDomain.updateAtomicNote(noteToSave);
+            }
+
+            EventBus.getDefault().post(new Events.HandwrittenNoteSaved(bookId, noteToSave, context));
         }
 
         return noteUpdated;
@@ -236,7 +251,8 @@ public class HandwrittenNoteRepository {
             builder.append("{")
                     .append("\"x\":").append(point.getX()).append(",")
                     .append("\"y\":").append(point.getY()).append(",")
-                    .append("\"p\":").append(point.getPressure())
+                    .append("\"p\":").append(point.getPressure()).append(",")
+                    .append("\"t\":").append(point.getTimestamp())
                     .append("}");
 
             if (i < points.size() - 1) {
@@ -358,15 +374,49 @@ public class HandwrittenNoteRepository {
         JSONArray pointsArray = strokeJson.getJSONArray("points");
         for (int i = 0; i < pointsArray.length(); i++) {
             JSONObject pointJson = pointsArray.getJSONObject(i);
-            StrokePoint point = new StrokePoint(
-                    (float) pointJson.getDouble("x"),
-                    (float) pointJson.getDouble("y"),
-                    (float) pointJson.getDouble("p")
-            );
+            float x = (float) pointJson.getDouble("x");
+            float y = (float) pointJson.getDouble("y");
+            float p = (float) pointJson.getDouble("p");
+            long t = pointJson.has("t") ? pointJson.getLong("t") : System.currentTimeMillis();
+            StrokePoint point = new StrokePoint(x, y, p, t);
             stroke.addPoint(point);
         }
 
         return stroke;
+    }
+
+    /**
+     * Gets strokes for a specific note ID
+     *
+     * @param noteId The ID of the note to retrieve strokes for
+     * @return List of strokes or empty list if none found
+     */
+    public List<Stroke> getStrokes(long noteId) {
+        AtomicNoteEntity note = Repositories.getInstance().getAtomicNotesDomain().getAtomicNote(noteId);
+        if (note == null) {
+            logger.error("Could not find note with ID: " + noteId);
+            return new ArrayList<>();
+        }
+
+        return readHandwrittenNoteMarkdown(note);
+    }
+
+    /**
+     * Gets the parent directory from a filepath
+     *
+     * @param filepath The full filepath
+     * @return The parent directory path
+     */
+    private String getParentDirectory(String filepath) {
+        if (Strings.isEmptyOrWhitespace(filepath)) {
+            return "";
+        }
+
+        int lastSlashIndex = filepath.lastIndexOf('/');
+        if (lastSlashIndex > 0) {
+            return filepath.substring(0, lastSlashIndex);
+        }
+        return filepath;
     }
 
 }

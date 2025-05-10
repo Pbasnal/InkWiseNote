@@ -1,7 +1,6 @@
 {
   "enabledFeatures": [
     "HOME_PAGE_NAVIGATION_SIDEBAR",
-    "AZURE_OCR",
     "MARKDOWN_EDITOR",
     "ADMIN_VIEW"
   ],
@@ -11,5 +10,11 @@
       "lineColor": "#600b182e",
       "lineWidth": 1
     }
-  }
+  },
+  "canvasSizes": [
+    {
+      "width": 1000,
+      "height": 1400
+    }
+  ]
 }

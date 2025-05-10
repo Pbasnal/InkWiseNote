@@ -8,6 +8,8 @@ import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.common.Strings;
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,10 +31,16 @@ public class SmartNotebookRepository {
     public Optional<SmartNotebook> initializeNewSmartNotebook(String title,
                                                               String directoryPath,
                                                               NoteType noteType) {
+        // Create a directory with the notebook title
+        String notebookDirectory = Paths.get(directoryPath, title).toString();
+        File notebookDir = new File(notebookDirectory);
+        if (!notebookDir.exists()) {
+            notebookDir.mkdirs();
+        }
 
         AtomicNoteEntity atomicNoteEntity = atomicNotesDomain.saveAtomicNote(AtomicNotesDomain.constructAtomicNote(
                 "",
-                directoryPath,
+                notebookDirectory,
                 noteType));
         SmartBookEntity smartBookEntity = newSmartBook(title, atomicNoteEntity.getCreatedTimeMillis());
         SmartBookPage smartBookPage = newSmartBookPage(smartBookEntity, atomicNoteEntity, 0);
@@ -41,12 +49,11 @@ public class SmartNotebookRepository {
     }
 
     public void deleteSmartNotebook(SmartNotebook smartNotebook) {
-        // will pages allow this to be deleted first?
+        smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
+
         smartNotebook.getAtomicNotes()
                 .stream().map(AtomicNoteEntity::getNoteId)
                 .forEach(atomicNoteEntitiesDao::deleteAtomicNote);
-
-        smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
 
@@ -58,15 +65,16 @@ public class SmartNotebookRepository {
         if (smartNotebook.getAtomicNotes().size() <= 1) deleteSmartNotebook(smartNotebook);
         else {
 
-            atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
             smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
+            atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
 
-            getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
-                    .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
-                    .ifPresent(updatedSmartNotebook -> {
-                        smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
-                        smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
-                    });
+            // TODO: this is a clean up job. Why do here?
+//            getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
+//                    .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
+//                    .ifPresent(updatedSmartNotebook -> {
+//                        smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
+//                        smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
+//                    });
             EventBus.getDefault().post(new Events.NoteDeleted(smartNotebook, atomicNote));
         }
     }
@@ -286,6 +294,10 @@ public class SmartNotebookRepository {
         long bookId = smartBook.getBookId();
         SmartBookEntity bookInDb = smartBooksDao.getSmartbook(bookId);
         return bookInDb != null;
+    }
+
+    public List<SmartBookPage> getAllSmartBookPages() {
+        return smartBookPagesDao.getAllSmartBookPages();
     }
 }
 

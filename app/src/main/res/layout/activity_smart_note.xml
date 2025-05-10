@@ -109,7 +109,7 @@
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-    <androidx.recyclerview.widget.RecyclerView
+    <com.originb.inkwisenote2.modules.smartnotes.ui.NonScrollableRecyclerView
             android:id="@+id/smart_note_page_view"
             android:layout_width="match_parent"
             android:layout_height="0dp"

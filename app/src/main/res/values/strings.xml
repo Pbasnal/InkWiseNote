@@ -9,6 +9,7 @@
     <string name="tap_to_text">Tap here to take text note</string>
     <string name="tap_to_write">Touch here to take handwritten notes</string>
     <string name="create_by_user">Your recent SmartNotebooks</string>
+    <string name="take_notes_prompt">Looks a bit empty here :) \n Lets take some notes!</string>
     <string name="create_by_us">Smart Notebooks created by us for you!</string>
     <string name="custom_tracking">Words and topics currently being tracked</string>
     <string name="query_results_title">Query Results</string>

@@ -62,7 +62,6 @@ public class OcrService {
         public AzureOcrResult runOcr(InputStream imageStream) throws IOException {
             byte[] imageBytes = new byte[imageStream.available()];
             imageStream.read(imageBytes);
-//                String contents = Base64.getEncoder().encodeToString(imageBytes);
 
             URL url = new URL(VISION_ENDPOINT + "/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=read&language=en");
             HttpURLConnection connection = (HttpsURLConnection) url.openConnection();
