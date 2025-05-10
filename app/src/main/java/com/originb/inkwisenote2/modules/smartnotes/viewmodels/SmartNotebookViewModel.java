@@ -147,6 +147,14 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                     notebookTitle.setValue(notebook.smartBook.getTitle());
                     createdTimeMillis.setValue(notebook.smartBook.getCreatedTimeMillis());
                     updatePageNumberText();
+
+
+                    if (bookTitle == null) {
+                        String booktTitleFromDb = notebook.smartBook.getTitle();
+                        booktTitleFromDb = booktTitleFromDb != null ?
+                                booktTitleFromDb : String.valueOf(notebook.smartBook.getCreatedTimeMillis());
+                        this.workingNotePath = Paths.get(workingPath, booktTitleFromDb).toString();
+                    }
                 }
         );
     }
@@ -264,28 +272,28 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                                         NoteHolderData noteHolderData) {
         // Store the old path to move files
         String oldFilePath = atomicNote.getFilepath();
-        
+
         // Update the filepath
         atomicNote.setFilepath(newNotebookPath);
-        
+
         // Ensure directory exists
         File directory = new File(newNotebookPath);
         if (!directory.exists()) {
             directory.mkdirs();
         }
-        
+
         // Move existing files if they exist
         moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".png");
         moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + "-t.png");
         moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".pt");
         moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".md");
-        
+
         BackgroundOps.execute(() -> {
             atomicNotesDomain.updateAtomicNote(atomicNote);
             saveCurrentNote(atomicNote, noteHolderData);
         });
     }
-    
+
     /**
      * Moves a file from source to destination if it exists
      */
@@ -432,7 +440,7 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                     .collect(Collectors.toSet());
 
             Set<SmartNotebook> smartNotebooks = smartNotebookRepository.getSmartNotebooksForNoteIds(noteIdsSet);
-            if (smartNotebooks.size() == 1) {
+            if (smartNotebooks.size() == 1) { // if all the notes belong to an existing notebook
                 return smartNotebooks.stream().findFirst();
             }
 

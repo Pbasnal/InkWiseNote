@@ -8,23 +8,17 @@ import java.util.stream.Collectors;
 public class ListUtils {
     public static <T> List<T> listOf(T... items) {
         if (items == null) return new ArrayList<>();
-        switch (items.length) {
-            case 0:
-                return Collections.emptyList();
-            case 1:
-                return Collections.singletonList(items[0]);
-            default:
-                return Collections.unmodifiableList(Arrays.asList(items));
-        }
+        return new ArrayList<>(Arrays.asList(items));
     }
 
     public static <T> List<T> merge(List<T> a, List<T> b) {
-        if (a == null && b != null) return b;
-        else if (a != null && b == null) return a;
-        else if (a == null && b == null) return new ArrayList<>();
+        if (a == null && b == null) return new ArrayList<>();
+        else if (a != null && b == null) return new ArrayList<>(a);
+        else if (a == null && b != null) return new ArrayList<>(b);
 
-        a.addAll(b);
-        return a;
+        List<T> result = new ArrayList<>(a);
+        result.addAll(b);
+        return result;
     }
 
     public static <T, K> Map<K, List<T>> groupBy(List<T> list, Function<? super T, ? extends K> keyMapper) {

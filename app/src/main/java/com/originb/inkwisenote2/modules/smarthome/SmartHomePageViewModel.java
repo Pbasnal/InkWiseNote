@@ -105,6 +105,19 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.setValue(queryResultsMap);
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNoteDeleted(Events.NoteDeleted noteDeleted) {
+        Map<String, Set<QueryNoteResult>> queryResultsMap = liveQueryResults.getValue();
+        if (queryResultsMap == null || queryResultsMap.values() == null) return;
+
+        long noteId = noteDeleted.atomicNote.getNoteId();
+        for (Set<QueryNoteResult> queryNoteResults : queryResultsMap.values()) {
+            queryNoteResults.removeIf(q -> noteId == q.getNoteId());
+        }
+
+        liveQueryResults.setValue(queryResultsMap);
+    }
+
     public Map<String, Set<QueryNoteResult>> getResultsOfAllQueries(Optional<Long> bookIdOpt) {
         List<QueryEntity> queries = queryRepository.getAllQueries();
         Map<String, Set<QueryNoteResult>> queryResultsMap = new HashMap<>();
