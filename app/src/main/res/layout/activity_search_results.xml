@@ -3,13 +3,15 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               xmlns:app="http://schemas.android.com/apk/res-auto"
-              android:orientation="vertical">
+              android:orientation="vertical"
+              android:background="?attr/colorSurface">
 
     <TextView
             android:id="@+id/searchResultsTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Search Results"
+            android:textColor="?attr/colorOnSurface"
             android:textAppearance="@style/TextAppearance.MaterialComponents.Headline6"
             android:padding="16dp"
             android:gravity="center"/>
@@ -18,13 +20,22 @@
             android:id="@+id/searchInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Type to search"/>
+            android:hint="Type to search"
+            android:textColor="?attr/colorOnSurface"
+            android:textColorHint="?attr/colorOnSurface"
+            android:backgroundTint="?attr/colorPrimary"
+            android:layout_marginHorizontal="16dp"/>
 
     <Button
             android:id="@+id/searchButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Search"/>
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:text="Search"
+            android:backgroundTint="?attr/colorPrimary"
+            android:textColor="?attr/colorOnPrimary"/>
 
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/note_search_card_grid_view"
@@ -37,7 +48,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
             app:spanCount="2"
-            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/> <!-- Adjust spanCount based on the desired number of columns per row -->
-
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
 
 </LinearLayout>

@@ -21,8 +21,14 @@
         <item name="colorOnPrimaryContainer">@color/on_primary_container_light</item>
         <item name="colorSecondaryContainer">@color/secondary_container_light</item>
         <item name="colorOnSecondaryContainer">@color/on_secondary_container_light</item>
+        <!-- Error colors -->
+        <item name="colorError">@color/red</item>
+        <item name="colorOnError">@color/white</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Primary surface color (combines primary and surface) -->
+        <item name="colorPrimarySurface">?attr/colorPrimary</item>
+        <item name="colorOnPrimarySurface">?attr/colorOnPrimary</item>
         <!-- Outline -->
         <item name="colorOutline">@color/card_stroke_light</item>
         <item name="windowActionBar">false</item>
