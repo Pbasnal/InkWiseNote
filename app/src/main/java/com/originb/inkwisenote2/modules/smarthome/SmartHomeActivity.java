@@ -79,12 +79,6 @@ public class SmartHomeActivity extends AppCompatActivity {
         ImageButton searchButton = findViewById(R.id.search_button);
         searchButton.setOnClickListener(v -> Routing.NoteSearchActivity.openSearchPage(this));
 
-        // Setup open all notebooks button
-        ImageButton openAllNotebooksButton = findViewById(R.id.open_all_notebooks);
-        openAllNotebooksButton.setOnClickListener(v -> {
-            Routing.NoteSearchActivity.openAllNotebooksPage(this);
-        });
-
         // Setup drawer layout
         drawerLayout = findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(
@@ -144,6 +138,8 @@ public class SmartHomeActivity extends AppCompatActivity {
         private SmartNoteGridAdapter smartNoteGridAdapter;
 
         private TextView createdByUserText;
+        // Setup open all notebooks button
+        private ImageButton openAllNotebooksButton;
         private TextView createNotesPrompt;
 
         public RecentNotebooks(SmartHomeActivity activity) {
@@ -154,6 +150,13 @@ public class SmartHomeActivity extends AppCompatActivity {
             userNotebooksRecyclerView = findViewById(R.id.user_created_notebooks);
             createdByUserText = findViewById(R.id.created_by_user_text);
             createdByUserText.setVisibility(View.GONE);
+
+            // Setup open all notebooks button
+            openAllNotebooksButton = findViewById(R.id.open_all_notebooks);
+            openAllNotebooksButton.setVisibility(View.GONE);
+            openAllNotebooksButton.setOnClickListener(v -> {
+                Routing.NoteSearchActivity.openAllNotebooksPage(activity);
+            });
 
             createNotesPrompt = findViewById(R.id.take_notes_prompt);
             createNotesPrompt.setVisibility(View.GONE);
@@ -173,11 +176,13 @@ public class SmartHomeActivity extends AppCompatActivity {
             if (CollectionUtils.isEmpty(notebooks)) {
                 createdByUserText.setVisibility(View.GONE);
                 createNotesPrompt.setVisibility(View.VISIBLE);
+                openAllNotebooksButton.setVisibility(View.VISIBLE);
                 return;
             }
             smartNoteGridAdapter.setSmartNotebooks(notebooks);
             createdByUserText.setVisibility(View.VISIBLE);
             createNotesPrompt.setVisibility(View.GONE);
+            openAllNotebooksButton.setVisibility(View.GONE);
         }
     }
 
