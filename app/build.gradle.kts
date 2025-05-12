@@ -54,6 +54,7 @@ android {
 
 dependencies {
     implementation("com.google.android.gms:play-services-base:18.5.0") // Ensure this is added
+    implementation("com.google.mlkit:digital-ink-recognition:18.0.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.drawerlayout:drawerlayout:1.2.0")
     implementation("com.google.android.material:material:1.12.0")

@@ -5,11 +5,15 @@ import android.graphics.*;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
+
+import com.originb.inkwisenote2.config.CanvasSize;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.RuledPageBackground;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.Stroke;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.StrokePoint;
+
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -40,19 +44,25 @@ public class DrawingView extends View {
     private WriteablePath path;
     private List<WriteablePath> paths;
     private List<Paint> paints;
-    
+
     // Collection of strokes for markdown export
     private List<Stroke> strokes;
     private Stroke currentStroke;
     private float lastPressure = 1.0f;
-    
+
     // Eraser mode flag and properties
     private boolean eraserMode = false;
     private float eraserSize = 30f;
     private Paint eraserPaint;
 
+    private ConfigReader configReader;
+    private CanvasSize canvasSize;
+
     public DrawingView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        configReader = ConfigReader.getInstance();
+        canvasSize = configReader.getAppConfig().getCanvasSizes().get(0);
 
         // Initialize paint with pencil-like properties
         paint = new Paint();
@@ -82,7 +92,7 @@ public class DrawingView extends View {
         path = new WriteablePath();
         paths = new ArrayList<>();
         paints = new ArrayList<>();
-        
+
         // Initialize strokes collection
         strokes = new ArrayList<>();
 
@@ -93,6 +103,31 @@ public class DrawingView extends View {
                 1000, 1000);
 
         pageTemplateBitmap = ruledPageBackground.drawTemplate();
+
+        DrawingView thisView = this;
+        ViewTreeObserver vto = this.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int newWidth = thisView.getWidth();
+                int newHeight = thisView.getHeight();
+
+                if (currentWidth > newWidth || currentHeight > newHeight) {
+                    return;
+                }
+                currentWidth = thisView.getWidth();
+                currentHeight = thisView.getHeight();
+
+                // Now you can use width/height
+
+                // Remove listener if you only need it once
+                redrawStrokesOnBitmap();
+                ruledPageBackground.onSizeChanged(currentWidth, currentHeight, 0, 0);
+                pageTemplateBitmap = ruledPageBackground.drawTemplate();
+//                thisView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+            }
+        });
+
     }
 
     private Shader createPencilShader() {
@@ -120,39 +155,13 @@ public class DrawingView extends View {
         return Bitmap.createBitmap(1000, 1000, Bitmap.Config.ARGB_8888);
     }
 
-    @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
-        super.onSizeChanged(w, h, oldw, oldh);
-
-        if (oldh * oldw > 100) return; // bitmap has been already initialized
-        if (w == 0 || h == 0) return;
-
-        sizeChangeUserDrawingBitmap(w, h, oldw, oldh);
-        if (w != oldw || h != oldh) {
-            Bitmap newBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-            Canvas newCanvas = new Canvas(newBitmap);
-
-            // Draw the old bitmap onto the new one
-            newCanvas.drawBitmap(userDrawingBitmap, 0, 0, null);
-
-            userDrawingBitmap = newBitmap;
-            userDrwaingCanvas = newCanvas;
-        }
-
-        currentWidth = w;
-        currentHeight = h;
-
-        ruledPageBackground.onSizeChanged(w, h, oldw, oldh);
-        pageTemplateBitmap = ruledPageBackground.drawTemplate();
-    }
-
-    private void sizeChangeUserDrawingBitmap(int w, int h, int oldw, int oldh) {
-        if (Objects.isNull(userDrawingBitmap)) {
-            userDrawingBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        }
-    }
-
     public Bitmap getNewBitmap() {
+        if (currentWidth > 0 && currentHeight > 0) {
+            return Bitmap.createBitmap(currentWidth,
+                    currentHeight,
+                    Bitmap.Config.ARGB_8888);
+        }
+
         return Bitmap.createBitmap(userDrawingBitmap.getWidth(),
                 userDrawingBitmap.getHeight(),
                 Bitmap.Config.ARGB_8888);
@@ -213,13 +222,13 @@ public class DrawingView extends View {
                 path.moveTo(x, y);
                 // Start a new stroke for markdown export
                 currentStroke = new Stroke(paint.getColor(), paint.getStrokeWidth());
-                currentStroke.addPoint(x, y, pressure);
+                currentStroke.addPoint(x, y, pressure, event.getEventTime());
                 break;
             case MotionEvent.ACTION_MOVE:
                 path.lineTo(x, y);
                 // Add point to current stroke
                 if (currentStroke != null) {
-                    currentStroke.addPoint(x, y, pressure);
+                    currentStroke.addPoint(x, y, pressure, event.getEventTime());
                 }
                 break;
             case MotionEvent.ACTION_UP:
@@ -260,21 +269,21 @@ public class DrawingView extends View {
 
     private void eraseStrokesAt(float x, float y) {
         boolean strokesErased = false;
-        
+
         // Create a touch area for eraser
         RectF eraserRect = new RectF(
-                x - eraserSize/2,
-                y - eraserSize/2,
-                x + eraserSize/2,
-                y + eraserSize/2
+                x - eraserSize / 2,
+                y - eraserSize / 2,
+                x + eraserSize / 2,
+                y + eraserSize / 2
         );
-        
+
         // Iterate through strokes and remove those that intersect with eraser
         Iterator<Stroke> strokeIterator = strokes.iterator();
         while (strokeIterator.hasNext()) {
             Stroke stroke = strokeIterator.next();
             List<StrokePoint> points = stroke.getPoints();
-            
+
             // Check if any point in the stroke is within eraser area
             for (StrokePoint point : points) {
                 if (eraserRect.contains(point.getX(), point.getY())) {
@@ -284,7 +293,7 @@ public class DrawingView extends View {
                 }
             }
         }
-        
+
         // If we erased any strokes, redraw the bitmap
         if (strokesErased) {
             redrawStrokesOnBitmap();
@@ -293,6 +302,7 @@ public class DrawingView extends View {
 
     /**
      * Set eraser mode on or off
+     *
      * @param enabled true to enable eraser mode, false for drawing mode
      */
     public void setEraserMode(boolean enabled) {
@@ -305,6 +315,7 @@ public class DrawingView extends View {
 
     /**
      * Check if eraser mode is currently active
+     *
      * @return true if in eraser mode, false if in drawing mode
      */
     public boolean isEraserMode() {
@@ -313,6 +324,7 @@ public class DrawingView extends View {
 
     /**
      * Set the eraser size
+     *
      * @param size diameter of the eraser in pixels
      */
     public void setEraserSize(float size) {
@@ -322,12 +334,13 @@ public class DrawingView extends View {
 
     /**
      * Gets all strokes recorded for markdown export
+     *
      * @return List of strokes
      */
     public List<Stroke> getStrokes() {
         return strokes;
     }
-    
+
     /**
      * Clears all strokes
      */
@@ -335,9 +348,10 @@ public class DrawingView extends View {
         strokes.clear();
         invalidate();
     }
-    
+
     /**
      * Sets strokes list from external source (when loading from markdown)
+     *
      * @param loadedStrokes List of strokes to set
      */
     public void setStrokes(List<Stroke> loadedStrokes) {
@@ -347,7 +361,7 @@ public class DrawingView extends View {
             invalidate();
         }
     }
-    
+
     /**
      * Redraws all strokes on the bitmap
      */
@@ -355,25 +369,25 @@ public class DrawingView extends View {
         // Clear current bitmap
         userDrawingBitmap = getNewBitmap();
         userDrwaingCanvas = new Canvas(userDrawingBitmap);
-        
+
         // Redraw each stroke
         for (Stroke stroke : strokes) {
             Paint strokePaint = new Paint(paint);
             strokePaint.setColor(stroke.getColor());
             strokePaint.setStrokeWidth(stroke.getWidth());
-            
+
             Path strokePath = new Path();
             List<StrokePoint> points = stroke.getPoints();
-            
+
             if (points.size() > 0) {
                 StrokePoint firstPoint = points.get(0);
                 strokePath.moveTo(firstPoint.getX(), firstPoint.getY());
-                
+
                 for (int i = 1; i < points.size(); i++) {
                     StrokePoint point = points.get(i);
                     strokePath.lineTo(point.getX(), point.getY());
                 }
-                
+
                 userDrwaingCanvas.drawPath(strokePath, strokePaint);
             }
         }

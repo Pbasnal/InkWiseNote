@@ -1,6 +1,7 @@
 package com.originb.inkwisenote2.modules.smartnotes.viewmodels;
 
 import android.app.Application;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
@@ -19,6 +20,7 @@ import com.originb.inkwisenote2.modules.smartnotes.data.*;
 
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -29,10 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -137,6 +136,10 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
     public void loadSmartNotebook(Long bookId, String workingPath, String bookTitle, String noteIdsString) {
         this.workingNotePath = workingPath;
+        if (!Strings.isNullOrWhitespace(bookTitle)) {
+            this.workingNotePath = Paths.get(workingPath, bookTitle).toString();
+        }
+
         BackgroundOps.executeOpt(
                 () -> getSmartNotebook(bookId, bookTitle, noteIdsString),
                 notebook -> {
@@ -144,6 +147,14 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                     notebookTitle.setValue(notebook.smartBook.getTitle());
                     createdTimeMillis.setValue(notebook.smartBook.getCreatedTimeMillis());
                     updatePageNumberText();
+
+
+                    if (bookTitle == null) {
+                        String booktTitleFromDb = notebook.smartBook.getTitle();
+                        booktTitleFromDb = booktTitleFromDb != null ?
+                                booktTitleFromDb : String.valueOf(notebook.smartBook.getCreatedTimeMillis());
+                        this.workingNotePath = Paths.get(workingPath, booktTitleFromDb).toString();
+                    }
                 }
         );
     }
@@ -204,7 +215,8 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     public void onNotebookDelete(Events.NotebookDeleted notebookDeleted) {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         SmartNotebook deletedNotebook = notebookDeleted.smartNotebook;
-        if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId()) return;
+        if (notebook == null || deletedNotebook.smartBook.getBookId() != notebook.smartBook.getBookId())
+            return;
         deleteNotebookFolder(notebook.smartBook.getTitle());
         smartNotebookUpdate.setValue(SmartNotebookUpdate.notebookDeleted(deletedNotebook));
     }
@@ -234,7 +246,9 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     private void deleteNotebookFolder(String smartNotebookTitle) {
-
+        if (smartNotebookTitle == null) {
+            smartNotebookTitle = "";
+        }
         Path notebookPath = Paths.get(workingNotePath, smartNotebookTitle);
         try {
             Files.walk(notebookPath)
@@ -253,37 +267,76 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
     }
 
-    public void updateTitle(String title) {
-        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
-        if (notebook == null) return;
+    public void saveNoteInCorrectFolder(AtomicNoteEntity atomicNote,
+                                        String newNotebookPath,
+                                        NoteHolderData noteHolderData) {
+        // Store the old path to move files
+        String oldFilePath = atomicNote.getFilepath();
 
-        String currentTitleOfTheNotebook = notebook.smartBook.getTitle();
-        if (Strings.isNotEmpty(title)) {
-            notebook.getSmartBook().setTitle(title);
+        // Update the filepath
+        atomicNote.setFilepath(newNotebookPath);
+
+        // Ensure directory exists
+        File directory = new File(newNotebookPath);
+        if (!directory.exists()) {
+            directory.mkdirs();
         }
-        notebookTitle.setValue(title);
-        BackgroundOps.execute(() -> smartNotebookRepository.updateNotebook(notebook, getApplication()), () -> {
-            // rename the folder and update all the AtomicNotes filepath
-            if (currentTitleOfTheNotebook.equals(title)) return;
 
-            String newNotebookPath = workingNotePath + "/" + title;
-            File oldFolder = new File(workingNotePath + "/" + currentTitleOfTheNotebook);
-            File newFolder = new File(newNotebookPath);
+        // Move existing files if they exist
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".png");
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + "-t.png");
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".pt");
+        moveFileIfExists(oldFilePath, newNotebookPath, atomicNote.getFilename() + ".md");
 
-            boolean success = oldFolder.renameTo(newFolder);
-            if (success) {
-                logger.debug("Folder renamed successfully.");
-
-                for (AtomicNoteEntity atomicNote : notebook.atomicNotes) {
-                    atomicNote.setFilepath(newNotebookPath);
-                    atomicNotesDomain.saveAtomicNote(atomicNote);
-                }
-
-            } else {
-                logger.debug("Failed to rename folder.");
-            }
+        BackgroundOps.execute(() -> {
+            atomicNotesDomain.updateAtomicNote(atomicNote);
+            saveCurrentNote(atomicNote, noteHolderData);
         });
     }
+
+    /**
+     * Moves a file from source to destination if it exists
+     */
+    private void moveFileIfExists(String sourcePath, String destPath, String filename) {
+        try {
+            File sourceFile = new File(sourcePath, filename);
+            if (sourceFile.exists()) {
+                File destFile = new File(destPath, filename);
+                if (!sourceFile.renameTo(destFile)) {
+                    logger.error("Failed to move file: " + filename);
+                }
+            }
+        } catch (Exception e) {
+            logger.exception("Error moving file: " + filename, e);
+        }
+    }
+
+    public boolean updateTitle(String updatedTitle) {
+        if (smartNotebookUpdate.getValue() == null) return false;
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
+        if (notebook == null) return false;
+
+        if (Strings.isNotEmpty(updatedTitle)) {
+            notebook.getSmartBook().setTitle(updatedTitle);
+            notebookTitle.setValue(updatedTitle);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean renameNotebookFolderName(String newNotebookPath, String oldNotebookTitle) {
+        File newFolder = new File(newNotebookPath);
+
+        boolean updateNotesFolderName = true;
+
+        File oldFolder = new File(workingNotePath + "/" + oldNotebookTitle);
+        updateNotesFolderName = oldFolder.renameTo(newFolder);
+        if (!newFolder.exists()) {
+            updateNotesFolderName = newFolder.mkdirs();
+        }
+        return updateNotesFolderName;
+    }
+
 
     public void saveCurrentSmartNotebook() {
         // This method is called when the activity is paused or stopped
@@ -299,22 +352,20 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
     }
 
-    public void saveCurrentNote(NoteHolderData noteHolderData) {
+    public void saveCurrentNote(AtomicNoteEntity atomicNote, NoteHolderData noteHolderData) {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
         switch (noteHolderData.noteType) {
             case HANDWRITTEN_PNG:
                 handwrittenNoteRepository.saveHandwrittenNotes(notebook.smartBook.getBookId(),
-                        getCurrentNote(),
+                        atomicNote,
                         noteHolderData.bitmap,
                         noteHolderData.pageTemplate,
                         noteHolderData.strokes,
                         getApplication());
                 break;
             case TEXT_NOTE:
-                AtomicNoteEntity atomicNote = getCurrentNote();
-
                 // Save to database
                 TextNoteEntity textNoteEntity = textNotesDao.getTextNoteForNote(atomicNote.getNoteId());
                 if (textNoteEntity == null) {
@@ -345,7 +396,12 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private void saveNoteToMarkdownFile(AtomicNoteEntity note, String noteText) {
         BackgroundOps.execute(() -> {
             String filename = note.getFilename() + ".md";
-            File file = new File(note.getFilepath(), filename);
+            // Ensure we're using the notebook's directory path
+            String notebookDir = workingNotePath;
+            if (Strings.isNullOrWhitespace(notebookDir)) {
+                notebookDir = note.getFilepath();
+            }
+            File file = new File(notebookDir, filename);
 
             try (FileWriter writer = new FileWriter(file)) {
                 writer.write(noteText);
@@ -362,6 +418,11 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     }
 
     public AtomicNoteEntity getCurrentNote() {
+        // todo: handle this null case
+        if (smartNotebookUpdate.getValue() == null) {
+            return null;
+        }
+
         int currentNoteIndex = currentPageIndexLive.getValue();
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         return notebook.getAtomicNotes().get(currentNoteIndex);
@@ -379,8 +440,14 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                     .collect(Collectors.toSet());
 
             Set<SmartNotebook> smartNotebooks = smartNotebookRepository.getSmartNotebooksForNoteIds(noteIdsSet);
-            if (smartNotebooks.size() == 1) {
-                return smartNotebooks.stream().findFirst();
+            if (smartNotebooks.size() == 1) { // if all the notes belong to an existing notebook
+                Optional<SmartNotebook> notebookWithAllNotes = smartNotebooks.stream().findFirst();
+                Set<Long> noteIdsInNotebook = notebookWithAllNotes.get().atomicNotes
+                        .stream().map(AtomicNoteEntity::getNoteId)
+                        .collect(Collectors.toSet());
+
+                noteIdsInNotebook.removeAll(noteIdsSet);
+                if (!noteIdsInNotebook.isEmpty()) return notebookWithAllNotes;
             }
 
             return smartNotebookRepository.getVirtualSmartNotebooks(bookTitle, noteIdsSet);

@@ -48,7 +48,7 @@ public class NoteOcrEventListener {
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onTextNoteSaved(Events.TextNoteSaved textNoteSaved) {
         long bookId = textNoteSaved.bookId;
-        WorkManagerBus.scheduleWorkForTextProcessingForBook(textNoteSaved.context, bookId);
+        WorkManagerBus.scheduleWorkForTextProcessingForBook(textNoteSaved.context, bookId, textNoteSaved.atomicNote.getNoteId());
         EventBus.getDefault().post(new Events.NoteStatus(textNoteSaved.bookId, TextProcessingStage.TEXT_PARSING));
     }
 }

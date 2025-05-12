@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.ImageButton;
+
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -12,11 +14,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.core.view.GravityCompat;
+
 import com.google.android.gms.common.util.CollectionUtils;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.originb.inkwisenote2.AppMainActivity;
 import com.originb.inkwisenote2.R;
+import com.originb.inkwisenote2.common.MapsUtils;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.fileexplorer.DirectoryExplorerActivity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
@@ -33,9 +37,6 @@ public class SmartHomeActivity extends AppCompatActivity {
     private QueriedNotebooks queriedNotebooks;
 
     private FloatingActionButton addNewNoteButton;
-
-    private TextView createdByUsText;
-    private TextView trackedByUserText;
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
@@ -74,6 +75,16 @@ public class SmartHomeActivity extends AppCompatActivity {
         // Add custom view to toolbar
         toolbar.addView(getLayoutInflater().inflate(R.layout.custom_toolbar, null));
 
+        // Setup search button
+        ImageButton searchButton = findViewById(R.id.search_button);
+        searchButton.setOnClickListener(v -> Routing.NoteSearchActivity.openSearchPage(this));
+
+        // Setup open all notebooks button
+        ImageButton openAllNotebooksButton = findViewById(R.id.open_all_notebooks);
+        openAllNotebooksButton.setOnClickListener(v -> {
+            Routing.NoteSearchActivity.openAllNotebooksPage(this);
+        });
+
         // Setup drawer layout
         drawerLayout = findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(
@@ -86,21 +97,11 @@ public class SmartHomeActivity extends AppCompatActivity {
         drawerLayout.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
-
-        createdByUsText = findViewById(R.id.created_by_us_text);
-        trackedByUserText = findViewById(R.id.queried_notes_text);
-
-
-        createdByUsText.setVisibility(View.GONE);
-        trackedByUserText.setVisibility(View.GONE);
-
         addNewNoteButton = findViewById(R.id.add_new_note_btn);
         addNewNoteButton.setOnClickListener(v -> {
             Routing.SmartNotebookActivity.newNoteIntent(this, getFilesDir().getPath());
         });
 
-        // Observe notebooks LiveData
-        smartHomePageViewModel.getUserNotebooks().observe(this, recentNotebooks::showNotebooks);
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(item -> {
@@ -143,6 +144,7 @@ public class SmartHomeActivity extends AppCompatActivity {
         private SmartNoteGridAdapter smartNoteGridAdapter;
 
         private TextView createdByUserText;
+        private TextView createNotesPrompt;
 
         public RecentNotebooks(SmartHomeActivity activity) {
             this.activity = activity;
@@ -153,18 +155,29 @@ public class SmartHomeActivity extends AppCompatActivity {
             createdByUserText = findViewById(R.id.created_by_user_text);
             createdByUserText.setVisibility(View.GONE);
 
+            createNotesPrompt = findViewById(R.id.take_notes_prompt);
+            createNotesPrompt.setVisibility(View.GONE);
+
             userNotebooksRecyclerView.setLayoutManager(
                     new LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false));
 
             smartNoteGridAdapter = new SmartNoteGridAdapter(activity, new ArrayList<>(), true);
 
             userNotebooksRecyclerView.setAdapter(smartNoteGridAdapter);
+
+            // Observe notebooks LiveData
+            smartHomePageViewModel.getUserNotebooks().observe(activity, this::showNotebooks);
         }
 
         public void showNotebooks(List<SmartNotebook> notebooks) {
-            if (CollectionUtils.isEmpty(notebooks)) return;
+            if (CollectionUtils.isEmpty(notebooks)) {
+                createdByUserText.setVisibility(View.GONE);
+                createNotesPrompt.setVisibility(View.VISIBLE);
+                return;
+            }
             smartNoteGridAdapter.setSmartNotebooks(notebooks);
             createdByUserText.setVisibility(View.VISIBLE);
+            createNotesPrompt.setVisibility(View.GONE);
         }
     }
 
@@ -191,7 +204,7 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotebooksRecyclerView.setAdapter(queryResultsAdapter);
 
             activity.smartHomePageViewModel.getLiveQueryResults().observe(activity, results -> {
-                if (results == null) {
+                if (MapsUtils.isEmpty(results)) {
                     queriedNotesText.setVisibility(View.GONE);
                     return;
                 }

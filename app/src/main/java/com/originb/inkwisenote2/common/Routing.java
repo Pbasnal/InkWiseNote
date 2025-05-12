@@ -46,6 +46,21 @@ public class Routing {
         }
     }
 
+    public static class NoteSearchActivity {
+        public static void openSearchPage(Context packageContext) {
+            Intent searchIntent = new Intent(packageContext,
+                    com.originb.inkwisenote2.modules.notesearch.NoteSearchActivity.class);
+            packageContext.startActivity(searchIntent);
+        }
+        
+        public static void openAllNotebooksPage(Context packageContext) {
+            Intent intent = new Intent(packageContext,
+                    com.originb.inkwisenote2.modules.notesearch.NoteSearchActivity.class);
+            intent.putExtra("show_all_notebooks", true);
+            packageContext.startActivity(intent);
+        }
+    }
+
     public static class HomePageActivity {
         public static void openSmartHomePageAndStartFresh(Context packageContext) {
             Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.smarthome.SmartHomeActivity.class);
@@ -61,6 +76,7 @@ public class Routing {
             Intent intent = new Intent(packageContext, QueryCreationActivity.class);
             packageContext.startActivity(intent);
         }
+
         public static void openQueryResultsActivity(Context packageContext, String queryName) {
             Intent intent = new Intent(packageContext, QueryResultsActivity.class);
             intent.putExtra("query_name", queryName);

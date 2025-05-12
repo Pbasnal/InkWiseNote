@@ -3,6 +3,7 @@ package com.originb.inkwisenote2.modules.smarthome;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
 import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote2.common.BitmapScale;
 import com.originb.inkwisenote2.common.MapsUtils;
@@ -21,8 +22,10 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
+import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -81,6 +84,40 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.postValue(mergedResultMap);
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onSmartNotebookDeleted(Events.NotebookDeleted notebookDeleted) {
+        List<SmartNotebook> userNotebooks = this.userNotebooks.getValue();
+        if (CollectionUtils.isEmpty(userNotebooks) || notebookDeleted.smartNotebook == null) {
+            return;
+        }
+        Long smartBookId = notebookDeleted.smartNotebook.smartBook.getBookId();
+        userNotebooks.removeIf(n -> smartBookId.equals(n.smartBook.getBookId()));
+
+        this.userNotebooks.postValue(userNotebooks);
+
+        Map<String, Set<QueryNoteResult>> queryResultsMap = liveQueryResults.getValue();
+        if (queryResultsMap == null || queryResultsMap.values() == null) return;
+
+        for (Set<QueryNoteResult> queryNoteResults : queryResultsMap.values()) {
+            queryNoteResults.removeIf(q -> smartBookId.equals(q.getBookId()));
+        }
+
+        liveQueryResults.setValue(queryResultsMap);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onNoteDeleted(Events.NoteDeleted noteDeleted) {
+        Map<String, Set<QueryNoteResult>> queryResultsMap = liveQueryResults.getValue();
+        if (queryResultsMap == null || queryResultsMap.values() == null) return;
+
+        long noteId = noteDeleted.atomicNote.getNoteId();
+        for (Set<QueryNoteResult> queryNoteResults : queryResultsMap.values()) {
+            queryNoteResults.removeIf(q -> noteId == q.getNoteId());
+        }
+
+        liveQueryResults.setValue(queryResultsMap);
+    }
+
     public Map<String, Set<QueryNoteResult>> getResultsOfAllQueries(Optional<Long> bookIdOpt) {
         List<QueryEntity> queries = queryRepository.getAllQueries();
         Map<String, Set<QueryNoteResult>> queryResultsMap = new HashMap<>();
@@ -96,7 +133,7 @@ public class SmartHomePageViewModel extends ViewModel {
                     .map(note -> transform(note, wordsToFind, wordsToIgnore))
                     .collect(Collectors.toSet());
 
-            if(queryResults.isEmpty()) continue;
+            if (queryResults.isEmpty()) continue;
             if (queryResultsMap.containsKey(query.getName())) {
                 queryResultsMap.get(query.getName()).addAll(queryResults);
             } else {
@@ -105,6 +142,7 @@ public class SmartHomePageViewModel extends ViewModel {
         }
         return queryResultsMap;
     }
+
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onQueryUpdated(Events.QueryUpdated queryUpdate) {
@@ -152,7 +190,7 @@ public class SmartHomePageViewModel extends ViewModel {
                 noteWithImage.noteImage.ifPresent(queryNoteResult::setNoteImage);
             }
             NoteOcrText noteOcrText = noteOcrTextDao.readTextFromDb(atomicNoteEntity.getNoteId());
-            if(noteOcrText != null) {
+            if (noteOcrText != null) {
                 queryNoteResult.setNoteText(noteOcrText.getExtractedText());
             }
         }
@@ -196,10 +234,13 @@ public class SmartHomePageViewModel extends ViewModel {
 
     public List<SmartNotebook> fetchUserCreatedNotebooks() {
 
-        if (smartNotebookRepository == null) ;
+        if (smartNotebookRepository == null) {
+            return Collections.emptyList();
+        }
         List<SmartNotebook> notebooks = smartNotebookRepository.getAllSmartNotebooks();
-        if (notebooks == null) notebooks = new ArrayList<>();
-
+        if (CollectionUtils.isEmpty(notebooks)) {
+            return Collections.emptyList();
+        }
         // Sort notebooks by last updated time in descending order (most recent first)
         notebooks.sort((n1, n2) -> {
             // Assuming getLastUpdatedTime() returns a long timestamp
