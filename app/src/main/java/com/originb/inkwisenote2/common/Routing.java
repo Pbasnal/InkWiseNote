@@ -32,6 +32,19 @@ public class Routing {
             intent.putExtra("noteIds", commaSeparatedNoteIds);
             packageContext.startActivity(intent);
         }
+
+        public static void openNotebookIntent(Context packageContext,
+                                              String currentDirectoryPath,
+                                              String bookTitle,
+                                              String commaSeparatedNoteIds,
+                                              long selectedNoteId) {
+            Intent intent = new Intent(packageContext, com.originb.inkwisenote2.modules.smartnotes.ui.SmartNotebookActivity.class);
+            intent.putExtra("workingNotePath", currentDirectoryPath);
+            intent.putExtra("bookTitle", bookTitle);
+            intent.putExtra("noteIds", commaSeparatedNoteIds);
+            intent.putExtra("selectedNoteId", selectedNoteId);
+            packageContext.startActivity(intent);
+        }
     }
 
     public static class RelatedNotesActivity {
@@ -52,7 +65,7 @@ public class Routing {
                     com.originb.inkwisenote2.modules.notesearch.NoteSearchActivity.class);
             packageContext.startActivity(searchIntent);
         }
-        
+
         public static void openAllNotebooksPage(Context packageContext) {
             Intent intent = new Intent(packageContext,
                     com.originb.inkwisenote2.modules.notesearch.NoteSearchActivity.class);

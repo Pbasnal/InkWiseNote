@@ -57,13 +57,26 @@ public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHold
                     .map(String::valueOf)  // Map each Long to String
                     .collect(Collectors.joining(","));
 
-            Try.to(() -> Routing.SmartNotebookActivity.openNotebookIntent(
-                                    context,
-                                    context.getFilesDir().getPath(),
-                                    queryName,
-                                    commaSeparatedNoteIds),
-                            logger)
-                    .get();
+            QueryNoteResult selectedNote = notes.get(position);
+            if (position < notes.size()) {
+                long selectedNoteId = notes.get(position).getNoteId();
+                Try.to(() -> Routing.SmartNotebookActivity.openNotebookIntent(
+                                        context,
+                                        context.getFilesDir().getPath(),
+                                        queryName,
+                                        commaSeparatedNoteIds,
+                                        selectedNoteId),
+                                logger)
+                        .get();
+            } else {
+                Try.to(() -> Routing.SmartNotebookActivity.openNotebookIntent(
+                                        context,
+                                        context.getFilesDir().getPath(),
+                                        queryName,
+                                        commaSeparatedNoteIds),
+                                logger)
+                        .get();
+            }
         });
     }
 
