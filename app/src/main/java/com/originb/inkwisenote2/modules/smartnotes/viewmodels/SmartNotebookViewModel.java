@@ -441,7 +441,13 @@ public class SmartNotebookViewModel extends AndroidViewModel {
 
             Set<SmartNotebook> smartNotebooks = smartNotebookRepository.getSmartNotebooksForNoteIds(noteIdsSet);
             if (smartNotebooks.size() == 1) { // if all the notes belong to an existing notebook
-                return smartNotebooks.stream().findFirst();
+                Optional<SmartNotebook> notebookWithAllNotes = smartNotebooks.stream().findFirst();
+                Set<Long> noteIdsInNotebook = notebookWithAllNotes.get().atomicNotes
+                        .stream().map(AtomicNoteEntity::getNoteId)
+                        .collect(Collectors.toSet());
+
+                noteIdsInNotebook.removeAll(noteIdsSet);
+                if (!noteIdsInNotebook.isEmpty()) return notebookWithAllNotes;
             }
 
             return smartNotebookRepository.getVirtualSmartNotebooks(bookTitle, noteIdsSet);

@@ -94,7 +94,6 @@
                 android:id="@+id/parsedTextContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#f5f5f5"
                 android:padding="8dp" />
 
             <TextView
@@ -109,7 +108,7 @@
                 android:id="@+id/markdownStrokesContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#f5f5f5"
+
                 android:padding="8dp"
                 android:fontFamily="monospace"
                 android:textSize="12sp" />
