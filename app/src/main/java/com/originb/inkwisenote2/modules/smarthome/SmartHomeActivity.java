@@ -79,6 +79,12 @@ public class SmartHomeActivity extends AppCompatActivity {
         ImageButton searchButton = findViewById(R.id.search_button);
         searchButton.setOnClickListener(v -> Routing.NoteSearchActivity.openSearchPage(this));
 
+        // Setup open all notebooks button
+        ImageButton openAllNotebooksButton = findViewById(R.id.open_all_notebooks);
+        openAllNotebooksButton.setOnClickListener(v -> {
+            Routing.NoteSearchActivity.openAllNotebooksPage(this);
+        });
+
         // Setup drawer layout
         drawerLayout = findViewById(R.id.drawer_layout);
         drawerToggle = new ActionBarDrawerToggle(
