@@ -159,6 +159,15 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         );
     }
 
+    public void navigateToPageIndex(int pageIndex) {
+        SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
+        if (notebook == null) return;
+        if (pageIndex < notebook.getAtomicNotes().size()) {
+            currentPageIndexLive.setValue(pageIndex);
+            updatePageNumberText();
+        }
+    }
+
     public void navigateToNextPage() {
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;

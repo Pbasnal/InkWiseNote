@@ -48,6 +48,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     private TextView noteCreatedTime;
     private TextView pageNumText;
 
+
+    private Long noteIdToLoadOnOpen;
     private ISmartNotebookActivityState currentState;
 
     @Override
@@ -64,6 +66,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         workingNotePath = getIntent().getStringExtra("workingNotePath");
         String noteIds = getIntent().getStringExtra("noteIds");
         String bookTitle = getIntent().getStringExtra("bookTitle");
+        noteIdToLoadOnOpen = getIntent().getLongExtra("selectedNoteId", -1);
 
         if (noteIds == null || Strings.isNullOrWhitespace(noteIds)) {
             currentState = new SmartNotebookActivityRWState();
@@ -156,13 +159,13 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         if (isFinishing() || isDestroyed()) {
             return; // Don't proceed if activity is finishing/destroyed
         }
-        
+
         if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTEBOOK_DELETED) {
             currentState = new SmartNotebookDeletedNotebook();
             Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
             return;
         }
-        
+
         if (smartNotebookAdapter == null) {
             smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
             if (recyclerView != null) {
@@ -183,18 +186,30 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
                 smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook, notebookUpdate.indexOfUpdatedNote);
             }
         }
-        
+
         // Update UI elements if available
         String createdTime = DateTimeUtils.msToDateTime(notebookUpdate.smartNotebook.smartBook.getLastModifiedTimeMillis());
         if (noteCreatedTime != null) {
             noteCreatedTime.setText(createdTime);
         }
-        
+
         if (noteTitleText != null) {
             String noteTitle = noteTitleText.getText().toString().trim();
             if (Strings.isNullOrWhitespace(noteTitle)) {
                 noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
             }
+        }
+
+        if (noteIdToLoadOnOpen != null && noteIdToLoadOnOpen != -1L) {
+            List<AtomicNoteEntity> allNotes = notebookUpdate.smartNotebook.atomicNotes;
+            int i = 0;
+            for (; i < allNotes.size(); i++) {
+                if (noteIdToLoadOnOpen.equals(allNotes.get(i).getNoteId())) {
+                    break;
+                }
+            }
+            viewModel.navigateToPageIndex(i);
+            noteIdToLoadOnOpen = -1L;
         }
     }
 
@@ -202,15 +217,15 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         if (isFinishing() || isDestroyed() || navigationData == null) {
             return;
         }
-        
+
         if (pageNumText != null) {
             pageNumText.setText(navigationData.pageNumbeText);
         }
-        
+
         if (nextButton != null) {
             nextButton.setVisibility(navigationData.showNextButton ? View.VISIBLE : View.INVISIBLE);
         }
-        
+
         if (prevButton != null) {
             prevButton.setVisibility(navigationData.showPrevButton ? View.VISIBLE : View.INVISIBLE);
         }
@@ -220,15 +235,15 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         if (recyclerView == null || scrollLayout == null || smartNotebookAdapter == null) {
             return; // Guard against null references
         }
-        
+
         recyclerView.post(() -> {
             if (isDestroyed() || isFinishing()) {
                 return; // Don't proceed if activity is finishing/destroyed
             }
-            
+
             scrollLayout.setScrollRequested(true);
             recyclerView.smoothScrollToPosition(index);
-            
+
             // Get current note and ensure it's not null before trying to set data
             AtomicNoteEntity currentNote = viewModel.getCurrentNote();
             if (currentNote != null) {
@@ -257,10 +272,10 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     @Override
     public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        
+
         // Recreate all visual elements to apply new theme
         recreateVisuals();
-        
+
         // After view recreation is complete, recreate all fragments with new theme
         if (recyclerView != null) {
             recyclerView.post(this::recreateFragments);
@@ -271,7 +286,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         // Get current content view to be replaced
         ViewGroup rootView = findViewById(android.R.id.content);
         if (rootView == null) return;
-        
+
         // Save state of important elements
         AtomicNoteEntity currentNote = null;
         if (viewModel != null) {
@@ -288,27 +303,27 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         // Re-apply theme by recreating the views
         setContentView(R.layout.activity_smart_note);
-        
+
         // Reinitialize the UI elements
         initializeRecyclerView();
-        
+
         // Create new adapter with the notebook data
         if (currentNotebook != null) {
             smartNotebookAdapter = new SmartNotebookAdapter(this, currentNotebook);
             recyclerView.setAdapter(smartNotebookAdapter);
         }
-        
+
         // Re-initialize the current state
         if (currentState != null) {
             currentState.initializeViews();
             currentState.setupObservers();
         }
-        
+
         // Update the adapter with the current notebook data
         if (viewModel != null && viewModel.getSmartNotebookUpdate().getValue() != null) {
             SmartNotebookViewModel.SmartNotebookUpdate update = viewModel.getSmartNotebookUpdate().getValue();
             onSmartNotebookUpdate(update);
-            
+
             // If we had a note and index already, restore the position
             if (currentIndex != null) {
                 onCurrentPageIndexChange(currentIndex);
@@ -318,14 +333,14 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
     private void recreateFragments() {
         if (smartNotebookAdapter == null || viewModel == null) return;
-        
+
         // Force recreate all fragments to apply new theme
         SmartNotebookViewModel.SmartNotebookUpdate update = viewModel.getSmartNotebookUpdate().getValue();
         if (update != null) {
             // Set notebook to null and back to force a full refresh of all fragments
             smartNotebookAdapter.setSmartNotebook(null);
             smartNotebookAdapter.setSmartNotebook(update.smartNotebook);
-            
+
             // Ensure we're showing the current page
             Integer currentPageIndex = viewModel.getCurrentPageIndexLive().getValue();
             if (currentPageIndex != null) {
@@ -357,28 +372,28 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         @Override
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
-            
+
             // First remove any existing observers to prevent duplication during configuration changes
             if (viewModel != null) {
                 viewModel.getSmartNotebookUpdate().removeObservers(owner);
                 viewModel.getNavigationDataLive().removeObservers(owner);
                 viewModel.getCurrentPageIndexLive().removeObservers(owner);
             }
-            
+
             // Observe smart notebook data changes
             viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
                 if (notebookUpdate != null) {
                     onSmartNotebookUpdate(notebookUpdate);
                 }
             });
-            
+
             // Observe page number text
             viewModel.getNavigationDataLive().observe(owner, navigationData -> {
                 if (navigationData != null) {
                     onNavigationDataChange(navigationData);
                 }
             });
-            
+
             // Observe current page index (for scrolling)
             viewModel.getCurrentPageIndexLive().observe(owner, index -> {
                 if (index != null) {
@@ -479,28 +494,28 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         @Override
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
-            
+
             // First remove any existing observers to prevent duplication during configuration changes
             if (viewModel != null) {
                 viewModel.getSmartNotebookUpdate().removeObservers(owner);
                 viewModel.getNavigationDataLive().removeObservers(owner);
                 viewModel.getCurrentPageIndexLive().removeObservers(owner);
             }
-            
+
             // Observe smart notebook data changes
             viewModel.getSmartNotebookUpdate().observe(owner, smartNotebookUpdate -> {
                 if (smartNotebookUpdate != null) {
                     onSmartNotebookUpdate_VirtualNotebook(smartNotebookUpdate);
                 }
             });
-            
+
             // Observe page number text
             viewModel.getNavigationDataLive().observe(owner, navigationData -> {
                 if (navigationData != null) {
                     onNavigationDataChange(navigationData);
                 }
             });
-            
+
             // Observe current page index (for scrolling)
             viewModel.getCurrentPageIndexLive().observe(owner, index -> {
                 if (index != null) {
@@ -531,11 +546,12 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         private void initializeSaveButton_VirtualNotebook() {
             newNotePageBtn = findViewById(R.id.fab_add_note);
-            newNotePageBtn.setImageResource(R.drawable.ic_save);
-            newNotePageBtn.setOnClickListener(view -> {
-                viewModel.saveCurrentSmartNotebook();
-                stateManager.changeState();
-            });
+            newNotePageBtn.setVisibility(View.GONE);
+//            newNotePageBtn.setImageResource(R.drawable.ic_save);
+//            newNotePageBtn.setOnClickListener(view -> {
+//                viewModel.saveCurrentSmartNotebook();
+//                stateManager.changeState();
+//            });
         }
 
         private void initializeNoteTitle_VirtualNotebook() {
