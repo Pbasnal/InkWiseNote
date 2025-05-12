@@ -46,6 +46,8 @@
                     android:layout_margin="8dp"
                     android:background="@drawable/circle_button_background"
                     android:src="@drawable/ic_debug"
+                    app:backgroundTint="@color/yellow"
+                    app:tint="?attr/colorOnSecondary"
                     android:contentDescription="Debug Note"/>
 
             <ImageButton
