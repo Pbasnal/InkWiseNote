@@ -23,8 +23,10 @@
             <ImageButton
                     android:id="@+id/query_results_toggle"
                     android:src="@drawable/toggle_expanded"
-                    android:backgroundTintMode="add"
                     android:layout_gravity="center_vertical"
+                    android:backgroundTintMode="add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="?attr/colorOnSurface"
                     android:scaleType="centerCrop"
                     android:layout_width="40dp"
                     android:layout_height="40dp"/>
@@ -44,9 +46,11 @@
                     android:src="@drawable/ic_expand"
                     android:layout_gravity="center_vertical"
                     android:backgroundTintMode="add"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:tint="?attr/colorOnSurface"
                     android:scaleType="centerCrop"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"/>
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"/>
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
