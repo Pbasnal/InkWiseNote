@@ -40,8 +40,5 @@
         
         <!-- Outline -->
         <item name="colorOutline">@color/card_stroke_dark</item>
-        
-        <!-- Custom attributes -->
-        <item name="drawingSurface">@color/surface_light</item>
     </style>
 </resources>
