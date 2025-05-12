@@ -3,6 +3,7 @@ package com.originb.inkwisenote2.modules.smartnotes.ui;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -26,6 +27,8 @@ import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewM
 
 import java.util.List;
 import java.util.Objects;
+
+import androidx.annotation.NonNull;
 
 public class SmartNotebookActivity extends AppCompatActivity implements IStateManager {
 
@@ -150,42 +153,87 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     }
 
     public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
+        if (isFinishing() || isDestroyed()) {
+            return; // Don't proceed if activity is finishing/destroyed
+        }
+        
         if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTEBOOK_DELETED) {
             currentState = new SmartNotebookDeletedNotebook();
             Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
             return;
         }
+        
         if (smartNotebookAdapter == null) {
             smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
-            recyclerView.setAdapter(smartNotebookAdapter);
+            if (recyclerView != null) {
+                recyclerView.setAdapter(smartNotebookAdapter);
+            }
         }
 
         if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTE_DELETED) {
-            smartNotebookAdapter.removeNoteCard(notebookUpdate.atomicNote.getNoteId());
+            if (smartNotebookAdapter != null) {
+                smartNotebookAdapter.removeNoteCard(notebookUpdate.atomicNote.getNoteId());
+            }
         } else if (notebookUpdate.indexOfUpdatedNote == -1) {
-            smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook);
+            if (smartNotebookAdapter != null) {
+                smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook);
+            }
         } else {
-            smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook, notebookUpdate.indexOfUpdatedNote);
+            if (smartNotebookAdapter != null) {
+                smartNotebookAdapter.setSmartNotebook(notebookUpdate.smartNotebook, notebookUpdate.indexOfUpdatedNote);
+            }
         }
+        
+        // Update UI elements if available
         String createdTime = DateTimeUtils.msToDateTime(notebookUpdate.smartNotebook.smartBook.getLastModifiedTimeMillis());
-        noteCreatedTime.setText(createdTime);
-        String noteTitle = noteTitleText.getText().toString().trim();
-        if (Strings.isNullOrWhitespace(noteTitle)) {
-            noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+        if (noteCreatedTime != null) {
+            noteCreatedTime.setText(createdTime);
+        }
+        
+        if (noteTitleText != null) {
+            String noteTitle = noteTitleText.getText().toString().trim();
+            if (Strings.isNullOrWhitespace(noteTitle)) {
+                noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+            }
         }
     }
 
     public void onNavigationDataChange(NotebookNavigationData navigationData) {
-        pageNumText.setText(navigationData.pageNumbeText);
-        nextButton.setVisibility(navigationData.showNextButton ? View.VISIBLE : View.INVISIBLE);
-        prevButton.setVisibility(navigationData.showPrevButton ? View.VISIBLE : View.INVISIBLE);
+        if (isFinishing() || isDestroyed() || navigationData == null) {
+            return;
+        }
+        
+        if (pageNumText != null) {
+            pageNumText.setText(navigationData.pageNumbeText);
+        }
+        
+        if (nextButton != null) {
+            nextButton.setVisibility(navigationData.showNextButton ? View.VISIBLE : View.INVISIBLE);
+        }
+        
+        if (prevButton != null) {
+            prevButton.setVisibility(navigationData.showPrevButton ? View.VISIBLE : View.INVISIBLE);
+        }
     }
 
     public void onCurrentPageIndexChange(Integer index) {
+        if (recyclerView == null || scrollLayout == null || smartNotebookAdapter == null) {
+            return; // Guard against null references
+        }
+        
         recyclerView.post(() -> {
+            if (isDestroyed() || isFinishing()) {
+                return; // Don't proceed if activity is finishing/destroyed
+            }
+            
             scrollLayout.setScrollRequested(true);
             recyclerView.smoothScrollToPosition(index);
-            smartNotebookAdapter.setNoteData(index, viewModel.getCurrentNote());
+            
+            // Get current note and ensure it's not null before trying to set data
+            AtomicNoteEntity currentNote = viewModel.getCurrentNote();
+            if (currentNote != null) {
+                smartNotebookAdapter.setNoteData(index, currentNote);
+            }
         });
     }
 
@@ -206,6 +254,86 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         super.onStart();
     }
 
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        
+        // Recreate all visual elements to apply new theme
+        recreateVisuals();
+        
+        // After view recreation is complete, recreate all fragments with new theme
+        if (recyclerView != null) {
+            recyclerView.post(this::recreateFragments);
+        }
+    }
+
+    private void recreateVisuals() {
+        // Get current content view to be replaced
+        ViewGroup rootView = findViewById(android.R.id.content);
+        if (rootView == null) return;
+        
+        // Save state of important elements
+        AtomicNoteEntity currentNote = null;
+        if (viewModel != null) {
+            currentNote = viewModel.getCurrentNote();
+        }
+        Integer currentIndex = null;
+        if (viewModel != null && viewModel.getCurrentPageIndexLive() != null) {
+            currentIndex = viewModel.getCurrentPageIndexLive().getValue();
+        }
+        SmartNotebook currentNotebook = null;
+        if (viewModel != null && viewModel.getSmartNotebookUpdate().getValue() != null) {
+            currentNotebook = viewModel.getSmartNotebookUpdate().getValue().smartNotebook;
+        }
+
+        // Re-apply theme by recreating the views
+        setContentView(R.layout.activity_smart_note);
+        
+        // Reinitialize the UI elements
+        initializeRecyclerView();
+        
+        // Create new adapter with the notebook data
+        if (currentNotebook != null) {
+            smartNotebookAdapter = new SmartNotebookAdapter(this, currentNotebook);
+            recyclerView.setAdapter(smartNotebookAdapter);
+        }
+        
+        // Re-initialize the current state
+        if (currentState != null) {
+            currentState.initializeViews();
+            currentState.setupObservers();
+        }
+        
+        // Update the adapter with the current notebook data
+        if (viewModel != null && viewModel.getSmartNotebookUpdate().getValue() != null) {
+            SmartNotebookViewModel.SmartNotebookUpdate update = viewModel.getSmartNotebookUpdate().getValue();
+            onSmartNotebookUpdate(update);
+            
+            // If we had a note and index already, restore the position
+            if (currentIndex != null) {
+                onCurrentPageIndexChange(currentIndex);
+            }
+        }
+    }
+
+    private void recreateFragments() {
+        if (smartNotebookAdapter == null || viewModel == null) return;
+        
+        // Force recreate all fragments to apply new theme
+        SmartNotebookViewModel.SmartNotebookUpdate update = viewModel.getSmartNotebookUpdate().getValue();
+        if (update != null) {
+            // Set notebook to null and back to force a full refresh of all fragments
+            smartNotebookAdapter.setSmartNotebook(null);
+            smartNotebookAdapter.setSmartNotebook(update.smartNotebook);
+            
+            // Ensure we're showing the current page
+            Integer currentPageIndex = viewModel.getCurrentPageIndexLive().getValue();
+            if (currentPageIndex != null) {
+                onCurrentPageIndexChange(currentPageIndex);
+            }
+        }
+    }
+
     public class SmartNotebookActivityRWState implements ISmartNotebookActivityState {
 
         @Override
@@ -218,29 +346,43 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void finalizeState() {
-
+            // Remove observers to prevent duplicates
+            if (viewModel != null) {
+                viewModel.getSmartNotebookUpdate().removeObservers(SmartNotebookActivity.this);
+                viewModel.getNavigationDataLive().removeObservers(SmartNotebookActivity.this);
+                viewModel.getCurrentPageIndexLive().removeObservers(SmartNotebookActivity.this);
+            }
         }
 
         @Override
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
+            
+            // First remove any existing observers to prevent duplication during configuration changes
+            if (viewModel != null) {
+                viewModel.getSmartNotebookUpdate().removeObservers(owner);
+                viewModel.getNavigationDataLive().removeObservers(owner);
+                viewModel.getCurrentPageIndexLive().removeObservers(owner);
+            }
+            
             // Observe smart notebook data changes
             viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
-                onSmartNotebookUpdate(notebookUpdate);
                 if (notebookUpdate != null) {
-                    // clean up existing observers
-                    viewModel.getSmartNotebookUpdate().removeObservers(owner);
-
-                    // Set up all the observers
-                    // this clean up and setting is done so that, the navigation and current page
-                    // listeners do not experience null reference error because
-                    // smartNotebook is still null.
-                    viewModel.getSmartNotebookUpdate().observe(owner, owner::onSmartNotebookUpdate);
-                    // Observe page number text
-                    viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
-                    // Observe current page index (for scrolling)
-                    viewModel.getCurrentPageIndexLive().observe(owner, owner::onCurrentPageIndexChange);
-
+                    onSmartNotebookUpdate(notebookUpdate);
+                }
+            });
+            
+            // Observe page number text
+            viewModel.getNavigationDataLive().observe(owner, navigationData -> {
+                if (navigationData != null) {
+                    onNavigationDataChange(navigationData);
+                }
+            });
+            
+            // Observe current page index (for scrolling)
+            viewModel.getCurrentPageIndexLive().observe(owner, index -> {
+                if (index != null) {
+                    onCurrentPageIndexChange(index);
                 }
             });
         }
@@ -326,37 +468,45 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         @Override
         public void finalizeState() {
-
+            // Remove observers to prevent duplicates
+            if (viewModel != null) {
+                viewModel.getSmartNotebookUpdate().removeObservers(SmartNotebookActivity.this);
+                viewModel.getNavigationDataLive().removeObservers(SmartNotebookActivity.this);
+                viewModel.getCurrentPageIndexLive().removeObservers(SmartNotebookActivity.this);
+            }
         }
 
         @Override
         public void setupObservers() {
             SmartNotebookActivity owner = SmartNotebookActivity.this;
+            
+            // First remove any existing observers to prevent duplication during configuration changes
+            if (viewModel != null) {
+                viewModel.getSmartNotebookUpdate().removeObservers(owner);
+                viewModel.getNavigationDataLive().removeObservers(owner);
+                viewModel.getCurrentPageIndexLive().removeObservers(owner);
+            }
+            
             // Observe smart notebook data changes
-            viewModel.getSmartNotebookUpdate().observe(owner, notebookUpdate -> {
-                onSmartNotebookUpdate_VirtualNotebook(notebookUpdate);
-                if (notebookUpdate != null) {
-                    // clean up existing observers
-                    viewModel.getSmartNotebookUpdate().removeObservers(owner);
-
-                    // Set up all the observers
-                    // this clean up and setting is done so that, the navigation and current page
-                    // listeners do not experience null reference error because
-                    // smartNotebook is still null.
-                    viewModel.getSmartNotebookUpdate().observe(owner, this::onSmartNotebookUpdate_VirtualNotebook);
-                    // Observe page number text
-                    viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
-                    // Observe current page index (for scrolling)
-                    viewModel.getCurrentPageIndexLive().observe(owner, owner::onCurrentPageIndexChange);
-
+            viewModel.getSmartNotebookUpdate().observe(owner, smartNotebookUpdate -> {
+                if (smartNotebookUpdate != null) {
+                    onSmartNotebookUpdate_VirtualNotebook(smartNotebookUpdate);
                 }
             });
-
+            
             // Observe page number text
-            viewModel.getNavigationDataLive().observe(owner, owner::onNavigationDataChange);
-
+            viewModel.getNavigationDataLive().observe(owner, navigationData -> {
+                if (navigationData != null) {
+                    onNavigationDataChange(navigationData);
+                }
+            });
+            
             // Observe current page index (for scrolling)
-            viewModel.getCurrentPageIndexLive().observe(owner, owner::onCurrentPageIndexChange);
+            viewModel.getCurrentPageIndexLive().observe(owner, index -> {
+                if (index != null) {
+                    onCurrentPageIndexChange(index);
+                }
+            });
         }
 
         private void onSmartNotebookUpdate_VirtualNotebook(SmartNotebookViewModel.SmartNotebookUpdate smartNotebookUpdate) {

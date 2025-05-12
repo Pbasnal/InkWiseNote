@@ -135,4 +135,4 @@ public class QueryResultsAdapter extends RecyclerView.Adapter<QueryResultsAdapte
             }
         }
     }
-} 
+}

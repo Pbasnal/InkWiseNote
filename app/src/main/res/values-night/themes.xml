@@ -13,6 +13,7 @@
         <item name="colorOnSecondary">@color/white</item>
         
         <!-- Surface colors -->
+        <item name="drawingSurface">@color/surface_light</item>
         <item name="colorSurface">@color/surface_dark</item>
         <item name="colorOnSurface">@color/on_surface_dark</item>
         
@@ -39,5 +40,8 @@
         
         <!-- Outline -->
         <item name="colorOutline">@color/card_stroke_dark</item>
+        
+        <!-- Custom attributes -->
+        <item name="drawingSurface">@color/surface_light</item>
     </style>
 </resources>
