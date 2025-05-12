@@ -11,6 +11,7 @@
         <item name="colorSecondaryVariant">@color/secondary_dark</item>
         <item name="colorOnSecondary">@color/black</item>
         <!-- Surface colors -->
+        <item name="drawingSurface">@color/surface_light</item>
         <item name="colorSurface">@color/surface_light</item>
         <item name="colorOnSurface">@color/on_surface_light</item>
         <!-- Background colors -->
@@ -21,12 +22,22 @@
         <item name="colorOnPrimaryContainer">@color/on_primary_container_light</item>
         <item name="colorSecondaryContainer">@color/secondary_container_light</item>
         <item name="colorOnSecondaryContainer">@color/on_secondary_container_light</item>
+        <!-- Error colors -->
+        <item name="colorError">@color/red</item>
+        <item name="colorOnError">@color/white</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Primary surface color (combines primary and surface) -->
+        <item name="colorPrimarySurface">?attr/colorPrimary</item>
+        <item name="colorOnPrimarySurface">?attr/colorOnPrimary</item>
         <!-- Outline -->
         <item name="colorOutline">@color/card_stroke_light</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        
+        <!-- Custom attributes -->
+        <item name="drawingSurface">@color/white</item>
+        
         <!-- Customize your theme here. -->
     </style>
 </resources>

@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
@@ -15,6 +16,7 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,6 +25,7 @@ public class NoteSearchActivity extends AppCompatActivity {
     private EditText searchInput;
     private Button searchButton;
     private List<SmartNotebook> resultsList;
+    private TextView titleTextView;
 
     private SmartNoteGridAdapter smartNoteGridAdapter;
 
@@ -30,6 +33,7 @@ public class NoteSearchActivity extends AppCompatActivity {
     private SmartNotebookRepository smartNotebookRepository;
 
     private RecyclerView recyclerView;
+    private boolean isShowingAllNotebooks = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +45,7 @@ public class NoteSearchActivity extends AppCompatActivity {
 
         searchInput = findViewById(R.id.searchInput);
         searchButton = findViewById(R.id.searchButton);
+        titleTextView = findViewById(R.id.searchResultsTitle);
 
         createGridLayoutToShowNotes();
 
@@ -50,6 +55,15 @@ public class NoteSearchActivity extends AppCompatActivity {
                 performSearch(searchInput.getText().toString());
             }
         });
+
+        // Check if we should display all notebooks
+        isShowingAllNotebooks = getIntent().getBooleanExtra("show_all_notebooks", false);
+        if (isShowingAllNotebooks) {
+            titleTextView.setText("All Notebooks");
+            searchInput.setVisibility(View.GONE);
+            searchButton.setVisibility(View.GONE);
+            loadAllNotebooks();
+        }
     }
 
     public void createGridLayoutToShowNotes() {
@@ -60,6 +74,30 @@ public class NoteSearchActivity extends AppCompatActivity {
 
         recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
+    }
+
+    private void loadAllNotebooks() {
+        resultsList.clear();
+        BackgroundOps.execute(() -> {
+                    // Get all notebooks from repository
+                    List<SmartNotebook> notebooks = smartNotebookRepository.getAllSmartNotebooks();
+                    
+                    // Sort by last modified time (newest first)
+                    notebooks.sort(Comparator.comparing(
+                            notebook -> notebook.getSmartBook().getLastModifiedTimeMillis(),
+                            Comparator.reverseOrder()
+                    ));
+                    
+                    return notebooks;
+                },
+                notebooks -> {
+                    if (notebooks != null && !notebooks.isEmpty()) {
+                        resultsList.addAll(notebooks);
+                        smartNoteGridAdapter.setSmartNotebooks(resultsList);
+                    } else {
+                        Toast.makeText(this, "No notebooks found", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void performSearch(String query) {

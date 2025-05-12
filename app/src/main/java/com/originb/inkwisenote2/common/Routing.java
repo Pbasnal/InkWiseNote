@@ -52,6 +52,13 @@ public class Routing {
                     com.originb.inkwisenote2.modules.notesearch.NoteSearchActivity.class);
             packageContext.startActivity(searchIntent);
         }
+        
+        public static void openAllNotebooksPage(Context packageContext) {
+            Intent intent = new Intent(packageContext,
+                    com.originb.inkwisenote2.modules.notesearch.NoteSearchActivity.class);
+            intent.putExtra("show_all_notebooks", true);
+            packageContext.startActivity(intent);
+        }
     }
 
     public static class HomePageActivity {

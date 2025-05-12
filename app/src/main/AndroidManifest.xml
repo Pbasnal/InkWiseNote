@@ -21,6 +21,7 @@
         <activity android:name=".modules.queries.ui.QueryResultsActivity"/>
         <activity
                 android:name=".modules.smartnotes.ui.SmartNotebookActivity"
+                android:configChanges="uiMode|orientation|screenSize|screenLayout"
                 android:screenOrientation="portrait"/>
         <activity
                 android:name=".modules.fileexplorer.DirectoryExplorerActivity"
