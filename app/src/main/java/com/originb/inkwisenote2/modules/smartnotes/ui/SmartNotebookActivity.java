@@ -553,11 +553,6 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         private void initializeSaveButton_VirtualNotebook() {
             newNotePageBtn = findViewById(R.id.fab_add_note);
             newNotePageBtn.setVisibility(View.GONE);
-//            newNotePageBtn.setImageResource(R.drawable.ic_save);
-//            newNotePageBtn.setOnClickListener(view -> {
-//                viewModel.saveCurrentSmartNotebook();
-//                stateManager.changeState();
-//            });
         }
 
         private void initializeNoteTitle_VirtualNotebook() {

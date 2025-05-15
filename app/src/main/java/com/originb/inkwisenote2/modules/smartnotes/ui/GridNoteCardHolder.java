@@ -48,7 +48,6 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private final ImageView relationViewBtn;
     private Animation rotateAnimation;
 
-    private boolean isAnimationRunning = false;
     private SmartNotebook smartNotebook;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final TextNotesDao textNotesDao;
@@ -134,13 +133,11 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
             
             // Start animation
             rotateAnimator.start();
-            isAnimationRunning = true;
             
             Log.d("GridNoteCardHolder", "Starting rotation animation");
         } else {
             // Set ready status image without animation
             noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
-            isAnimationRunning = false;
             Log.d("GridNoteCardHolder", "Set to ready status");
         }
     }
@@ -197,8 +194,6 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     private void deleteNotebook() {
-        // User confirmed, proceed with deletion
-        EventBus.getDefault().post(new Events.NotebookDeleted(smartNotebook));
         BackgroundOps.execute(() -> {
             smartNotebook.atomicNotes.forEach(note -> {
                 handwrittenNoteRepository.deleteHandwrittenNote(note);

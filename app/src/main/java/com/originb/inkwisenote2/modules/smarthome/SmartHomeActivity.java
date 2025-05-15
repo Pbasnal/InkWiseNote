@@ -175,13 +175,13 @@ public class SmartHomeActivity extends AppCompatActivity {
             if (CollectionUtils.isEmpty(notebooks)) {
                 createdByUserText.setVisibility(View.GONE);
                 createNotesPrompt.setVisibility(View.VISIBLE);
-                openAllNotebooksButton.setVisibility(View.VISIBLE);
+                openAllNotebooksButton.setVisibility(View.GONE);
                 return;
             }
             smartNoteGridAdapter.setSmartNotebooks(notebooks);
             createdByUserText.setVisibility(View.VISIBLE);
             createNotesPrompt.setVisibility(View.GONE);
-            openAllNotebooksButton.setVisibility(View.GONE);
+            openAllNotebooksButton.setVisibility(View.VISIBLE);
         }
     }
 
@@ -208,11 +208,11 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotebooksRecyclerView.setAdapter(queryResultsAdapter);
 
             activity.smartHomePageViewModel.getLiveQueryResults().observe(activity, results -> {
+                queryResultsAdapter.setData(results);
                 if (MapsUtils.isEmpty(results)) {
                     queriedNotesText.setVisibility(View.GONE);
                     return;
                 }
-                queryResultsAdapter.setData(results);
                 queriedNotesText.setVisibility(View.VISIBLE);
             });
         }

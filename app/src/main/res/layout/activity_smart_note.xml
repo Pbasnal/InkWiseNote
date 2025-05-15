@@ -41,7 +41,6 @@
                     android:layout_height="wrap_content"
                     android:minHeight="48dp"
                     android:textColor="?attr/colorOnPrimaryContainer"
-                    android:text="Note"
                     android:textStyle="bold"
                     android:textSize="20sp"
                     android:textColorHint="?attr/colorOnPrimaryContainer"
