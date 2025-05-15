@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 
 import com.originb.inkwisenote2.R;
 
+import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
@@ -31,6 +32,8 @@ import org.greenrobot.eventbus.EventBus;
  * Fragment for displaying and editing handwritten notes
  */
 public class HandwrittenNoteFragment extends NoteFragment {
+
+    private Logger logger = new Logger("HandwrittenNoteFragment");
 
     private View fragmentView;
     private DrawingView drawingView;
@@ -208,5 +211,43 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     private boolean useDefaultBitmap() {
         return drawingView == null || drawingView.currentWidth * drawingView.currentHeight == 0;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Save the data when fragment is paused to prevent data loss
+        saveCurrentNoteData();
+    }
+    
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        // Save the data when saving state
+        saveCurrentNoteData();
+    }
+
+    /**
+     * Explicitly save current note data to prevent data loss during navigation
+     */
+    private void saveCurrentNoteData() {
+        try {
+            if (drawingView != null && atomicNote != null && smartNotebook != null) {
+                NoteHolderData noteData = getNoteHolderData();
+                if (noteData != null) {
+                    // Get the repository to save the data
+                    handwrittenNoteRepository.saveHandwrittenNotes(
+                            smartNotebook.getSmartBook().getBookId(),
+                            atomicNote,
+                            noteData.bitmap,
+                            noteData.pageTemplate,
+                            noteData.strokes,
+                            getContext()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            logger.exception("Error saving note data during pause", e);
+        }
     }
 }

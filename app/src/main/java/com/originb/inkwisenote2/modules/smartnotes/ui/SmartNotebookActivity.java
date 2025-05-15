@@ -114,7 +114,10 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         // Button click listeners
         nextButton.setOnClickListener(view -> {
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            if (atomicNote == null) return;
+
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            if (noteData == null) return;
 
             BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::navigateToNextPage);
@@ -122,7 +125,11 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         prevButton.setOnClickListener(view -> {
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            if (atomicNote == null) return;
+
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            if (noteData == null) return;
+
             BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::navigateToPreviousPage);
         });
@@ -236,7 +243,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             return; // Guard against null references
         }
 
-        recyclerView.post(() -> {
+        recyclerView.postDelayed(() -> {
             if (isDestroyed() || isFinishing()) {
                 return; // Don't proceed if activity is finishing/destroyed
             }
@@ -249,7 +256,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             if (currentNote != null) {
                 smartNotebookAdapter.setNoteData(index, currentNote);
             }
-        });
+        }, 100);
     }
 
     @Override
@@ -506,6 +513,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             viewModel.getSmartNotebookUpdate().observe(owner, smartNotebookUpdate -> {
                 if (smartNotebookUpdate != null) {
                     onSmartNotebookUpdate_VirtualNotebook(smartNotebookUpdate);
+                    onSmartNotebookUpdate(smartNotebookUpdate);
                 }
             });
 
@@ -532,8 +540,6 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
                     stateManager.changeState();
                 }
             }
-
-            onSmartNotebookUpdate(smartNotebookUpdate);
         }
 
         @Override
