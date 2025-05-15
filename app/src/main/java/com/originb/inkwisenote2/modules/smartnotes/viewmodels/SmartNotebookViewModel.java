@@ -43,6 +43,9 @@ public class SmartNotebookViewModel extends AndroidViewModel {
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final TextNotesDao textNotesDao;
 
+    // Lock for synchronizing page navigation
+    private final Object pageSwitchLock = new Object();
+
     private String workingNotePath;
     private final MutableLiveData<Integer> currentPageIndexLive = new MutableLiveData<>(0);
     private final MutableLiveData<SmartNotebookUpdate> smartNotebookUpdate = new MutableLiveData<>();
@@ -361,17 +364,33 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
     }
 
-    public void saveCurrentNote(AtomicNoteEntity atomicNote, NoteHolderData noteHolderData) {
+    public void saveCurrentNote(AtomicNoteEntity atomicNote, NoteHolderData noteData) {
+        if (atomicNote == null || noteData == null) {
+            logger.error("Attempted to save null note or note data");
+            return;
+        }
+
         SmartNotebook notebook = smartNotebookUpdate.getValue().smartNotebook;
         if (notebook == null) return;
 
-        switch (noteHolderData.noteType) {
+        synchronized (pageSwitchLock) {
+            try {
+                saveCurrentNoteAsPerType(atomicNote, noteData, notebook);
+            } catch (Exception e) {
+                logger.exception("Error saving note", e);
+            }
+        }
+    }
+
+    public void saveCurrentNoteAsPerType(AtomicNoteEntity atomicNote, NoteHolderData noteData, SmartNotebook notebook) {
+
+        switch (noteData.noteType) {
             case HANDWRITTEN_PNG:
                 handwrittenNoteRepository.saveHandwrittenNotes(notebook.smartBook.getBookId(),
                         atomicNote,
-                        noteHolderData.bitmap,
-                        noteHolderData.pageTemplate,
-                        noteHolderData.strokes,
+                        noteData.bitmap,
+                        noteData.pageTemplate,
+                        noteData.strokes,
                         getApplication());
                 break;
             case TEXT_NOTE:
@@ -383,11 +402,11 @@ public class SmartNotebookViewModel extends AndroidViewModel {
                             notebook.smartBook.getBookId());
                     textNotesDao.insertTextNote(textNoteEntity);
                 }
-                textNoteEntity.setNoteText(noteHolderData.noteText);
+                textNoteEntity.setNoteText(noteData.noteText);
                 textNotesDao.updateTextNote(textNoteEntity);
 
                 // Save to markdown file
-                saveNoteToMarkdownFile(atomicNote, noteHolderData.noteText);
+                saveNoteToMarkdownFile(atomicNote, noteData.noteText);
 
                 // Post event
                 EventBus.getDefault().post(new Events.TextNoteSaved(notebook.smartBook.getBookId(),

@@ -98,11 +98,21 @@ public class SmartHomePageViewModel extends ViewModel {
         Map<String, Set<QueryNoteResult>> queryResultsMap = liveQueryResults.getValue();
         if (queryResultsMap == null || queryResultsMap.values() == null) return;
 
-        for (Set<QueryNoteResult> queryNoteResults : queryResultsMap.values()) {
-            queryNoteResults.removeIf(q -> smartBookId.equals(q.getBookId()));
+        List<Long> deletedNotes = notebookDeleted.smartNotebook.atomicNotes.stream()
+                .map(AtomicNoteEntity::getNoteId).collect(Collectors.toList());
+
+        List<String> keysToRemove = new ArrayList<>();
+        for (String key : queryResultsMap.keySet()) {
+            Set<QueryNoteResult> queryNoteResults = queryResultsMap.get(key);
+            queryNoteResults.removeIf(q -> deletedNotes.contains(q.getNoteId()));
+            if (queryNoteResults.isEmpty()) {
+                keysToRemove.add(key);
+            }
         }
 
-        liveQueryResults.setValue(queryResultsMap);
+        keysToRemove.forEach(queryResultsMap::remove);
+
+        liveQueryResults.postValue(queryResultsMap);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -166,6 +176,10 @@ public class SmartHomePageViewModel extends ViewModel {
         Map<String, Set<QueryNoteResult>> queryResultsMap = liveQueryResults.getValue();
         queryResultsMap.remove(queryDeleted.query.getName());
         liveQueryResults.postValue(queryResultsMap);
+    }
+
+    public boolean userHasAnyQuery() {
+        return queryRepository.userHasAnyQuery();
     }
 
     private QueryNoteResult transform(AtomicNoteEntity atomicNoteEntity,

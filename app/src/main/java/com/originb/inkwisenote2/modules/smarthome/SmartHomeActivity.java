@@ -3,6 +3,7 @@ package com.originb.inkwisenote2.modules.smarthome;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ImageButton;
 
@@ -22,12 +23,15 @@ import com.originb.inkwisenote2.AppMainActivity;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.MapsUtils;
 import com.originb.inkwisenote2.common.Routing;
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.fileexplorer.DirectoryExplorerActivity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SmartHomeActivity extends AppCompatActivity {
 
@@ -40,7 +44,7 @@ public class SmartHomeActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -175,13 +179,13 @@ public class SmartHomeActivity extends AppCompatActivity {
             if (CollectionUtils.isEmpty(notebooks)) {
                 createdByUserText.setVisibility(View.GONE);
                 createNotesPrompt.setVisibility(View.VISIBLE);
-                openAllNotebooksButton.setVisibility(View.VISIBLE);
+                openAllNotebooksButton.setVisibility(View.GONE);
                 return;
             }
             smartNoteGridAdapter.setSmartNotebooks(notebooks);
             createdByUserText.setVisibility(View.VISIBLE);
             createNotesPrompt.setVisibility(View.GONE);
-            openAllNotebooksButton.setVisibility(View.GONE);
+            openAllNotebooksButton.setVisibility(View.VISIBLE);
         }
     }
 
@@ -189,6 +193,9 @@ public class SmartHomeActivity extends AppCompatActivity {
         private SmartHomeActivity activity;
         private RecyclerView queriedNotebooksRecyclerView;
         private QueryResultsAdapter queryResultsAdapter;
+
+        private TextView createNewStandingQueriesMsg;
+        private Button createNewStandingQueriesBtn;
 
         private TextView queriedNotesText;
 
@@ -201,6 +208,15 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotesText = findViewById(R.id.queried_notes_text);
             queriedNotesText.setVisibility(View.GONE);
 
+            createNewStandingQueriesMsg = findViewById(R.id.add_standing_queries_msg);
+            createNewStandingQueriesMsg.setVisibility(View.GONE);
+
+            createNewStandingQueriesBtn = findViewById(R.id.create_standing_query_btn);
+            updateCreateStandingQueryBtnVisibility();
+            createNewStandingQueriesBtn.setOnClickListener(v -> {
+                Routing.QueryActivity.openQueryActivity(activity);
+            });
+
             queriedNotebooksRecyclerView.setLayoutManager(
                     new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
 
@@ -208,13 +224,45 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotebooksRecyclerView.setAdapter(queryResultsAdapter);
 
             activity.smartHomePageViewModel.getLiveQueryResults().observe(activity, results -> {
+                queryResultsAdapter.setData(results);
                 if (MapsUtils.isEmpty(results)) {
                     queriedNotesText.setVisibility(View.GONE);
-                    return;
+                    updateCreateStandingQueryVisibility();
+
+                } else {
+                    queriedNotesText.setVisibility(View.VISIBLE);
+                    createNewStandingQueriesMsg.setVisibility(View.GONE);
                 }
-                queryResultsAdapter.setData(results);
-                queriedNotesText.setVisibility(View.VISIBLE);
+                updateCreateStandingQueryBtnVisibility();
             });
+        }
+
+        private void updateCreateStandingQueryBtnVisibility() {
+
+            List<SmartNotebook> userNotebooks = activity.smartHomePageViewModel.getUserNotebooks().getValue();
+
+            if (CollectionUtils.isEmpty(userNotebooks)) {
+                createNewStandingQueriesBtn.setVisibility(View.GONE);
+            } else {
+                createNewStandingQueriesBtn.setVisibility(View.VISIBLE);
+            }
+
+        }
+
+        private void updateCreateStandingQueryVisibility() {
+
+            BackgroundOps.execute(() -> activity.smartHomePageViewModel.userHasAnyQuery(),
+                    hasAtLeastOneQuery -> {
+                        List<SmartNotebook> userNotebooks = activity.smartHomePageViewModel
+                                .getUserNotebooks().getValue();
+                        boolean hasSomeNotebooks = !CollectionUtils.isEmpty(userNotebooks);
+                        if (!hasAtLeastOneQuery && hasSomeNotebooks) {
+                            createNewStandingQueriesMsg.setVisibility(View.VISIBLE);
+                        } else {
+                            createNewStandingQueriesMsg.setVisibility(View.GONE);
+                        }
+                    }
+            );
         }
     }
 }

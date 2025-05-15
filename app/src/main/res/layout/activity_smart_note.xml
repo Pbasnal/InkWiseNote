@@ -33,7 +33,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorOnPrimaryContainer"
-                    android:alpha="0.9"
                     android:text="Timestamp"/>
             <EditText
                     android:id="@+id/smart_note_title"
@@ -41,12 +40,12 @@
                     android:layout_height="wrap_content"
                     android:minHeight="48dp"
                     android:textColor="?attr/colorOnPrimaryContainer"
-                    android:text="Note"
                     android:textStyle="bold"
                     android:textSize="20sp"
+                    android:alpha="0.7"
                     android:textColorHint="?attr/colorOnPrimaryContainer"
                     android:background="@drawable/edit_text_bottom_border"
-                    android:hint="Title"/>
+                    android:hint="Untitled notebook"/>
 
         </LinearLayout>
 

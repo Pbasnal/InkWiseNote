@@ -1,7 +1,9 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -114,7 +116,10 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         // Button click listeners
         nextButton.setOnClickListener(view -> {
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            if (atomicNote == null) return;
+
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            if (noteData == null) return;
 
             BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::navigateToNextPage);
@@ -122,7 +127,11 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         prevButton.setOnClickListener(view -> {
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            if (atomicNote == null) return;
+
             NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+            if (noteData == null) return;
+
             BackgroundOps.execute(() -> viewModel.saveCurrentNote(viewModel.getCurrentNote(), noteData),
                     viewModel::navigateToPreviousPage);
         });
@@ -146,6 +155,25 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         noteTitleText.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) noteTitleText.selectAll();
+        });
+
+        noteTitleText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    noteTitleText.setAlpha(1.0f);
+                } else {
+                    noteTitleText.setAlpha(0.7f);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
@@ -196,7 +224,11 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         if (noteTitleText != null) {
             String noteTitle = noteTitleText.getText().toString().trim();
             if (Strings.isNullOrWhitespace(noteTitle)) {
-                noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+                String smartBookName = notebookUpdate.smartNotebook.smartBook.getTitle();
+                if (Strings.isNotEmpty(smartBookName)) {
+                    noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+                    noteTitleText.setAlpha(1.0f);
+                }
             }
         }
 
@@ -236,7 +268,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             return; // Guard against null references
         }
 
-        recyclerView.post(() -> {
+        recyclerView.postDelayed(() -> {
             if (isDestroyed() || isFinishing()) {
                 return; // Don't proceed if activity is finishing/destroyed
             }
@@ -249,7 +281,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             if (currentNote != null) {
                 smartNotebookAdapter.setNoteData(index, currentNote);
             }
-        });
+        }, 100);
     }
 
     @Override
@@ -506,6 +538,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             viewModel.getSmartNotebookUpdate().observe(owner, smartNotebookUpdate -> {
                 if (smartNotebookUpdate != null) {
                     onSmartNotebookUpdate_VirtualNotebook(smartNotebookUpdate);
+                    onSmartNotebookUpdate(smartNotebookUpdate);
                 }
             });
 
@@ -532,8 +565,6 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
                     stateManager.changeState();
                 }
             }
-
-            onSmartNotebookUpdate(smartNotebookUpdate);
         }
 
         @Override
@@ -547,11 +578,6 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         private void initializeSaveButton_VirtualNotebook() {
             newNotePageBtn = findViewById(R.id.fab_add_note);
             newNotePageBtn.setVisibility(View.GONE);
-//            newNotePageBtn.setImageResource(R.drawable.ic_save);
-//            newNotePageBtn.setOnClickListener(view -> {
-//                viewModel.saveCurrentSmartNotebook();
-//                stateManager.changeState();
-//            });
         }
 
         private void initializeNoteTitle_VirtualNotebook() {

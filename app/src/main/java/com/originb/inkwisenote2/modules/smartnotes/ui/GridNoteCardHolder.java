@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.app.AlertDialog;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.common.BitmapScale;
@@ -47,7 +48,6 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private final ImageView relationViewBtn;
     private Animation rotateAnimation;
 
-    private boolean isAnimationRunning = false;
     private SmartNotebook smartNotebook;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final TextNotesDao textNotesDao;
@@ -133,13 +133,11 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
             
             // Start animation
             rotateAnimator.start();
-            isAnimationRunning = true;
             
             Log.d("GridNoteCardHolder", "Starting rotation animation");
         } else {
             // Set ready status image without animation
             noteStatusImg.setImageResource(R.drawable.ic_tick_circle);
-            isAnimationRunning = false;
             Log.d("GridNoteCardHolder", "Set to ready status");
         }
     }
@@ -182,7 +180,20 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     private void onClickDelete() {
-        EventBus.getDefault().post(new Events.NotebookDeleted(smartNotebook));
+        // Show confirmation dialog
+        new AlertDialog.Builder(parentActivity)
+                .setTitle("Delete Notebook")
+                .setMessage("Are you sure you want to delete this notebook? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteNotebook())
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, do nothing
+                    dialog.dismiss();
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void deleteNotebook() {
         BackgroundOps.execute(() -> {
             smartNotebook.atomicNotes.forEach(note -> {
                 handwrittenNoteRepository.deleteHandwrittenNote(note);
