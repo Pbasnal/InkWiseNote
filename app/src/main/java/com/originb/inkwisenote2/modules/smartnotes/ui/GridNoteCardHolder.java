@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.activity.ComponentActivity;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.app.AlertDialog;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.common.BitmapScale;
@@ -182,6 +183,21 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     }
 
     private void onClickDelete() {
+        // Show confirmation dialog
+        new AlertDialog.Builder(parentActivity)
+                .setTitle("Delete Notebook")
+                .setMessage("Are you sure you want to delete this notebook? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteNotebook())
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // User cancelled, do nothing
+                    dialog.dismiss();
+                })
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private void deleteNotebook() {
+        // User confirmed, proceed with deletion
         EventBus.getDefault().post(new Events.NotebookDeleted(smartNotebook));
         BackgroundOps.execute(() -> {
             smartNotebook.atomicNotes.forEach(note -> {
