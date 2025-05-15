@@ -62,10 +62,8 @@ public class TextNoteFragment extends NoteFragment {
     @Override
     public void onViewCreated(@NonNull View itemView, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(itemView, savedInstanceState);
-        deleteBtn.setOnClickListener(view ->
-                EventBus.getDefault()
-                        .post(new Events.DeleteNoteCommand(smartNotebook,
-                                atomicNote))
+        deleteBtn.setOnClickListener(view -> 
+            confirmDeleteNote()
         );
 
         debugButton.setOnClickListener(v -> {

@@ -56,9 +56,7 @@ public class InitNoteFragment extends NoteFragment {
         }
 
         deleteNote.setOnClickListener(v ->
-                EventBus.getDefault()
-                        .post(new Events.DeleteNoteCommand(smartNotebook,
-                                atomicNote))
+                confirmDeleteNote()
         );
 
         return itemView;
