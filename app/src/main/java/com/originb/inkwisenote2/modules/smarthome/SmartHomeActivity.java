@@ -30,6 +30,8 @@ import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SmartHomeActivity extends AppCompatActivity {
 
@@ -225,7 +227,7 @@ public class SmartHomeActivity extends AppCompatActivity {
                 queryResultsAdapter.setData(results);
                 if (MapsUtils.isEmpty(results)) {
                     queriedNotesText.setVisibility(View.GONE);
-                    updateCreateStandingQueryVisibility(View.VISIBLE);
+                    updateCreateStandingQueryVisibility();
 
                 } else {
                     queriedNotesText.setVisibility(View.VISIBLE);
@@ -247,11 +249,17 @@ public class SmartHomeActivity extends AppCompatActivity {
 
         }
 
-        private void updateCreateStandingQueryVisibility(int visibility) {
+        private void updateCreateStandingQueryVisibility() {
 
-            BackgroundOps.execute(() -> activity.smartHomePageViewModel.userHasAnyQuery(), hasAtLeastOneQuery -> {
-                        if (!hasAtLeastOneQuery) {
-                            createNewStandingQueriesMsg.setVisibility(visibility);
+            BackgroundOps.execute(() -> activity.smartHomePageViewModel.userHasAnyQuery(),
+                    hasAtLeastOneQuery -> {
+                        List<SmartNotebook> userNotebooks = activity.smartHomePageViewModel
+                                .getUserNotebooks().getValue();
+                        boolean hasSomeNotebooks = !CollectionUtils.isEmpty(userNotebooks);
+                        if (!hasAtLeastOneQuery && hasSomeNotebooks) {
+                            createNewStandingQueriesMsg.setVisibility(View.VISIBLE);
+                        } else {
+                            createNewStandingQueriesMsg.setVisibility(View.GONE);
                         }
                     }
             );
