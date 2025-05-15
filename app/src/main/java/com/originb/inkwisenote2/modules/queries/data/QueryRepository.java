@@ -1,14 +1,13 @@
 package com.originb.inkwisenote2.modules.queries.data;
 
-import android.content.Context;
-import androidx.lifecycle.LiveData;
+import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote2.common.NotesDatabase;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 
 import java.util.List;
 import java.util.Arrays;
-import java.util.stream.Collectors;
 import java.util.ArrayList;
+
 import android.database.sqlite.SQLiteConstraintException;
 
 public class QueryRepository {
@@ -31,13 +30,18 @@ public class QueryRepository {
         QueryEntity query = new QueryEntity();
         fillEntityWithData(query, name, wordsToFind, wordsToIgnore);
         query.setCreatedTimeMillis(System.currentTimeMillis());
-        
+
         try {
             queryDao.insertQuery(query);
         } catch (SQLiteConstraintException e) {
             // Name already exists, update instead
             queryDao.updateQuery(query);
         }
+    }
+
+    public boolean userHasAnyQuery() {
+        List<QueryEntity> queries = queryDao.hasAnyQuery();
+        return !CollectionUtils.isEmpty(queries);
     }
 
     public QueryEntity fillEntityWithData(QueryEntity query, String name, List<String> wordsToFind, List<String> wordsToIgnore) {

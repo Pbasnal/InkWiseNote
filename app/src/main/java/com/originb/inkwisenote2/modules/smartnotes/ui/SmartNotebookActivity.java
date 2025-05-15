@@ -1,7 +1,9 @@
 package com.originb.inkwisenote2.modules.smartnotes.ui;
 
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -154,6 +156,25 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         noteTitleText.setOnFocusChangeListener((view, hasFocus) -> {
             if (hasFocus) noteTitleText.selectAll();
         });
+
+        noteTitleText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() > 0) {
+                    noteTitleText.setAlpha(1.0f);
+                } else {
+                    noteTitleText.setAlpha(0.7f);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
     }
 
     public void initializeCreatedTimeAndPageNum() {
@@ -203,7 +224,11 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         if (noteTitleText != null) {
             String noteTitle = noteTitleText.getText().toString().trim();
             if (Strings.isNullOrWhitespace(noteTitle)) {
-                noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+                String smartBookName = notebookUpdate.smartNotebook.smartBook.getTitle();
+                if (Strings.isNotEmpty(smartBookName)) {
+                    noteTitleText.setText(notebookUpdate.smartNotebook.smartBook.getTitle());
+                    noteTitleText.setAlpha(1.0f);
+                }
             }
         }
 

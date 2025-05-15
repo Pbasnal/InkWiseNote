@@ -178,6 +178,10 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.postValue(queryResultsMap);
     }
 
+    public boolean userHasAnyQuery() {
+        return queryRepository.userHasAnyQuery();
+    }
+
     private QueryNoteResult transform(AtomicNoteEntity atomicNoteEntity,
                                       Set<String> wordsToFind,
                                       Set<String> wordsToIgnore) {

@@ -3,6 +3,7 @@ package com.originb.inkwisenote2.modules.smarthome;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ImageButton;
 
@@ -22,6 +23,7 @@ import com.originb.inkwisenote2.AppMainActivity;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.MapsUtils;
 import com.originb.inkwisenote2.common.Routing;
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.fileexplorer.DirectoryExplorerActivity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
@@ -40,7 +42,7 @@ public class SmartHomeActivity extends AppCompatActivity {
 
     private DrawerLayout drawerLayout;
     private ActionBarDrawerToggle drawerToggle;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -190,6 +192,9 @@ public class SmartHomeActivity extends AppCompatActivity {
         private RecyclerView queriedNotebooksRecyclerView;
         private QueryResultsAdapter queryResultsAdapter;
 
+        private TextView createNewStandingQueriesMsg;
+        private Button createNewStandingQueriesBtn;
+
         private TextView queriedNotesText;
 
         public QueriedNotebooks(SmartHomeActivity activity) {
@@ -201,6 +206,15 @@ public class SmartHomeActivity extends AppCompatActivity {
             queriedNotesText = findViewById(R.id.queried_notes_text);
             queriedNotesText.setVisibility(View.GONE);
 
+            createNewStandingQueriesMsg = findViewById(R.id.add_standing_queries_msg);
+            createNewStandingQueriesMsg.setVisibility(View.GONE);
+
+            createNewStandingQueriesBtn = findViewById(R.id.create_standing_query_btn);
+            updateCreateStandingQueryBtnVisibility();
+            createNewStandingQueriesBtn.setOnClickListener(v -> {
+                Routing.QueryActivity.openQueryActivity(activity);
+            });
+
             queriedNotebooksRecyclerView.setLayoutManager(
                     new LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false));
 
@@ -211,10 +225,36 @@ public class SmartHomeActivity extends AppCompatActivity {
                 queryResultsAdapter.setData(results);
                 if (MapsUtils.isEmpty(results)) {
                     queriedNotesText.setVisibility(View.GONE);
-                    return;
+                    updateCreateStandingQueryVisibility(View.VISIBLE);
+
+                } else {
+                    queriedNotesText.setVisibility(View.VISIBLE);
+                    createNewStandingQueriesMsg.setVisibility(View.GONE);
                 }
-                queriedNotesText.setVisibility(View.VISIBLE);
+                updateCreateStandingQueryBtnVisibility();
             });
+        }
+
+        private void updateCreateStandingQueryBtnVisibility() {
+
+            List<SmartNotebook> userNotebooks = activity.smartHomePageViewModel.getUserNotebooks().getValue();
+
+            if (CollectionUtils.isEmpty(userNotebooks)) {
+                createNewStandingQueriesBtn.setVisibility(View.GONE);
+            } else {
+                createNewStandingQueriesBtn.setVisibility(View.VISIBLE);
+            }
+
+        }
+
+        private void updateCreateStandingQueryVisibility(int visibility) {
+
+            BackgroundOps.execute(() -> activity.smartHomePageViewModel.userHasAnyQuery(), hasAtLeastOneQuery -> {
+                        if (!hasAtLeastOneQuery) {
+                            createNewStandingQueriesMsg.setVisibility(visibility);
+                        }
+                    }
+            );
         }
     }
 }

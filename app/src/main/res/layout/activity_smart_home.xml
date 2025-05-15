@@ -169,6 +169,28 @@
                         android:paddingHorizontal="8dp"
                         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
+                <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                    <TextView
+                            android:id="@+id/add_standing_queries_msg"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="16dp"
+                            android:text="@string/add_standing_queries_msg"
+                            android:textColor="?attr/colorOnSurface"
+                            android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"/>
+
+                    <Button
+                            android:id="@+id/create_standing_query_btn"
+                            android:text="Create Standing Query"
+                            android:layout_width="match_parent"
+                            android:layout_margin="10dp"
+                            android:layout_height="wrap_content"/>
+                </LinearLayout>
+
                 <TextView
                         android:id="@+id/queried_notes_text"
                         android:layout_width="match_parent"
@@ -202,7 +224,7 @@
                 app:backgroundTint="?attr/colorSecondary"/>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
-    <!-- Navigation Drawer-->
+    <!--     Navigation Drawer-->
     <com.google.android.material.navigation.NavigationView
             android:id="@+id/nav_view"
             android:layout_width="wrap_content"
