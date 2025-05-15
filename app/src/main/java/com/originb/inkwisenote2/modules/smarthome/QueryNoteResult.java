@@ -13,7 +13,6 @@ public class QueryNoteResult {
     private Bitmap noteImage;
     private String queryWord;
     private String noteText;
-    private long bookId;
     private long lastModifiedMillis;
     private NoteType noteType;
 

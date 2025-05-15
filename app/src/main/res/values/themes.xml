@@ -34,10 +34,6 @@
         <item name="colorOutline">@color/card_stroke_light</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        
-        <!-- Custom attributes -->
-        <item name="drawingSurface">@color/white</item>
-        
         <!-- Customize your theme here. -->
     </style>
 </resources>
