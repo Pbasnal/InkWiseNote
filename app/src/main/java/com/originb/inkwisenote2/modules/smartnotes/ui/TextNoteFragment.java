@@ -80,6 +80,27 @@ public class TextNoteFragment extends NoteFragment {
         }
     }
 
+    @Override
+    protected void deleteNote() {
+        textNotesDao.deleteTextNote(atomicNote.getNoteId());
+        File markdownFile = new File(getMarkdownFilePath());
+        markdownFile.delete();
+
+        File notebookDir = new File(atomicNote.getFilepath());
+        if (notebookDir.exists() && notebookDir.isDirectory()) {
+            // Delete all files in the directory
+            File[] files = notebookDir.listFiles();
+            if (files == null || files.length == 0) {
+                notebookDir.delete();
+            }
+        }
+
+        EventBus.getDefault().post(new Events.DeleteNoteCommand(
+                smartNotebook,
+                atomicNote
+        ));
+    }
+
     protected void loadNote() {
         BackgroundOps.execute(() -> {
             // Check for markdown file first

@@ -34,7 +34,7 @@ public class HandwrittenNoteRepository {
     private final Logger logger = new Logger("HandwrittenNoteRepository");
     private final HandwrittenNotesDao handwrittenNotesDao;
     AtomicNotesDomain atomicNotesDomain;
-    
+
     // Maps noteId to a lock object for synchronizing file operations per note
     private final Map<Long, Object> noteLocks = new ConcurrentHashMap<>();
 
@@ -42,7 +42,7 @@ public class HandwrittenNoteRepository {
         this.handwrittenNotesDao = Repositories.getInstance().getNotesDb().handwrittenNotesDao();
         this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
     }
-    
+
     /**
      * Get or create a lock object for a specific note
      */
@@ -84,7 +84,7 @@ public class HandwrittenNoteRepository {
                                         List<Stroke> strokes,
                                         Context context) {
         // Synchronize operations on this specific note
-        synchronized(getLockForNote(atomicNote.getNoteId())) {
+        synchronized (getLockForNote(atomicNote.getNoteId())) {
             // Make a local copy of atomicNote to avoid modifying the original object
             AtomicNoteEntity noteToSave = new AtomicNoteEntity();
             noteToSave.setNoteId(atomicNote.getNoteId());
@@ -185,6 +185,15 @@ public class HandwrittenNoteRepository {
         String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
         File markdownFile = new File(markdownPath);
         markdownFile.delete();
+
+        File notebookDir = new File(atomicNote.getFilepath());
+        if (notebookDir.exists() && notebookDir.isDirectory()) {
+            // Delete all files in the directory
+            File[] files = notebookDir.listFiles();
+            if (files == null || files.length == 0) {
+                notebookDir.delete();
+            }
+        }
     }
 
     private String getBitmapHash(Bitmap bitmap) {

@@ -49,6 +49,31 @@ public class SmartNotebookRepository {
     }
 
     public void deleteSmartNotebook(SmartNotebook smartNotebook) {
+        // Delete notebook folder from filesystem if it exists
+        try {
+            if (!smartNotebook.getAtomicNotes().isEmpty()) {
+                AtomicNoteEntity firstNote = smartNotebook.getAtomicNotes().get(0);
+                if (firstNote != null && firstNote.getFilepath() != null) {
+                    File notebookDir = new File(firstNote.getFilepath());
+                    if (notebookDir.exists() && notebookDir.isDirectory()) {
+                        // Delete all files in the directory
+                        File[] files = notebookDir.listFiles();
+                        if (files != null) {
+                            for (File file : files) {
+                                file.delete();
+                            }
+                        }
+                        // Delete the directory itself
+                        notebookDir.delete();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log error but continue with database deletion
+            System.err.println("Error deleting notebook directory: " + e.getMessage());
+        }
+
+        // Delete database records
         smartBookPagesDao.deleteSmartBookPages(smartNotebook.getSmartBook().getBookId());
 
         smartNotebook.getAtomicNotes()
@@ -68,13 +93,6 @@ public class SmartNotebookRepository {
             smartBookPagesDao.deleteNotePages(atomicNote.getNoteId());
             atomicNoteEntitiesDao.deleteAtomicNote(atomicNote.getNoteId());
 
-            // TODO: this is a clean up job. Why do here?
-//            getSmartNotebooks(smartNotebook.getSmartBook().getBookId())
-//                    .filter(updatedSmartNotebook -> updatedSmartNotebook.atomicNotes.isEmpty())
-//                    .ifPresent(updatedSmartNotebook -> {
-//                        smartBookPagesDao.deleteSmartBookPages(smartNotebook.smartBook.getBookId());
-//                        smartBooksDao.deleteSmartBook(smartNotebook.getSmartBook().getBookId());
-//                    });
             EventBus.getDefault().post(new Events.NoteDeleted(smartNotebook, atomicNote));
         }
     }
