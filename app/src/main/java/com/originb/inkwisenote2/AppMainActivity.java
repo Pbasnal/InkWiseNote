@@ -41,7 +41,7 @@ public class AppMainActivity extends AppCompatActivity {
         AppState.updateState();
         
         // Bootstrap notebooks and notes from working directory
-//        bootstrapNotebooksAndNotes();
+        bootstrapNotebooksAndNotes();
 
         Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
     }

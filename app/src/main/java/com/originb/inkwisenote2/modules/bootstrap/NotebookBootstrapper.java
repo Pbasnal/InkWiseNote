@@ -6,15 +6,6 @@ import com.google.android.gms.common.util.CollectionUtils;
 import com.originb.inkwisenote2.common.ListUtils;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.common.Strings;
-import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
-import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPagesDao;
 
 import java.io.File;
 import java.util.*;
@@ -26,17 +17,10 @@ public class NotebookBootstrapper {
     private static final String TAG = "NotebookBootstrapper";
     private final Logger logger = new Logger(TAG);
 
-    private final SmartNotebookRepository smartNotebookRepository;
-    private final AtomicNotesDomain atomicNotesDomain;
-    private final SmartBookPagesDao smartBookPagesDao;
-
     private Map<String, NotebookFolder> smartBookFolders = new HashMap<>();
     private Map<String, NoteFileInfo> notesOnRootFolder = new HashMap<>();
 
     public NotebookBootstrapper() {
-        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
-        this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
     }
 
     /**
