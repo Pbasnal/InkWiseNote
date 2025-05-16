@@ -9,6 +9,7 @@ import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,6 +34,15 @@ public class TextNoteListener {
     public void onNoteDelete(Events.NoteDeleted noteDeleted) {
         textNotesDao.deleteTextNote(noteDeleted.atomicNote.getNoteId());
         deleteNoteMarkdown(noteDeleted.atomicNote);
+
+        File notebookDir = new File(noteDeleted.atomicNote.getFilepath());
+        if (notebookDir.exists() && notebookDir.isDirectory()) {
+            // Delete all files in the directory
+            File[] files = notebookDir.listFiles();
+            if (files == null || files.length == 0) {
+                notebookDir.delete();
+            }
+        }
     }
 
     public void deleteNoteMarkdown(AtomicNoteEntity atomicNote) {

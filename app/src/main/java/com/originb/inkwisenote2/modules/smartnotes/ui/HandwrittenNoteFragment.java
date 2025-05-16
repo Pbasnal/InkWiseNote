@@ -28,6 +28,8 @@ import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.File;
+
 /**
  * Fragment for displaying and editing handwritten notes
  */
@@ -124,28 +126,6 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     protected void loadNote() {
         if (atomicNote == null) return;
-        
-        // Make sure we have the correct filepath based on notebook title
-//        String notebookTitle = smartNotebook.getSmartBook().getTitle();
-//        String baseDir = atomicNote.getFilepath();
-//        if (baseDir.lastIndexOf('/') > 0) {
-//            baseDir = baseDir.substring(0, baseDir.lastIndexOf('/'));
-//        }
-//
-//        // If notebook has a title, ensure it's used as the directory name
-//        if (notebookTitle != null && !notebookTitle.trim().isEmpty()) {
-//            String correctPath = baseDir + "/" + notebookTitle;
-//            if (!atomicNote.getFilepath().equals(correctPath)) {
-//                atomicNote.setFilepath(correctPath);
-//            }
-//        } else {
-//            // If no title, use timestamp
-//            String timestamp = String.valueOf(smartNotebook.getSmartBook().getLastModifiedTimeMillis());
-//            String correctPath = baseDir + "/" + timestamp;
-//            if (!atomicNote.getFilepath().equals(correctPath)) {
-//                atomicNote.setFilepath(correctPath);
-//            }
-//        }
 
         // Load strokes from markdown file
         BackgroundOps.execute(
@@ -181,9 +161,6 @@ public class HandwrittenNoteFragment extends NoteFragment {
         );
     }
 
-    /**
-     * Show the debug dialog with note information
-     */
     private void showDebugDialog() {
         if (getContext() != null) {
             NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
@@ -202,47 +179,5 @@ public class HandwrittenNoteFragment extends NoteFragment {
                 drawingView.getPageTemplate(),
                 drawingView.getStrokes()
         );
-    }
-
-    private boolean useDefaultBitmap() {
-        return drawingView == null || drawingView.currentWidth * drawingView.currentHeight == 0;
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        // Save the data when fragment is paused to prevent data loss
-        saveCurrentNoteData();
-    }
-    
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-        // Save the data when saving state
-        saveCurrentNoteData();
-    }
-
-    /**
-     * Explicitly save current note data to prevent data loss during navigation
-     */
-    private void saveCurrentNoteData() {
-        try {
-            if (drawingView != null && atomicNote != null && smartNotebook != null) {
-                NoteHolderData noteData = getNoteHolderData();
-                if (noteData != null) {
-                    // Get the repository to save the data
-                    handwrittenNoteRepository.saveHandwrittenNotes(
-                            smartNotebook.getSmartBook().getBookId(),
-                            atomicNote,
-                            noteData.bitmap,
-                            noteData.pageTemplate,
-                            noteData.strokes,
-                            getContext()
-                    );
-                }
-            }
-        } catch (Exception e) {
-            logger.exception("Error saving note data during pause", e);
-        }
     }
 }
