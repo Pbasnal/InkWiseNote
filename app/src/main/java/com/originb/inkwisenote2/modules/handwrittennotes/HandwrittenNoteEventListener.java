@@ -23,7 +23,6 @@ public class HandwrittenNoteEventListener {
         smartNotebook.atomicNotes.forEach(note ->
                 {
                     handwrittenNoteRepository.deleteHandwrittenNote(note);
-                    handwrittenNoteRepository.deleteHandwrittenNoteMarkdown(note);
                 }
         );
     }
@@ -31,7 +30,6 @@ public class HandwrittenNoteEventListener {
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     public void onNoteDelete(Events.NoteDeleted noteDeleted) {
         handwrittenNoteRepository.deleteHandwrittenNote(noteDeleted.atomicNote);
-        handwrittenNoteRepository.deleteHandwrittenNoteMarkdown(noteDeleted.atomicNote);
     }
 }
 

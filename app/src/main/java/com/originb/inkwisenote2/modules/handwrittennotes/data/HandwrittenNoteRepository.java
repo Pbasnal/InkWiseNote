@@ -326,17 +326,6 @@ public class HandwrittenNoteRepository {
         return readStrokesFromMarkdown(markdownPath);
     }
 
-    public void deleteHandwrittenNoteMarkdown(AtomicNoteEntity atomicNote) {
-        if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath())) return;
-        Path path = Paths.get(atomicNote.getFilepath(), atomicNote.getFilename());
-        Path pathWithExtension = Paths.get(path.toString() + ".md");
-        try {
-            Files.delete(pathWithExtension);
-        } catch (Exception e) {
-            System.out.println("Failed to delete the file: " + e.getMessage());
-        }
-    }
-
     /**
      * Reads strokes from a markdown file containing "inkwise" fenced code blocks
      *

@@ -28,7 +28,10 @@ public abstract class NoteFragment extends Fragment {
                 .setTitle("Delete Note")
                 .setMessage("Are you sure you want to delete this note?")
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    deleteNote();
+                    EventBus.getDefault().post(new Events.DeleteNoteCommand(
+                            smartNotebook,
+                            atomicNote
+                    ));
                 })
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .setNegativeButton("Cancel", null)
@@ -36,5 +39,4 @@ public abstract class NoteFragment extends Fragment {
     }
 
     public abstract NoteHolderData getNoteHolderData();
-    protected abstract void deleteNote();
 }
