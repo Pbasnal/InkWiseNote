@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote2.common.*;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.handwrittennotes.ui.ThumbnailGenerator;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
@@ -50,7 +51,7 @@ public class HandwrittenNoteRepository {
         return noteLocks.computeIfAbsent(noteId, k -> new Object());
     }
 
-    public void saveHandwrittenNoteImage(AtomicNoteEntity atomicNote, Bitmap bitmap) {
+    public void saveHandwrittenNoteImage(AtomicNoteEntity atomicNote, Bitmap bitmap, List<Stroke> strokes) {
         if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath()) || Objects.isNull(bitmap)) {
             return;
         }
@@ -58,7 +59,7 @@ public class HandwrittenNoteRepository {
             String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
             String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
 
-            Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
+            Bitmap thumbnail = ThumbnailGenerator.generateThumbnail(bitmap, strokes);
 
             BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
             BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
@@ -110,14 +111,14 @@ public class HandwrittenNoteRepository {
 
                 handwrittenNoteEntity.setCreatedTimeMillis(System.currentTimeMillis());
                 handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-                saveHandwrittenNoteImage(noteToSave, bitmap);
+                saveHandwrittenNoteImage(noteToSave, bitmap, strokes);
                 saveHandwrittenNoteMarkdown(noteToSave, strokes);
                 handwrittenNotesDao.insertHandwrittenNote(handwrittenNoteEntity);
                 noteUpdated = true;
             } else if (bitmapHash != null && !bitmapHash.equals(handwrittenNoteEntity.getBitmapHash())) {
                 handwrittenNoteEntity.setBitmapHash(bitmapHash);
                 handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-                saveHandwrittenNoteImage(noteToSave, bitmap);
+                saveHandwrittenNoteImage(noteToSave, bitmap, strokes);
                 saveHandwrittenNoteMarkdown(noteToSave, strokes);
                 handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
                 noteUpdated = true;

@@ -161,9 +161,6 @@ public class HandwrittenNoteFragment extends NoteFragment {
         );
     }
 
-    /**
-     * Show the debug dialog with note information
-     */
     private void showDebugDialog() {
         if (getContext() != null) {
             NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
