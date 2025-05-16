@@ -18,8 +18,6 @@ public abstract class NoteFragment extends Fragment {
         this.atomicNote = atomicNote;
     }
 
-    public abstract NoteHolderData getNoteHolderData();
-    
     /**
      * Shows a confirmation dialog before deleting a note
      */
@@ -39,4 +37,6 @@ public abstract class NoteFragment extends Fragment {
                 .setNegativeButton("Cancel", null)
                 .show();
     }
+
+    public abstract NoteHolderData getNoteHolderData();
 }

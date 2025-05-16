@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import com.google.android.gms.common.util.Strings;
 import com.originb.inkwisenote2.common.*;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
+import com.originb.inkwisenote2.modules.handwrittennotes.ui.ThumbnailGenerator;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
@@ -34,7 +35,7 @@ public class HandwrittenNoteRepository {
     private final Logger logger = new Logger("HandwrittenNoteRepository");
     private final HandwrittenNotesDao handwrittenNotesDao;
     AtomicNotesDomain atomicNotesDomain;
-    
+
     // Maps noteId to a lock object for synchronizing file operations per note
     private final Map<Long, Object> noteLocks = new ConcurrentHashMap<>();
 
@@ -42,7 +43,7 @@ public class HandwrittenNoteRepository {
         this.handwrittenNotesDao = Repositories.getInstance().getNotesDb().handwrittenNotesDao();
         this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
     }
-    
+
     /**
      * Get or create a lock object for a specific note
      */
@@ -50,7 +51,7 @@ public class HandwrittenNoteRepository {
         return noteLocks.computeIfAbsent(noteId, k -> new Object());
     }
 
-    public void saveHandwrittenNoteImage(AtomicNoteEntity atomicNote, Bitmap bitmap) {
+    public void saveHandwrittenNoteImage(AtomicNoteEntity atomicNote, Bitmap bitmap, List<Stroke> strokes) {
         if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath()) || Objects.isNull(bitmap)) {
             return;
         }
@@ -58,7 +59,7 @@ public class HandwrittenNoteRepository {
             String fullPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".png";
             String thumbnailPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + "-t.png";
 
-            Bitmap thumbnail = BitmapFileIoUtils.resizeBitmap(bitmap, BitmapScale.THUMBNAIL.getValue());
+            Bitmap thumbnail = ThumbnailGenerator.generateThumbnail(bitmap, strokes);
 
             BitmapFileIoUtils.writeDataToDisk(fullPath, bitmap);
             BitmapFileIoUtils.writeDataToDisk(thumbnailPath, thumbnail);
@@ -84,7 +85,7 @@ public class HandwrittenNoteRepository {
                                         List<Stroke> strokes,
                                         Context context) {
         // Synchronize operations on this specific note
-        synchronized(getLockForNote(atomicNote.getNoteId())) {
+        synchronized (getLockForNote(atomicNote.getNoteId())) {
             // Make a local copy of atomicNote to avoid modifying the original object
             AtomicNoteEntity noteToSave = new AtomicNoteEntity();
             noteToSave.setNoteId(atomicNote.getNoteId());
@@ -110,14 +111,14 @@ public class HandwrittenNoteRepository {
 
                 handwrittenNoteEntity.setCreatedTimeMillis(System.currentTimeMillis());
                 handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-                saveHandwrittenNoteImage(noteToSave, bitmap);
+                saveHandwrittenNoteImage(noteToSave, bitmap, strokes);
                 saveHandwrittenNoteMarkdown(noteToSave, strokes);
                 handwrittenNotesDao.insertHandwrittenNote(handwrittenNoteEntity);
                 noteUpdated = true;
             } else if (bitmapHash != null && !bitmapHash.equals(handwrittenNoteEntity.getBitmapHash())) {
                 handwrittenNoteEntity.setBitmapHash(bitmapHash);
                 handwrittenNoteEntity.setLastModifiedTimeMillis(System.currentTimeMillis());
-                saveHandwrittenNoteImage(noteToSave, bitmap);
+                saveHandwrittenNoteImage(noteToSave, bitmap, strokes);
                 saveHandwrittenNoteMarkdown(noteToSave, strokes);
                 handwrittenNotesDao.updateHandwrittenNote(handwrittenNoteEntity);
                 noteUpdated = true;
@@ -185,6 +186,15 @@ public class HandwrittenNoteRepository {
         String markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md";
         File markdownFile = new File(markdownPath);
         markdownFile.delete();
+
+        File notebookDir = new File(atomicNote.getFilepath());
+        if (notebookDir.exists() && notebookDir.isDirectory()) {
+            // Delete all files in the directory
+            File[] files = notebookDir.listFiles();
+            if (files == null || files.length == 0) {
+                notebookDir.delete();
+            }
+        }
     }
 
     private String getBitmapHash(Bitmap bitmap) {
@@ -315,17 +325,6 @@ public class HandwrittenNoteRepository {
         }
 
         return readStrokesFromMarkdown(markdownPath);
-    }
-
-    public void deleteHandwrittenNoteMarkdown(AtomicNoteEntity atomicNote) {
-        if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath())) return;
-        Path path = Paths.get(atomicNote.getFilepath(), atomicNote.getFilename());
-        Path pathWithExtension = Paths.get(path.toString() + ".md");
-        try {
-            Files.delete(pathWithExtension);
-        } catch (Exception e) {
-            System.out.println("Failed to delete the file: " + e.getMessage());
-        }
     }
 
     /**
