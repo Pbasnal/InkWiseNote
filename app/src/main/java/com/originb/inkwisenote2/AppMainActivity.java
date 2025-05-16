@@ -41,7 +41,7 @@ public class AppMainActivity extends AppCompatActivity {
         AppState.updateState();
         
         // Bootstrap notebooks and notes from working directory
-        bootstrapNotebooksAndNotes();
+//        bootstrapNotebooksAndNotes();
 
         Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
     }
@@ -52,21 +52,18 @@ public class AppMainActivity extends AppCompatActivity {
     private void bootstrapNotebooksAndNotes() {
         try {
             // Get the root notes directory from config
-            String rootNotesDirectory = ConfigReader.getInstance().getRuntimeSetting(ConfigKeys.NOTES_ROOT_DIRECTORY);
+            String rootNotesDirectory = this.getFilesDir().getPath();
             File workingDirectory = new File(rootNotesDirectory);
             
             // Initialize bootstrapper
             NotebookBootstrapper bootstrapper = new NotebookBootstrapper();
             
             // Bootstrap notebooks and notes
-            List<SmartNotebook> bootstrappedNotebooks = bootstrapper.bootstrapFromDirectory(this, workingDirectory);
+            List<NotebookBootstrapper.NotebookFolder> bootstrappedNotebooks = bootstrapper.bootstrapFromDirectory(this, workingDirectory);
             
             // Log bootstrap results
-            logger.info("Bootstrap completed. Found " + bootstrappedNotebooks.size() + " notebooks");
-            for (SmartNotebook notebook : bootstrappedNotebooks) {
-                logger.info("Notebook: " + notebook.getSmartBook().getTitle() + 
-                           " with " + notebook.getAtomicNotes().size() + " notes");
-            }
+            logger.debug("Bootstrap completed. Found " + bootstrappedNotebooks.size() + " notebooks");
+
         } catch (Exception e) {
             logger.exception("Error during bootstrap process", e);
         }
