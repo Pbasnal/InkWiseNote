@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
@@ -49,7 +50,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     private EditText noteTitleText;
     private TextView noteCreatedTime;
     private TextView pageNumText;
-
+    private ImageButton backButton;
 
     private Long noteIdToLoadOnOpen;
     private ISmartNotebookActivityState currentState;
@@ -181,6 +182,25 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         // Initialize text fields
         noteCreatedTime = findViewById(R.id.note_created_time);
         pageNumText = findViewById(R.id.page_num_text);
+    }
+
+    public void initializeBackButton() {
+        backButton = findViewById(R.id.back_button);
+        backButton.setOnClickListener(view -> {
+            // Save current state before going back
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            if (atomicNote != null) {
+                NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+                if (noteData != null) {
+                    BackgroundOps.execute(() -> viewModel.saveCurrentNote(atomicNote, noteData),
+                            () -> finish());
+                } else {
+                    finish();
+                }
+            } else {
+                finish();
+            }
+        });
     }
 
     public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
@@ -389,6 +409,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             initializeNewNoteButton();
             initializeNoteTitle();
             initializeCreatedTimeAndPageNum();
+            initializeBackButton();
         }
 
         @Override
@@ -511,6 +532,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             initializeSaveButton_VirtualNotebook();
             initializeNoteTitle_VirtualNotebook();
             initializeCreatedTimeAndPageNum();
+            initializeBackButton();
         }
 
         @Override
