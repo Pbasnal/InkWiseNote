@@ -190,6 +190,10 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
     public void initializeBackButton() {
         backButton = findViewById(R.id.back_button);
+        if (backButton == null) {
+            logger.error("Back button not found in layout. Make sure the layout contains an ImageButton with id 'back_button'");
+            return;
+        }
         backButton.setOnClickListener(view -> {
             // Save current state before going back
             AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
