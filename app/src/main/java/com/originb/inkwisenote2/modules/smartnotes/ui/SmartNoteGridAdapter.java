@@ -53,6 +53,17 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
         }
     }
 
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onSmartNotebookSaved(Events.SmartNotebookSaved smartNotebookSaved) {
+        SmartNotebook savedNotebook = smartNotebookSaved.smartNotebook;
+        long bookId = savedNotebook.getSmartBook().getBookId();
+
+        if (bookCards.containsKey(bookId)) {
+            GridNoteCardHolder holder = bookCards.get(bookId);
+            holder.setNote(savedNotebook);
+        }
+    }
+
     public void updateNoteRelations(Set<NoteRelation> updatedNoteRelationMap) {
         logger.debug("Updating note relations", updatedNoteRelationMap);
 
