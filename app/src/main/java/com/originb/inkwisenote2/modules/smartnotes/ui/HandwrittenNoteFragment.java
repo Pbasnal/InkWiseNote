@@ -98,6 +98,42 @@ public class HandwrittenNoteFragment extends NoteFragment {
         loadNote();
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Hide navigation bar when fragment becomes active
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).hideNavigationBar();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Show navigation bar when fragment becomes inactive
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).showNavigationBar();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Ensure navigation bar is shown when fragment is destroyed
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).showNavigationBar();
+        }
+    }
+
+    /**
+     * Ensure navigation bar stays hidden during drawing
+     */
+    public void ensureNavigationBarHidden() {
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).hideNavigationBar();
+        }
+    }
+
     /**
      * Switch to eraser mode
      */
