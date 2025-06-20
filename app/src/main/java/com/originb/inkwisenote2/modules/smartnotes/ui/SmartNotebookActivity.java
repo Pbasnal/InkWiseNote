@@ -6,6 +6,7 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.ImageButton;
@@ -13,6 +14,9 @@ import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote2.common.Logger;
@@ -201,6 +205,40 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
                 finish();
             }
         });
+    }
+
+    /**
+     * Hide the navigation bar for immersive drawing experience
+     */
+    public void hideNavigationBar() {
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.hide(WindowInsetsCompat.Type.navigationBars());
+        controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+    }
+
+    /**
+     * Show the navigation bar
+     */
+    public void showNavigationBar() {
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.show(WindowInsetsCompat.Type.navigationBars());
+    }
+
+    /**
+     * Handle system UI visibility changes to maintain immersive mode
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            // Check if current fragment is HandwrittenNoteFragment and hide navigation bar if needed
+            if (smartNotebookAdapter != null) {
+                AtomicNoteEntity currentNote = viewModel.getCurrentNote();
+                if (currentNote != null && "handwritten_png".equals(currentNote.getNoteType())) {
+                    hideNavigationBar();
+                }
+            }
+        }
     }
 
     public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
