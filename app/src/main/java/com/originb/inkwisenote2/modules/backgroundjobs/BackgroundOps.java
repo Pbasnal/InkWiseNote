@@ -42,28 +42,30 @@ public class BackgroundOps {
     }
 
     public static <T> void execute(Callable<T> callable, Consumer<T> resultOnMainThread) {
-        try {
-            Future<T> callFuture = getInstance().executor.submit(callable);
-            T result = callFuture.get();
+        getInstance().executor.execute(() -> {
+            try {
+                // This happens on the background thread
+                T result = callable.call();
 
-            getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result));
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+                // Post the result back to the UI thread without blocking
+                getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result));
+            } catch (Exception e) {
+                // Log the error or handle it - don't let it crash the background thread silently
+                e.printStackTrace();
+            }
+        });
     }
 
     public static <T> void executeOpt(Callable<Optional<T>> callable, Consumer<T> resultOnMainThread) {
-        try {
-            Future<Optional<T>> callFuture = getInstance().executor.submit(callable);
-            Optional<T> result = callFuture.get();
-
-            if (result.isPresent()) {
-                getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result.get()));
+        getInstance().executor.execute(() -> {
+            try {
+                Optional<T> result = callable.call();
+                if (result.isPresent()) {
+                    getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result.get()));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 }
