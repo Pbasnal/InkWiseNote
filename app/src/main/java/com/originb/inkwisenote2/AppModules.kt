@@ -4,6 +4,7 @@ import androidx.room.Room
 import com.originb.inkwisenote2.common.NotesDatabase
 import com.originb.inkwisenote2.modules.admin.AdminViewModel
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository
+import com.originb.inkwisenote2.modules.noterelation.ui.RelatedNotesViewModel
 import com.originb.inkwisenote2.modules.notesearch.NoteSearchViewModel
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
@@ -27,6 +28,7 @@ val appModule = module {
     single { get<NotesDatabase>().smartBooksDao() }
     single { get<NotesDatabase>().smartBookPagesDao() }
     single { get<NotesDatabase>().handwrittenNotesDao() }
+    single { get<NotesDatabase>().noteRelationDao() }
 
     // 3. Single instances of Repositories
     single { HandwrittenNoteRepository() }
@@ -34,6 +36,7 @@ val appModule = module {
     single { AtomicNotesDomain() }
     single { QueryRepository() }
     single { SmartNotebookRepository() }
+
 
     viewModel {
         NoteSearchViewModel(
@@ -45,6 +48,14 @@ val appModule = module {
         AdminViewModel(
             get(),
             get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    }
+    viewModel {
+        RelatedNotesViewModel(
             get(),
             get(),
             get(),
