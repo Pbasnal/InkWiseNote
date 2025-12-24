@@ -2,6 +2,7 @@ package com.originb.inkwisenote2.modules.backgroundjobs;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 
@@ -42,16 +43,19 @@ public class BackgroundOps {
     }
 
     public static <T> void execute(Callable<T> callable, Consumer<T> resultOnMainThread) {
+        // 1. Capture the stack trace of the CALLER (the UI thread) right now
+        Exception clientStack = new Exception("Task submitted from here");
+
         getInstance().executor.execute(() -> {
             try {
-                // This happens on the background thread
                 T result = callable.call();
-
-                // Post the result back to the UI thread without blocking
                 getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result));
             } catch (Exception e) {
-                // Log the error or handle it - don't let it crash the background thread silently
-                e.printStackTrace();
+                // 2. Stitch the current background exception with the caller's stack trace
+                e.initCause(clientStack);
+
+                // 3. Now when you log this, you see exactly where it was enqueued
+                handleError(e);
             }
         });
     }
@@ -66,6 +70,17 @@ public class BackgroundOps {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        });
+    }
+
+    private static void handleError(Exception e) {
+        // Using a logger helps preserve the full cause chain
+        e.printStackTrace();
+        Log.e("BackgroundOps", "Background task failed", e);
+
+        // Optional: Post back to UI to show an error dialog/toast
+        getInstance().mainThreadHandler.post(() -> {
+            // You could add an Error Consumer to your execute method if needed
         });
     }
 }

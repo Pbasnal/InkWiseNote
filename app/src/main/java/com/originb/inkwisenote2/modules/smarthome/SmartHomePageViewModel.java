@@ -42,6 +42,10 @@ public class SmartHomePageViewModel extends ViewModel {
     private NoteOcrTextDao noteOcrTextDao;
     private HandwrittenNoteRepository handwrittenNoteRepository;
 
+    private final MutableLiveData<List<SmartNotebook>> _userNotebooks = new MutableLiveData<>();
+    private final MutableLiveData<Map<String, List<SmartNotebook>>> _queryResults = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _showStandingQueryPrompt = new MutableLiveData<>(false);
+
     private final MutableLiveData<List<SmartNotebook>> userNotebooks = new MutableLiveData<>(new ArrayList<>());
 
     private final MutableLiveData<Map<String, Set<QueryNoteResult>>> liveQueryResults = new MutableLiveData<>(new HashMap<>());
@@ -178,8 +182,22 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.postValue(queryResultsMap);
     }
 
-    public boolean userHasAnyQuery() {
-        return queryRepository.userHasAnyQuery();
+    public LiveData<Boolean> getShowStandingQueryPrompt() {
+        return _showStandingQueryPrompt;
+    }
+
+    public void refreshDashboardState() {
+        // Move your BackgroundOps logic here!
+        BackgroundOps.execute(() -> {
+            boolean hasQueries = queryRepository.userHasAnyQuery();
+            List<SmartNotebook> notebooks = userNotebooks.getValue();
+
+            // Logic: Show prompt only if they have notes but NO queries
+            boolean showPrompt = !hasQueries && !CollectionUtils.isEmpty(notebooks);
+
+            _showStandingQueryPrompt.postValue(showPrompt);
+            _userNotebooks.postValue(notebooks);
+        });
     }
 
     private QueryNoteResult transform(AtomicNoteEntity atomicNoteEntity,

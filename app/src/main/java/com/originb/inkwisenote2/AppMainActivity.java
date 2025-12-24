@@ -13,7 +13,9 @@ import com.originb.inkwisenote2.modules.ocr.worker.NoteOcrEventListener;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener;
-import com.originb.inkwisenote2.R;
+import org.koin.android.java.KoinAndroidApplication;
+import org.koin.core.KoinApplication;
+import org.koin.core.context.GlobalContext;
 
 public class AppMainActivity extends AppCompatActivity {
     private SmartNotebookEventListener notebookEventListner;
@@ -30,7 +32,16 @@ public class AppMainActivity extends AppCompatActivity {
         registerModules();
 
         AppState.updateState();
+//        KoinApplication koinApp = KoinAndroidApplication.create(this)
+//                .modules(AppModulesKt.getAppModule());
+//        GlobalContext.INSTANCE.startKoin(koinApp);
 
+        // Using the static GlobalContextKt bridge for Java
+        GlobalContext.INSTANCE.startKoin(koinApp -> {
+            org.koin.android.ext.koin.KoinExtKt.androidContext(koinApp, this.getApplicationContext());
+            koinApp.modules(AppModulesKt.getAppModule());
+            return kotlin.Unit.INSTANCE;
+        });
 
         Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
     }
