@@ -45,9 +45,10 @@ public class Repositories {
                 .fallbackToDestructiveMigration()
                 .build();
 
-        handwrittenNoteRepository = new HandwrittenNoteRepository();
-        noteRelationRepository = new NoteRelationRepository();
         atomicNotesDomain = new AtomicNotesDomain();
+        handwrittenNoteRepository = new HandwrittenNoteRepository(notesDb.handwrittenNotesDao(),
+                atomicNotesDomain);
+        noteRelationRepository = new NoteRelationRepository();
         queryRepository = new QueryRepository();
         smartNotebookRepository = new SmartNotebookRepository();
     }

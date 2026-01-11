@@ -133,7 +133,6 @@ public class DrawingView extends View {
     private Shader createPencilShader() {
         // Create a subtle texture pattern
         Bitmap textureBitmap = Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888);
-        Canvas textureCanvas = new Canvas(textureBitmap);
         Paint texturePaint = new Paint();
         texturePaint.setColor(Color.BLACK);
 

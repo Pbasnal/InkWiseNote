@@ -1,5 +1,10 @@
 package com.originb.inkwisenote2.common;
 
+import android.graphics.Bitmap;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
+
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.security.MessageDigest;
 
 public class HashUtils {
@@ -17,6 +22,25 @@ public class HashUtils {
             }
 
             return hexString.toString();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String getBitmapHash(Bitmap bitmap) {
+        ByteArrayOutputStream bitmapStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, bitmapStream);
+        return HashUtils.calculateSha256(bitmapStream.toByteArray());
+    }
+
+    public static String getPageTemplateHash(PageTemplate pageTemplate) {
+        try {
+            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+            try (ObjectOutputStream objectStream = new ObjectOutputStream(byteStream)) {
+                objectStream.writeObject(pageTemplate); // Serialize the object
+            }
+            return HashUtils.calculateSha256(byteStream.toByteArray());
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;

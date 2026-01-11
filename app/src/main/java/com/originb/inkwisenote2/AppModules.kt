@@ -31,7 +31,7 @@ val appModule = module {
     single { get<NotesDatabase>().noteRelationDao() }
 
     // 3. Single instances of Repositories
-    single { HandwrittenNoteRepository() }
+    single { HandwrittenNoteRepository(get(), get()) }
     single { NoteRelationRepository() }
     single { AtomicNotesDomain() }
     single { QueryRepository() }
