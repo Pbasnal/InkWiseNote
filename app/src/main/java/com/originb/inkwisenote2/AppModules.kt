@@ -10,6 +10,11 @@ import com.originb.inkwisenote2.modules.queries.data.QueryRepository
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
 import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
+import com.originb.inkwisenote2.modules.handwrittennotes.HandwrittenNoteEventListener
+import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener
+import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener
+import com.originb.inkwisenote2.modules.ocr.worker.NoteOcrEventListener
+import com.originb.inkwisenote2.modules.textnote.TextNoteListener
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -29,14 +34,21 @@ val appModule = module {
     single { get<NotesDatabase>().smartBookPagesDao() }
     single { get<NotesDatabase>().handwrittenNotesDao() }
     single { get<NotesDatabase>().noteRelationDao() }
+    single { get<NotesDatabase>().textNotesDao() }
 
     // 3. Single instances of Repositories
     single { HandwrittenNoteRepository(get(), get()) }
     single { NoteRelationRepository() }
-    single { AtomicNotesDomain() }
+    single { AtomicNotesDomain(get()) }
     single { QueryRepository() }
     single { SmartNotebookRepository() }
 
+    // 4. Single instances of Event Listeners
+    single { HandwrittenNoteEventListener(get()) }
+    single { SmartNotebookEventListener(get()) }
+    single { NoteRelationEventListener(get()) }
+    single { NoteOcrEventListener(get()) }
+    single { TextNoteListener(get()) }
 
     viewModel {
         NoteSearchViewModel(

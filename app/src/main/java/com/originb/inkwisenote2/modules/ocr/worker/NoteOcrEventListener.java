@@ -5,12 +5,12 @@ import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.backgroundjobs.WorkManagerBus;
 import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.koin.java.KoinJavaComponent;
 
 public class NoteOcrEventListener {
 
@@ -18,8 +18,9 @@ public class NoteOcrEventListener {
 
     private NoteOcrTextDao noteOcrTextDao;
 
-    public NoteOcrEventListener() {
-        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+    public NoteOcrEventListener(NoteOcrTextDao noteOcrTextDao) {
+        // Inject NoteOcrTextDao via Koin
+        this.noteOcrTextDao = noteOcrTextDao;
         EventBus.getDefault().register(this);
     }
 

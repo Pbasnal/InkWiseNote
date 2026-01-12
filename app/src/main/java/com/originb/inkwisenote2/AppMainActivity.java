@@ -16,6 +16,7 @@ import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener;
 import org.koin.android.java.KoinAndroidApplication;
 import org.koin.core.KoinApplication;
 import org.koin.core.context.GlobalContext;
+import org.koin.java.KoinJavaComponent;
 
 public class AppMainActivity extends AppCompatActivity {
     private SmartNotebookEventListener notebookEventListner;
@@ -43,18 +44,24 @@ public class AppMainActivity extends AppCompatActivity {
             return kotlin.Unit.INSTANCE;
         });
 
+        // Initialize event listeners after Koin is started so they can use dependency injection
+        initializeEventListeners();
+
         Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
     }
 
     private void registerModules() {
         registerRepos(this);
         registerConfigs(this);
+    }
 
-        notebookEventListner = new SmartNotebookEventListener();
-        handwrittenNoteEventListener = new HandwrittenNoteEventListener();
-        noteRelationEventListener = new NoteRelationEventListener();
-        noteOcrEventListener = new NoteOcrEventListener();
-        textNoteListener = new TextNoteListener();
+    private void initializeEventListeners() {
+        // Get event listeners from Koin DI
+        notebookEventListner = KoinJavaComponent.get(SmartNotebookEventListener.class);
+        handwrittenNoteEventListener = KoinJavaComponent.get(HandwrittenNoteEventListener.class);
+        noteRelationEventListener = KoinJavaComponent.get(NoteRelationEventListener.class);
+        noteOcrEventListener = KoinJavaComponent.get(NoteOcrEventListener.class);
+        textNoteListener = KoinJavaComponent.get(TextNoteListener.class);
     }
 
     public static void registerRepos(AppCompatActivity appCompatActivity) {

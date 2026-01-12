@@ -3,17 +3,18 @@ package com.originb.inkwisenote2.modules.noterelation;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.koin.java.KoinJavaComponent;
 
 public class NoteRelationEventListener {
     private NoteRelationRepository noteRelationRepository;
 
-    public NoteRelationEventListener() {
-        noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
+    public NoteRelationEventListener(NoteRelationRepository noteRelationRepository) {
+        // Inject NoteRelationRepository via Koin
+        this.noteRelationRepository = noteRelationRepository;
         EventBus.getDefault().register(this);
     }
 
