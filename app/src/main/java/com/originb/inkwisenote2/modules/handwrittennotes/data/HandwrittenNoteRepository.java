@@ -298,7 +298,6 @@ public class HandwrittenNoteRepository {
     }
 
     public List<Stroke> getStrokes(long noteId) {
-        // Use the injected AtomicNotesDomain from constructor
         AtomicNoteEntity note = atomicNotesDomain.getAtomicNote(noteId);
         if (note == null) {
             logger.error("Could not find note with ID: " + noteId);
