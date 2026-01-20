@@ -7,9 +7,12 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRep
 import com.originb.inkwisenote2.modules.noterelation.ui.RelatedNotesViewModel
 import com.originb.inkwisenote2.modules.notesearch.NoteSearchViewModel
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository
+import com.originb.inkwisenote2.modules.queries.ui.QueryViewModel
+import com.originb.inkwisenote2.modules.queries.ui.QueryResultsViewModel
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
 import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
+import com.originb.inkwisenote2.modules.smarthome.SmartHomePageViewModel
 import com.originb.inkwisenote2.modules.handwrittennotes.HandwrittenNoteEventListener
 import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener
 import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener
@@ -35,12 +38,13 @@ val appModule = module {
     single { get<NotesDatabase>().handwrittenNotesDao() }
     single { get<NotesDatabase>().noteRelationDao() }
     single { get<NotesDatabase>().textNotesDao() }
+    single { get<NotesDatabase>().queryDao() }
 
     // 3. Single instances of Repositories
     single { HandwrittenNoteRepository(get(), get()) }
     single { NoteRelationRepository() }
     single { AtomicNotesDomain(get()) }
-    single { QueryRepository() }
+    single { QueryRepository(get()) }
     single { SmartNotebookRepository() }
 
     // 4. Single instances of Event Listeners
@@ -74,4 +78,7 @@ val appModule = module {
             get()
         )
     }
+    viewModel { QueryViewModel(get(), get()) }  // Application, QueryRepository
+    viewModel { SmartHomePageViewModel() }
+    viewModel { QueryResultsViewModel(get(), get()) }  // QueryRepository, SmartHomePageViewModel
 }

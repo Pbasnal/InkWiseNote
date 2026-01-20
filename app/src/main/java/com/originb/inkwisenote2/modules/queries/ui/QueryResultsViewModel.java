@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.smarthome.QueryNoteResult;
 import com.originb.inkwisenote2.modules.smarthome.SmartHomePageViewModel;
 
@@ -21,9 +20,9 @@ public class QueryResultsViewModel extends ViewModel {
     private final MutableLiveData<List<QueryEntity>> queries = new MutableLiveData<>(new ArrayList<>());
     private final MutableLiveData<Set<QueryNoteResult>> currentQueryResults = new MutableLiveData<>(new HashSet<>());
     
-    public QueryResultsViewModel() {
-        queryRepository = Repositories.getInstance().getQueryRepository();
-        smartHomePageViewModel = new SmartHomePageViewModel();
+    public QueryResultsViewModel(QueryRepository queryRepository, SmartHomePageViewModel smartHomePageViewModel) {
+        this.queryRepository = queryRepository;
+        this.smartHomePageViewModel = smartHomePageViewModel;
         
         loadQueries();
     }

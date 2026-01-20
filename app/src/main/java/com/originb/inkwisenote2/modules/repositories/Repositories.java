@@ -9,7 +9,7 @@ import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
+//@Getter
 @Setter
 public class Repositories {
     private static Repositories instance;
@@ -49,7 +49,32 @@ public class Repositories {
         handwrittenNoteRepository = new HandwrittenNoteRepository(notesDb.handwrittenNotesDao(),
                 atomicNotesDomain);
         noteRelationRepository = new NoteRelationRepository();
-        queryRepository = new QueryRepository();
+        queryRepository = new QueryRepository(notesDb.queryDao());
         smartNotebookRepository = new SmartNotebookRepository();
+    }
+
+
+    public QueryRepository getQueryRepository() {
+        return queryRepository;
+    }
+
+    public SmartNotebookRepository getSmartNotebookRepository() {
+        return smartNotebookRepository;
+    }
+
+    public HandwrittenNoteRepository getHandwrittenNoteRepository() {
+        return handwrittenNoteRepository;
+    }
+
+    public NoteRelationRepository getNoteRelationRepository() {
+        return noteRelationRepository;
+    }
+
+    public AtomicNotesDomain getAtomicNotesDomain() {
+        return atomicNotesDomain;
+    }
+
+    public NotesDatabase getNotesDb() {
+        return notesDb;
     }
 }
