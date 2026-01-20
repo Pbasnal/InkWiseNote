@@ -10,7 +10,6 @@ import android.widget.ImageButton;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -27,6 +26,7 @@ import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.fileexplorer.DirectoryExplorerActivity;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
+import org.koin.android.compat.ViewModelCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +54,7 @@ public class SmartHomeActivity extends AppCompatActivity {
         AppMainActivity.registerConfigs(this);
 
         // Initialize ViewModel
-        smartHomePageViewModel = new ViewModelProvider(this).get(SmartHomePageViewModel.class);
+        smartHomePageViewModel = ViewModelCompat.getViewModel(this, SmartHomePageViewModel.class);
 
         if (recentNotebooks == null) {
             recentNotebooks = new RecentNotebooks(this);

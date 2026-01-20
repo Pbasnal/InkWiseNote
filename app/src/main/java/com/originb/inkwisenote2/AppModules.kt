@@ -79,6 +79,6 @@ val appModule = module {
         )
     }
     viewModel { QueryViewModel(get(), get()) }  // Application, QueryRepository
-    viewModel { SmartHomePageViewModel() }
+    viewModel { SmartHomePageViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { QueryResultsViewModel(get(), get()) }  // QueryRepository, SmartHomePageViewModel
 }
