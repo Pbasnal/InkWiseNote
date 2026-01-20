@@ -21,7 +21,6 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 
@@ -42,11 +41,8 @@ public class SmartHomePageViewModel extends ViewModel {
     private final HandwrittenNoteRepository handwrittenNoteRepository;
 
     private final MutableLiveData<List<SmartNotebook>> _userNotebooks = new MutableLiveData<>();
-//    private final MutableLiveData<Map<String, List<SmartNotebook>>> _queryResults = new MutableLiveData<>();
     private final MutableLiveData<Boolean> _showStandingQueryPrompt = new MutableLiveData<>(false);
-
     private final MutableLiveData<List<SmartNotebook>> userNotebooks = new MutableLiveData<>(new ArrayList<>());
-
     private final MutableLiveData<Map<String, Set<QueryNoteResult>>> liveQueryResults = new MutableLiveData<>(new HashMap<>());
 
     public SmartHomePageViewModel(

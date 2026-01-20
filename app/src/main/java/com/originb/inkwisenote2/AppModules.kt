@@ -9,6 +9,9 @@ import com.originb.inkwisenote2.modules.notesearch.NoteSearchViewModel
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository
 import com.originb.inkwisenote2.modules.queries.ui.QueryViewModel
 import com.originb.inkwisenote2.modules.queries.ui.QueryResultsViewModel
+import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic
+import com.originb.inkwisenote2.modules.noterelation.worker.NoteRelationWorker
+import com.originb.inkwisenote2.modules.noterelation.worker.TextProcessingWorker
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
 import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
@@ -19,6 +22,7 @@ import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener
 import com.originb.inkwisenote2.modules.ocr.worker.NoteOcrEventListener
 import com.originb.inkwisenote2.modules.textnote.TextNoteListener
 import org.koin.androidx.viewmodel.dsl.viewModel
+import org.koin.androidx.workmanager.dsl.worker
 import org.koin.dsl.module
 
 val appModule = module {
@@ -46,6 +50,9 @@ val appModule = module {
     single { AtomicNotesDomain(get()) }
     single { QueryRepository(get()) }
     single { SmartNotebookRepository() }
+
+    // 3.5. Single instances of Services
+    single { NoteTfIdfLogic(get()) }
 
     // 4. Single instances of Event Listeners
     single { HandwrittenNoteEventListener(get()) }
@@ -81,4 +88,29 @@ val appModule = module {
     viewModel { QueryViewModel(get(), get()) }  // Application, QueryRepository
     viewModel { SmartHomePageViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { QueryResultsViewModel(get(), get()) }  // QueryRepository, SmartHomePageViewModel
+
+    // 5. Workers
+    worker {
+        NoteRelationWorker(
+            get(),
+            get(),
+            get(),  // NoteTfIdfLogic
+            get(),  // NoteTermFrequencyDao
+            get(),  // NoteRelationDao
+            get(),  // SmartNotebookRepository
+            get(),  // SmartBookPagesDao
+            get()   // AtomicNotesDomain
+        )
+    }
+    worker {
+        TextProcessingWorker(
+            get(),
+            get(),
+            get(),  // NoteTfIdfLogic
+            get(),  // NoteOcrTextDao
+            get(),  // TextNotesDao
+            get(),  // AtomicNotesDomain
+            get()   // SmartNotebookRepository
+        )
+    }
 }

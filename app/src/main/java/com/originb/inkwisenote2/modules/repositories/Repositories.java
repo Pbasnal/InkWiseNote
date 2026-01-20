@@ -53,11 +53,6 @@ public class Repositories {
         smartNotebookRepository = new SmartNotebookRepository();
     }
 
-
-    public QueryRepository getQueryRepository() {
-        return queryRepository;
-    }
-
     public SmartNotebookRepository getSmartNotebookRepository() {
         return smartNotebookRepository;
     }

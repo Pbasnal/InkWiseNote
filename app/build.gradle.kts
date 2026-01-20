@@ -77,6 +77,7 @@ dependencies {
 
     implementation("io.insert-koin:koin-android:3.1.6")
     implementation("io.insert-koin:koin-android-compat:3.1.6")
+    implementation("io.insert-koin:koin-androidx-workmanager:3.1.6")
 
     implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")

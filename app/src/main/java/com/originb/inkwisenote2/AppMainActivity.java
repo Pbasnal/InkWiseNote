@@ -13,6 +13,8 @@ import com.originb.inkwisenote2.modules.ocr.worker.NoteOcrEventListener;
 import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener;
+import androidx.work.Configuration;
+import androidx.work.WorkManager;
 import org.koin.android.java.KoinAndroidApplication;
 import org.koin.core.KoinApplication;
 import org.koin.core.context.GlobalContext;
@@ -43,6 +45,12 @@ public class AppMainActivity extends AppCompatActivity {
             koinApp.modules(AppModulesKt.getAppModule());
             return kotlin.Unit.INSTANCE;
         });
+
+        // Initialize WorkManager with Koin factory (must be done after Koin is started)
+        Configuration workManagerConfiguration = new Configuration.Builder()
+                .setWorkerFactory(KoinWorkManagerHelperKt.getKoinWorkManagerFactory())
+                .build();
+        WorkManager.initialize(this.getApplicationContext(), workManagerConfiguration);
 
         // Initialize event listeners after Koin is started so they can use dependency injection
         initializeEventListeners();

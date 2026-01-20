@@ -22,7 +22,6 @@ import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequency;
 import com.originb.inkwisenote2.common.ListUtils;
 import com.originb.inkwisenote2.functionalUtils.Try;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import lombok.AllArgsConstructor;
@@ -46,18 +45,22 @@ public class NoteRelationWorker extends Worker {
 
     private final Logger logger = new Logger("NoteRelationWorker");
 
-    public NoteRelationWorker(@NonNull @NotNull Context context, @NonNull @NotNull WorkerParameters workerParams) {
+    public NoteRelationWorker(@NonNull @NotNull Context context, 
+                             @NonNull @NotNull WorkerParameters workerParams,
+                             NoteTfIdfLogic noteTfIdfLogic,
+                             NoteTermFrequencyDao noteTermFrequencyDao,
+                             NoteRelationDao noteRelationDao,
+                             SmartNotebookRepository smartNotebookRepository,
+                             SmartBookPagesDao smartBookPagesDao,
+                             AtomicNotesDomain atomicNotesDomain) {
         super(context, workerParams);
-        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
-        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
-
-        noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
-        noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
-
-        noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
-
-        mainHandler = new Handler(Looper.getMainLooper());
+        this.noteTfIdfLogic = noteTfIdfLogic;
+        this.noteTermFrequencyDao = noteTermFrequencyDao;
+        this.noteRelationDao = noteRelationDao;
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.smartBookPagesDao = smartBookPagesDao;
+        this.atomicNotesDomain = atomicNotesDomain;
+        this.mainHandler = new Handler(Looper.getMainLooper());
     }
 
 

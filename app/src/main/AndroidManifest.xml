@@ -15,6 +15,18 @@
             android:roundIcon="@mipmap/app_icon"
             android:supportsRtl="true"
             android:theme="@style/Theme.InkWiseNote">
+        
+        <!-- Disable automatic WorkManager initialization to use Koin factory -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
         <activity android:name=".modules.notesearch.NoteSearchActivity"/>
         <activity android:name=".modules.smarthome.SmartHomeActivity"/>
