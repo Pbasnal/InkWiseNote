@@ -13,6 +13,10 @@ import com.originb.inkwisenote2.config.AppState;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.noterelation.data.NoteRelation;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository;
+import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -25,6 +29,10 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
     private final Logger logger = new Logger("SmartNoteGridAdapter");
 
     private final ComponentActivity parentActivity;
+    private final HandwrittenNoteRepository handwrittenNoteRepository;
+    private final TextNotesDao textNotesDao;
+    private final SmartNotebookRepository smartNotebookRepository;
+    private final NoteRelationRepository noteRelationRepository;
 
     private List<SmartNotebook> smartNotebooks;
 
@@ -38,6 +46,12 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
         this.parentActivity = parentActivity;
         this.smartNotebooks = smartNotebooks;
         this.isCompact = isCompact;
+
+        // Get dependencies from Koin
+        this.handwrittenNoteRepository = org.koin.java.KoinJavaComponent.get(HandwrittenNoteRepository.class);
+        this.textNotesDao = org.koin.java.KoinJavaComponent.get(TextNotesDao.class);
+        this.smartNotebookRepository = org.koin.java.KoinJavaComponent.get(SmartNotebookRepository.class);
+        this.noteRelationRepository = org.koin.java.KoinJavaComponent.get(NoteRelationRepository.class);
 
         AppState.observeNoteRelationships(parentActivity, this::updateNoteRelations);
         EventBus.getDefault().register(this);
@@ -100,7 +114,9 @@ public class SmartNoteGridAdapter extends RecyclerView.Adapter<GridNoteCardHolde
         View itemView = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.card_layout, parent, false);
 
-        return new GridNoteCardHolder(this, itemView, parentActivity);
+        return new GridNoteCardHolder(this, itemView, parentActivity,
+                                      handwrittenNoteRepository, textNotesDao,
+                                      smartNotebookRepository, noteRelationRepository);
     }
 
     @Override

@@ -18,7 +18,9 @@ import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
-import com.originb.inkwisenote2.modules.repositories.*;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
@@ -57,11 +59,19 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
     private ObjectAnimator rotateAnimator;
 
     public GridNoteCardHolder(SmartNoteGridAdapter smartNoteGridAdapter, @NonNull @NotNull View itemView,
-                              ComponentActivity parentActivity) {
+                              ComponentActivity parentActivity,
+                              HandwrittenNoteRepository handwrittenNoteRepository,
+                              TextNotesDao textNotesDao,
+                              SmartNotebookRepository smartNotebookRepository,
+                              NoteRelationRepository noteRelationRepository) {
         super(itemView);
         this.smartNoteGridAdapter = smartNoteGridAdapter;
         this.parentActivity = parentActivity;
         this.itemView = itemView;
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.textNotesDao = textNotesDao;
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.noteRelationRepository = noteRelationRepository;
 
         noteImage = itemView.findViewById(R.id.card_image);
         textPreview = itemView.findViewById(R.id.note_text_preview);
@@ -75,11 +85,6 @@ public class GridNoteCardHolder extends RecyclerView.ViewHolder implements View.
         textPreview.setOnClickListener(view -> onClick(itemView));
         deleteBtn.setOnClickListener(view -> onClickDelete());
         relationViewBtn.setVisibility(View.GONE);
-
-        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
-        textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        noteRelationRepository = Repositories.getInstance().getNoteRelationRepository();
 
         initializeAnimation();
     }

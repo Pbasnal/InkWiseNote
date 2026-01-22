@@ -46,11 +46,7 @@ public class AppMainActivity extends AppCompatActivity {
             return kotlin.Unit.INSTANCE;
         });
 
-        // Initialize WorkManager with Koin factory (must be done after Koin is started)
-        Configuration workManagerConfiguration = new Configuration.Builder()
-                .setWorkerFactory(KoinWorkManagerHelperKt.getKoinWorkManagerFactory())
-                .build();
-        WorkManager.initialize(this.getApplicationContext(), workManagerConfiguration);
+        // WorkManager is now initialized in InkWiseApplication.onCreate() to prevent double initialization
 
         // Initialize event listeners after Koin is started so they can use dependency injection
         initializeEventListeners();
