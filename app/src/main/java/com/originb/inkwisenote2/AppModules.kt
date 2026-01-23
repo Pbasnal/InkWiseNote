@@ -137,7 +137,7 @@ val appModule = module {
             get(),
             get(),
             get(),  // NoteTfIdfLogic
-            get(),  // NoteOcrTextDao
+            get(),  // NoteOcrTextsDao
             get(),  // TextNotesDao
             get(),  // AtomicNotesDomain
             get()   // SmartNotebookRepository

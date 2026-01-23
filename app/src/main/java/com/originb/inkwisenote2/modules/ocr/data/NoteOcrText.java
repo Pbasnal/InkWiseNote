@@ -2,6 +2,7 @@ package com.originb.inkwisenote2.modules.ocr.data;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +16,10 @@ import java.time.format.DateTimeFormatter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Entity(tableName = "note_text")
+@Entity(tableName = "note_text",
+        indices = {
+                @Index("note_id")
+        })
 public class NoteOcrText implements Serializable {
     @PrimaryKey
     @ColumnInfo(name = "note_id")

@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
@@ -22,7 +21,7 @@ import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -45,11 +44,11 @@ public class TextNoteFragment extends NoteFragment {
 
     // Additional dependencies for NoteDebugDialog
     private HandwrittenNoteRepository handwrittenNoteRepository;
-    private NoteOcrTextDao noteOcrTextDao;
+    private NoteOcrTextsDao noteOcrTextDao;
     private SmartNotebookRepository smartNotebookRepository;
 
     public TextNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote, TextNotesDao textNotesDao,
-                           HandwrittenNoteRepository handwrittenNoteRepository, NoteOcrTextDao noteOcrTextDao,
+                           HandwrittenNoteRepository handwrittenNoteRepository, NoteOcrTextsDao noteOcrTextDao,
                            SmartNotebookRepository smartNotebookRepository) {
         super(smartNotebook, atomicNote);
         this.textNotesDao = textNotesDao;

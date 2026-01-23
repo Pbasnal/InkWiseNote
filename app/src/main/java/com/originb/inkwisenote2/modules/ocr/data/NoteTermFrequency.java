@@ -2,13 +2,17 @@ package com.originb.inkwisenote2.modules.ocr.data;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@Entity(tableName = "note_term_frequency")
+@Entity(tableName = "note_term_frequency",
+        indices = {
+                @Index("note_id")
+        })
 public class NoteTermFrequency {
     @PrimaryKey(autoGenerate = true)
     private int id;

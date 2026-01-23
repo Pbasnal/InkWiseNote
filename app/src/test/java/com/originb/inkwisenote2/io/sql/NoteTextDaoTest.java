@@ -2,7 +2,7 @@ package com.originb.inkwisenote2.io.sql;
 
 import androidx.room.Room;
 import com.originb.inkwisenote2.common.NotesDatabase;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
 import org.junit.After;
 import org.junit.Before;
@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 
 @RunWith(RobolectricTestRunner.class)
 public class NoteTextDaoTest {
-    private NoteOcrTextDao noteOcrTextDao;
+    private NoteOcrTextsDao noteOcrTextDao;
 
     private NotesDatabase db;
 

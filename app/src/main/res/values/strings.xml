@@ -2,15 +2,10 @@
     <string name="app_name">InkWise</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="open">open</string>
-    <string name="close">close</string>
-    <string name="delete_note">delete note</string>
-    <string name="graph_view">graph view</string>
     <string name="tap_to_text">Tap here to take text note</string>
     <string name="tap_to_write">Touch here to take handwritten notes</string>
     <string name="create_by_user">Your recent SmartNotebooks</string>
     <string name="take_notes_prompt">Looks a bit empty here :) \n Lets take some notes!</string>
-    <string name="create_by_us">Smart Notebooks created by us for you!</string>
     <string name="add_standing_queries_msg">Add some standing queries to automate searching</string>
     <string name="custom_tracking">Words and topics currently being tracked</string>
     <string name="query_results_title">Query Results</string>
@@ -18,4 +13,12 @@
     <string name="no_queries_available">No queries available. Create a query first.</string>
     <string name="no_results_found">No results found for this query.</string>
     <string name="new_query_hint">Untitled query</string>
+    <string name="path_label">Path: </string>
+    <string name="up_button">↑ Up</string>
+    <string name="open_button">Open</string>
+    <string name="delete_button">Del</string>
+    <string name="loading_parsed_text">Loading parsed text...</string>
+    <string name="loading_markdown_strokes">Loading markdown strokes data...</string>
+    <string name="no_parsed_text">No parsed text available</string>
+    <string name="no_markdown_strokes">No markdown strokes data available</string>
 </resources>

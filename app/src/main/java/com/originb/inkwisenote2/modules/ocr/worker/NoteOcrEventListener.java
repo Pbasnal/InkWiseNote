@@ -4,7 +4,7 @@ import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.backgroundjobs.WorkManagerBus;
 import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 import org.greenrobot.eventbus.EventBus;
@@ -16,10 +16,10 @@ public class NoteOcrEventListener {
 
     private Logger logger = new Logger("NoteOcrEventListener");
 
-    private NoteOcrTextDao noteOcrTextDao;
+    private NoteOcrTextsDao noteOcrTextDao;
 
-    public NoteOcrEventListener(NoteOcrTextDao noteOcrTextDao) {
-        // Inject NoteOcrTextDao via Koin
+    public NoteOcrEventListener(NoteOcrTextsDao noteOcrTextDao) {
+        // Inject NoteOcrTextsDao via Koin
         this.noteOcrTextDao = noteOcrTextDao;
         EventBus.getDefault().register(this);
     }

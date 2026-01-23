@@ -5,7 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 
@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class NoteSearchViewModel extends ViewModel {
-    private final NoteOcrTextDao noteOcrTextDao;
+    private final NoteOcrTextsDao noteOcrTextDao;
     private final SmartNotebookRepository smartNotebookRepository;
 
     // Observable data for the UI
@@ -26,7 +26,7 @@ public class NoteSearchViewModel extends ViewModel {
     public LiveData<String> toastMessage = _toastMessage;
 
     // Constructor (Dependencies should be passed here)
-    public NoteSearchViewModel(NoteOcrTextDao ocrDao, SmartNotebookRepository notebookRepo) {
+    public NoteSearchViewModel(NoteOcrTextsDao ocrDao, SmartNotebookRepository notebookRepo) {
         this.noteOcrTextDao = ocrDao;
         this.smartNotebookRepository = notebookRepo;
     }

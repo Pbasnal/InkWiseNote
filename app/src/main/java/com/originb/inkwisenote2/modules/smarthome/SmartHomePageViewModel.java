@@ -12,7 +12,7 @@ import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteWithImage;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
@@ -37,7 +37,7 @@ public class SmartHomePageViewModel extends ViewModel {
     private final AtomicNotesDomain atomicNotesDomain;
     private final QueryRepository queryRepository;
     private final TextNotesDao textNotesDao;
-    private final NoteOcrTextDao noteOcrTextDao;
+    private final NoteOcrTextsDao noteOcrTextDao;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
 
     private final MutableLiveData<List<SmartNotebook>> _userNotebooks = new MutableLiveData<>();
@@ -51,7 +51,7 @@ public class SmartHomePageViewModel extends ViewModel {
             AtomicNotesDomain atomicNotesDomain,
             QueryRepository queryRepository,
             TextNotesDao textNotesDao,
-            NoteOcrTextDao noteOcrTextDao,
+            NoteOcrTextsDao noteOcrTextDao,
             HandwrittenNoteRepository handwrittenNoteRepository
     ) {
         this.smartNotebookRepository = smartNotebookRepository;

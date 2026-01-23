@@ -14,7 +14,6 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
 
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
@@ -23,18 +22,11 @@ import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 
-import org.greenrobot.eventbus.EventBus;
-
-import java.io.File;
-
-/**
- * Fragment for displaying and editing handwritten notes
- */
 public class HandwrittenNoteFragment extends NoteFragment {
 
     private Logger logger = new Logger("HandwrittenNoteFragment");
@@ -51,12 +43,12 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     // Additional dependencies for NoteDebugDialog
     private TextNotesDao textNotesDao;
-    private NoteOcrTextDao noteOcrTextDao;
+    private NoteOcrTextsDao noteOcrTextDao;
     private SmartNotebookRepository smartNotebookRepository;
 
 
     public HandwrittenNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote, HandwrittenNoteRepository handwrittenNoteRepository,
-                                  TextNotesDao textNotesDao, NoteOcrTextDao noteOcrTextDao, SmartNotebookRepository smartNotebookRepository) {
+                                  TextNotesDao textNotesDao, NoteOcrTextsDao noteOcrTextDao, SmartNotebookRepository smartNotebookRepository) {
         super(smartNotebook, atomicNote);
         this.handwrittenNoteRepository = handwrittenNoteRepository;
         this.textNotesDao = textNotesDao;

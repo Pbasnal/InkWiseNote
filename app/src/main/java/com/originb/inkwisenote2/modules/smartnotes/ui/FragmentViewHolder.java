@@ -15,7 +15,7 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
@@ -33,14 +33,14 @@ class FragmentViewHolder extends RecyclerView.ViewHolder {
     HandwrittenNoteRepository handwrittenNoteRepository;
     TextNotesDao textNotesDao;
     SmartNotebookRepository smartNotebookRepository;
-    NoteOcrTextDao noteOcrTextDao;
+    NoteOcrTextsDao noteOcrTextDao;
 
     public FragmentViewHolder(SmartNotebookAdapter smartNotebookAdapter, @NonNull View itemView,
                               AppCompatActivity parentActivity,
                               HandwrittenNoteRepository handwrittenNoteRepository,
                               TextNotesDao textNotesDao,
                               SmartNotebookRepository smartNotebookRepository,
-                              NoteOcrTextDao noteOcrTextDao) {
+                              NoteOcrTextsDao noteOcrTextDao) {
         super(itemView);
         fragmentContainer = itemView.findViewById(R.id.note_fragment_container);
         this.adapter = smartNotebookAdapter;

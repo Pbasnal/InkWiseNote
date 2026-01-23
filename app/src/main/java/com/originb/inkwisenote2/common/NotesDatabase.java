@@ -8,7 +8,7 @@ import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntitiesDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPagesDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBooksDao;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote2.modules.noterelation.data.NoteRelationDao;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteEntity;
@@ -19,7 +19,7 @@ import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
-import com.originb.inkwisenote2.modules.queries.data.QueryDao;
+import com.originb.inkwisenote2.modules.queries.data.QueriesDao;
 
 @Database(entities = {
         NoteRelation.class,
@@ -31,14 +31,14 @@ import com.originb.inkwisenote2.modules.queries.data.QueryDao;
         HandwrittenNoteEntity.class,
         TextNoteEntity.class,
         QueryEntity.class
-}, version = 13)
+}, version = 14)
 public abstract class NotesDatabase extends RoomDatabase {
 
     public abstract NoteRelationDao noteRelationDao();
 
     public abstract NoteTermFrequencyDao noteTermFrequencyDao();
 
-    public abstract NoteOcrTextDao noteOcrTextDao();
+    public abstract NoteOcrTextsDao noteOcrTextDao();
 
     public abstract AtomicNoteEntitiesDao atomicNoteEntitiesDao();
 
@@ -50,5 +50,5 @@ public abstract class NotesDatabase extends RoomDatabase {
 
     public abstract TextNotesDao textNotesDao();
 
-    public abstract QueryDao queryDao();
+    public abstract QueriesDao queryDao();
 }

@@ -19,7 +19,7 @@ import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.functionalUtils.Try;
 import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
@@ -28,6 +28,8 @@ import lombok.Getter;
 import org.greenrobot.eventbus.EventBus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -35,7 +37,7 @@ import java.util.Optional;
 
 public class TextProcessingWorker extends Worker {
     private final NoteTfIdfLogic noteTfIdfLogic;
-    private final NoteOcrTextDao noteOcrTextDao;
+    private final NoteOcrTextsDao noteOcrTextDao;
     private final TextNotesDao textNotesDao;
     private final AtomicNotesDomain atomicNotesDomain;
     private final SmartNotebookRepository smartNotebookRepository;
@@ -45,7 +47,7 @@ public class TextProcessingWorker extends Worker {
     public TextProcessingWorker(@NotNull Context context, 
                                 @NotNull WorkerParameters workerParams,
                                 NoteTfIdfLogic noteTfIdfLogic,
-                                NoteOcrTextDao noteOcrTextDao,
+                                NoteOcrTextsDao noteOcrTextDao,
                                 TextNotesDao textNotesDao,
                                 AtomicNotesDomain atomicNotesDomain,
                                 SmartNotebookRepository smartNotebookRepository) {
@@ -150,7 +152,7 @@ public class TextProcessingWorker extends Worker {
         }
 
         // Step 1: Normalize the text to lowercase
-        text = text.toLowerCase();
+        text = text.toLowerCase(Locale.ROOT);
 
         // Step 2: Remove non-alphanumeric characters except spaces
         text = text.replaceAll("[^a-z0-9\\s]", "");

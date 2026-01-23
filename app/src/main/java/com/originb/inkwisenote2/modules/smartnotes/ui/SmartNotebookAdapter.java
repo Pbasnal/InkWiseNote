@@ -14,7 +14,7 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<FragmentViewHolde
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private final TextNotesDao textNotesDao;
     private final SmartNotebookRepository smartNotebookRepository;
-    private final NoteOcrTextDao noteOcrTextDao;
+    private final NoteOcrTextsDao noteOcrTextDao;
 
     private SmartNotebook smartNotebook;
 
@@ -41,7 +41,7 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<FragmentViewHolde
                                 SmartNotebookRepository smartNotebookRepository,
                                 HandwrittenNoteRepository handwrittenNoteRepository,
                                 TextNotesDao textNotesDao,
-                                NoteOcrTextDao noteOcrTextDao) {
+                                NoteOcrTextsDao noteOcrTextDao) {
         this.parentActivity = parentActivity;
         this.smartNotebook = smartNotebook;
         this.smartNotebookRepository = smartNotebookRepository;

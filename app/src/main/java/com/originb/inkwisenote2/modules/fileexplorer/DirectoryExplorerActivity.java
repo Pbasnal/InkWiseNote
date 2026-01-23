@@ -14,6 +14,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+
+import java.util.Locale;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
@@ -188,7 +190,7 @@ public class DirectoryExplorerActivity extends AppCompatActivity
     private void showImageFile(File file) {
         try {
             BitmapFactory.Options options = new BitmapFactory.Options();
-            if (file.getName().toLowerCase().endsWith(".png")) {
+            if (file.getName().toLowerCase(Locale.ROOT).endsWith(".png")) {
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             }
             Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options);
@@ -260,7 +262,7 @@ public class DirectoryExplorerActivity extends AppCompatActivity
 
     private int getFileType(String fileName) {
         if (fileName == null) return FILE_TYPE_UNKNOWN;
-        String name = fileName.toLowerCase();
+        String name = fileName.toLowerCase(Locale.ROOT);
         if (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".webp")) return FILE_TYPE_IMAGE;
         if (name.endsWith(".md") || name.endsWith(".txt") || name.endsWith(".pt")) return FILE_TYPE_MARKDOWN;
         return FILE_TYPE_UNKNOWN;

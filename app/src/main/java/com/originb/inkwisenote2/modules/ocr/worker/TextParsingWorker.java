@@ -30,7 +30,7 @@ import com.originb.inkwisenote2.functionalUtils.Try;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteWithImage;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.repositories.*;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +48,7 @@ public class TextParsingWorker extends Worker {
 
     private final AppConfig appConfig;
     private final AppSecrets appSecrets;
-    private final NoteOcrTextDao noteOcrTextDao;
+    private final NoteOcrTextsDao noteOcrTextDao;
     private final Logger logger = new Logger("TextParsingWorker");
     private DigitalInkRecognizer recognizer;
 
@@ -62,7 +62,7 @@ public class TextParsingWorker extends Worker {
                              @NotNull WorkerParameters workerParams,
                              HandwrittenNoteRepository handwrittenNoteRepository,
                              AtomicNotesDomain atomicNotesDomain,
-                             NoteOcrTextDao noteOcrTextDao) {
+                             NoteOcrTextsDao noteOcrTextDao) {
         super(context, workerParams);
         this.handwrittenNoteRepository = handwrittenNoteRepository;
         this.atomicNotesDomain = atomicNotesDomain;

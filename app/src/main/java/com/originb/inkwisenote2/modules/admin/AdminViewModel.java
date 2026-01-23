@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNotesDao;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntitiesDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPagesDao;
@@ -19,7 +19,7 @@ public class AdminViewModel extends ViewModel {
 
     // DAOs
     private final NoteTermFrequencyDao termFreqDao;
-    private final NoteOcrTextDao ocrDao;
+    private final NoteOcrTextsDao ocrDao;
     private final AtomicNoteEntitiesDao atomicDao;
     private final SmartBooksDao booksDao;
     private final SmartBookPagesDao pagesDao;
@@ -36,7 +36,7 @@ public class AdminViewModel extends ViewModel {
 
     public AdminViewModel(
             NoteTermFrequencyDao termFreqDao,
-            NoteOcrTextDao ocrDao,
+            NoteOcrTextsDao ocrDao,
             AtomicNoteEntitiesDao atomicDao,
             SmartBooksDao booksDao,
             SmartBookPagesDao pagesDao,
