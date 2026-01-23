@@ -1,8 +1,6 @@
 package com.originb.inkwisenote2.modules.queries.data;
 
 import com.google.android.gms.common.util.CollectionUtils;
-import com.originb.inkwisenote2.common.NotesDatabase;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 
 import java.util.List;
 import java.util.Arrays;
@@ -13,9 +11,8 @@ import android.database.sqlite.SQLiteConstraintException;
 public class QueryRepository {
     private final QueryDao queryDao;
 
-    public QueryRepository() {
-        NotesDatabase db = Repositories.getInstance().getNotesDb();
-        queryDao = db.queryDao();
+    public QueryRepository(QueryDao queryDao) {
+        this.queryDao = queryDao;
     }
 
     public List<QueryEntity> getAllQueries() {

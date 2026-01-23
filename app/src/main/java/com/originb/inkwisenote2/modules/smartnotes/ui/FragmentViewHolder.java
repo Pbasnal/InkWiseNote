@@ -9,13 +9,19 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.R;
+import org.koin.java.KoinJavaComponent;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
 
 import static com.originb.inkwisenote2.modules.smartnotes.data.NoteType.*;
+import static org.koin.core.parameter.ParametersHolderKt.parametersOf;
 
 class FragmentViewHolder extends RecyclerView.ViewHolder {
     private final Logger logger = new Logger(FragmentViewHolder.class.getName());
@@ -24,20 +30,32 @@ class FragmentViewHolder extends RecyclerView.ViewHolder {
     NoteFragment noteFragment;
     SmartNotebookAdapter adapter;
     FragmentManager fragmentManager;
+    HandwrittenNoteRepository handwrittenNoteRepository;
+    TextNotesDao textNotesDao;
+    SmartNotebookRepository smartNotebookRepository;
+    NoteOcrTextDao noteOcrTextDao;
 
     public FragmentViewHolder(SmartNotebookAdapter smartNotebookAdapter, @NonNull View itemView,
-                              AppCompatActivity parentActivity) {
+                              AppCompatActivity parentActivity,
+                              HandwrittenNoteRepository handwrittenNoteRepository,
+                              TextNotesDao textNotesDao,
+                              SmartNotebookRepository smartNotebookRepository,
+                              NoteOcrTextDao noteOcrTextDao) {
         super(itemView);
         fragmentContainer = itemView.findViewById(R.id.note_fragment_container);
         this.adapter = smartNotebookAdapter;
         this.fragmentManager = parentActivity.getSupportFragmentManager();
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.textNotesDao = textNotesDao;
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.noteOcrTextDao = noteOcrTextDao;
     }
 
     public void setNote(SmartNotebook notebook, AtomicNoteEntity atomicNote, int position) {
         if (isCorrectFragmentAttached(atomicNote)
                 && atomicNote.getNoteId() == noteFragment.atomicNote.getNoteId()) return;
 
-        noteFragment = createFragmentByType(notebook, atomicNote, adapter);
+        noteFragment = this.createFragmentByType(notebook, atomicNote, adapter);
 
         final int containerId = fragmentContainer.getId();
         itemView.post(() -> {
@@ -86,15 +104,15 @@ class FragmentViewHolder extends RecyclerView.ViewHolder {
         }
     }
 
-    public static NoteFragment createFragmentByType(SmartNotebook notebook, AtomicNoteEntity atomicNote, SmartNotebookAdapter adapter) {
+    public NoteFragment createFragmentByType(SmartNotebook notebook, AtomicNoteEntity atomicNote, SmartNotebookAdapter adapter) {
         NoteType noteType = NoteType.fromString(atomicNote.getNoteType());
         switch (noteType) {
             case TEXT_NOTE:
-                return new TextNoteFragment(notebook, atomicNote);
+                return KoinJavaComponent.get(TextNoteFragment.class, null, () -> parametersOf(notebook, atomicNote));
             case HANDWRITTEN_PNG:
-                return new HandwrittenNoteFragment(notebook, atomicNote);
+                return KoinJavaComponent.get(HandwrittenNoteFragment.class, null, () -> parametersOf(notebook, atomicNote));
             default:
-                return new InitNoteFragment(notebook, atomicNote, adapter);
+                return KoinJavaComponent.get(InitNoteFragment.class, null, () -> parametersOf(notebook, atomicNote, adapter));
         }
     }
 

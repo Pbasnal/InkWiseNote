@@ -10,9 +10,11 @@ import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,18 +26,28 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<FragmentViewHolde
 
     private static Logger logger = new Logger("SmartNotebookAdapter");
     private final AppCompatActivity parentActivity;
+    private final HandwrittenNoteRepository handwrittenNoteRepository;
+    private final TextNotesDao textNotesDao;
+    private final SmartNotebookRepository smartNotebookRepository;
+    private final NoteOcrTextDao noteOcrTextDao;
 
     private SmartNotebook smartNotebook;
-    private final SmartNotebookRepository smartNotebookRepository;
 
     // noteId to card mapping
     private final Map<Long, FragmentViewHolder> noteCards = new HashMap<>();
 
     public SmartNotebookAdapter(AppCompatActivity parentActivity,
-                                SmartNotebook smartNotebook) {
+                                SmartNotebook smartNotebook,
+                                SmartNotebookRepository smartNotebookRepository,
+                                HandwrittenNoteRepository handwrittenNoteRepository,
+                                TextNotesDao textNotesDao,
+                                NoteOcrTextDao noteOcrTextDao) {
         this.parentActivity = parentActivity;
         this.smartNotebook = smartNotebook;
-        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.textNotesDao = textNotesDao;
+        this.noteOcrTextDao = noteOcrTextDao;
     }
 
     public void setSmartNotebook(SmartNotebook smartNotebook) {
@@ -61,7 +73,9 @@ public class SmartNotebookAdapter extends RecyclerView.Adapter<FragmentViewHolde
                 .inflate(R.layout.fragment_note_page, parent, false);
 
         // Create a truly unique ID for the fragment container
-        FragmentViewHolder holder = new FragmentViewHolder(this, view, parentActivity);
+        FragmentViewHolder holder = new FragmentViewHolder(this, view, parentActivity,
+                                                          handwrittenNoteRepository, textNotesDao,
+                                                          smartNotebookRepository, noteOcrTextDao);
         holder.fragmentContainer.setId(viewType + 1);
 
         return holder;

@@ -11,10 +11,14 @@ import com.originb.inkwisenote2.modules.handwrittennotes.HandwrittenNoteEventLis
 import com.originb.inkwisenote2.modules.textnote.TextNoteListener;
 import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener;
 import com.originb.inkwisenote2.modules.ocr.worker.NoteOcrEventListener;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import androidx.work.Configuration;
+import androidx.work.WorkManager;
+import org.koin.android.java.KoinAndroidApplication;
+import org.koin.core.KoinApplication;
+import org.koin.core.context.GlobalContext;
+import org.koin.java.KoinJavaComponent;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.R;
 
@@ -24,7 +28,7 @@ import java.util.List;
 public class AppMainActivity extends AppCompatActivity {
     private static final String TAG = "AppMainActivity";
     private final Logger logger = new Logger(TAG);
-    
+
     private SmartNotebookEventListener notebookEventListner;
     private HandwrittenNoteEventListener handwrittenNoteEventListener;
     private NoteRelationEventListener noteRelationEventListener;
@@ -39,13 +43,28 @@ public class AppMainActivity extends AppCompatActivity {
         registerModules();
 
         AppState.updateState();
-        
-        // Bootstrap notebooks and notes from working directory
-        bootstrapNotebooksAndNotes();
 
+        // Bootstrap notebooks and notes from working directory
+//        KoinApplication koinApp = KoinAndroidApplication.create(this)
+//                .modules(AppModulesKt.getAppModule());
+//        GlobalContext.INSTANCE.startKoin(koinApp);
+
+        // Using the static GlobalContextKt bridge for Java
+        GlobalContext.INSTANCE.startKoin(koinApp -> {
+            org.koin.android.ext.koin.KoinExtKt.androidContext(koinApp, this.getApplicationContext());
+            koinApp.modules(AppModulesKt.getAppModule());
+            return kotlin.Unit.INSTANCE;
+        });
+
+        // WorkManager is now initialized in InkWiseApplication.onCreate() to prevent double initialization
+
+        // Initialize event listeners after Koin is started so they can use dependency injection
+        initializeEventListeners();
+
+        bootstrapNotebooksAndNotes();
         Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
     }
-    
+
     /**
      * Bootstrap notebooks and notes from the working directory
      */
@@ -54,13 +73,13 @@ public class AppMainActivity extends AppCompatActivity {
             // Get the root notes directory from config
             String rootNotesDirectory = this.getFilesDir().getPath();
             File workingDirectory = new File(rootNotesDirectory);
-            
+
             // Initialize bootstrapper
             NotebookBootstrapper bootstrapper = new NotebookBootstrapper();
-            
+
             // Bootstrap notebooks and notes
             List<NotebookBootstrapper.NotebookFolder> bootstrappedNotebooks = bootstrapper.bootstrapFromDirectory(this, workingDirectory);
-            
+
             // Log bootstrap results
             logger.debug("Bootstrap completed. Found " + bootstrappedNotebooks.size() + " notebooks");
 
@@ -72,17 +91,20 @@ public class AppMainActivity extends AppCompatActivity {
     private void registerModules() {
         registerRepos(this);
         registerConfigs(this);
+    }
 
-        notebookEventListner = new SmartNotebookEventListener();
-        handwrittenNoteEventListener = new HandwrittenNoteEventListener();
-        noteRelationEventListener = new NoteRelationEventListener();
-        noteOcrEventListener = new NoteOcrEventListener();
-        textNoteListener = new TextNoteListener();
+    private void initializeEventListeners() {
+        // Get event listeners from Koin DI
+        notebookEventListner = KoinJavaComponent.get(SmartNotebookEventListener.class);
+        handwrittenNoteEventListener = KoinJavaComponent.get(HandwrittenNoteEventListener.class);
+        noteRelationEventListener = KoinJavaComponent.get(NoteRelationEventListener.class);
+        noteOcrEventListener = KoinJavaComponent.get(NoteOcrEventListener.class);
+        textNoteListener = KoinJavaComponent.get(TextNoteListener.class);
     }
 
     public static void registerRepos(AppCompatActivity appCompatActivity) {
         ConfigReader.fromContext(appCompatActivity);
-        Repositories.registerRepositories(appCompatActivity);
+        // Repositories are now managed by Koin, no need to register them manually
     }
 
     public static void registerConfigs(AppCompatActivity appCompatActivity) {

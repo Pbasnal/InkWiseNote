@@ -15,12 +15,14 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Strings;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -41,9 +43,19 @@ public class TextNoteFragment extends NoteFragment {
     private TextNoteEntity textNoteEntity;
     private File markdownFile;
 
-    public TextNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+    // Additional dependencies for NoteDebugDialog
+    private HandwrittenNoteRepository handwrittenNoteRepository;
+    private NoteOcrTextDao noteOcrTextDao;
+    private SmartNotebookRepository smartNotebookRepository;
+
+    public TextNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote, TextNotesDao textNotesDao,
+                           HandwrittenNoteRepository handwrittenNoteRepository, NoteOcrTextDao noteOcrTextDao,
+                           SmartNotebookRepository smartNotebookRepository) {
         super(smartNotebook, atomicNote);
-        textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
+        this.textNotesDao = textNotesDao;
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.noteOcrTextDao = noteOcrTextDao;
+        this.smartNotebookRepository = smartNotebookRepository;
     }
 
     @Override
@@ -75,7 +87,8 @@ public class TextNoteFragment extends NoteFragment {
 
     private void showDebugDialog() {
         if (getContext() != null) {
-            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
+            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook,
+                                                        smartNotebookRepository, textNotesDao, noteOcrTextDao, handwrittenNoteRepository);
             dialog.show();
         }
     }

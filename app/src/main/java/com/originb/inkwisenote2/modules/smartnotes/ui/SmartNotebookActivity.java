@@ -6,12 +6,21 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
+import org.koin.android.compat.ViewModelCompat;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.originb.inkwisenote2.common.Logger;
@@ -25,7 +34,6 @@ import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.ISmartNotebookActivityState;
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.IStateManager;
 import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModel;
-import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModelFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -43,13 +51,19 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     private SmartNotebookAdapter smartNotebookAdapter;
     private RecyclerView recyclerView;
 
+    // Dependencies from Koin
+    private HandwrittenNoteRepository handwrittenNoteRepository;
+    private TextNotesDao textNotesDao;
+    private SmartNotebookRepository smartNotebookRepository;
+    private NoteOcrTextDao noteOcrTextDao;
+
     private FloatingActionButton nextButton;
     private FloatingActionButton prevButton;
     private FloatingActionButton newNotePageBtn;
     private EditText noteTitleText;
     private TextView noteCreatedTime;
     private TextView pageNumText;
-
+    private ImageButton backButton;
 
     private Long noteIdToLoadOnOpen;
     private ISmartNotebookActivityState currentState;
@@ -59,9 +73,14 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_smart_note);
 
-        // Initialize ViewModel using the factory
-        SmartNotebookViewModelFactory factory = new SmartNotebookViewModelFactory(getApplication());
-        viewModel = new ViewModelProvider(this, factory).get(SmartNotebookViewModel.class);
+        // Initialize ViewModel with Koin DI
+        viewModel = ViewModelCompat.getViewModel(this, SmartNotebookViewModel.class);
+
+        // Get dependencies from Koin
+        handwrittenNoteRepository = org.koin.java.KoinJavaComponent.get(HandwrittenNoteRepository.class);
+        textNotesDao = org.koin.java.KoinJavaComponent.get(TextNotesDao.class);
+        smartNotebookRepository = org.koin.java.KoinJavaComponent.get(SmartNotebookRepository.class);
+        noteOcrTextDao = org.koin.java.KoinJavaComponent.get(NoteOcrTextDao.class);
 
         // Load notebook data
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
@@ -183,6 +202,63 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         pageNumText = findViewById(R.id.page_num_text);
     }
 
+    public void initializeBackButton() {
+        backButton = findViewById(R.id.back_button);
+        if (backButton == null) {
+            logger.error("Back button not found in layout. Make sure the layout contains an ImageButton with id 'back_button'");
+            return;
+        }
+        backButton.setOnClickListener(view -> {
+            // Save current state before going back
+            AtomicNoteEntity atomicNote = viewModel.getCurrentNote();
+            if (atomicNote != null) {
+                NoteHolderData noteData = smartNotebookAdapter.getNoteData(atomicNote.getNoteId());
+                if (noteData != null) {
+                    BackgroundOps.execute(() -> viewModel.saveCurrentNote(atomicNote, noteData),
+                            () -> finish());
+                } else {
+                    finish();
+                }
+            } else {
+                finish();
+            }
+        });
+    }
+
+    /**
+     * Hide the navigation bar for immersive drawing experience
+     */
+    public void hideNavigationBar() {
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.hide(WindowInsetsCompat.Type.navigationBars());
+        controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+    }
+
+    /**
+     * Show the navigation bar
+     */
+    public void showNavigationBar() {
+        WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
+        controller.show(WindowInsetsCompat.Type.navigationBars());
+    }
+
+    /**
+     * Handle system UI visibility changes to maintain immersive mode
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            // Check if current fragment is HandwrittenNoteFragment and hide navigation bar if needed
+            if (smartNotebookAdapter != null) {
+                AtomicNoteEntity currentNote = viewModel.getCurrentNote();
+                if (currentNote != null && "handwritten_png".equals(currentNote.getNoteType())) {
+                    hideNavigationBar();
+                }
+            }
+        }
+    }
+
     public void onSmartNotebookUpdate(SmartNotebookViewModel.SmartNotebookUpdate notebookUpdate) {
         if (isFinishing() || isDestroyed()) {
             return; // Don't proceed if activity is finishing/destroyed
@@ -195,7 +271,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         }
 
         if (smartNotebookAdapter == null) {
-            smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
+            smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook,
+                                                           smartNotebookRepository, handwrittenNoteRepository, textNotesDao, noteOcrTextDao);
             if (recyclerView != null) {
                 recyclerView.setAdapter(smartNotebookAdapter);
             }
@@ -341,7 +418,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         // Create new adapter with the notebook data
         if (currentNotebook != null) {
-            smartNotebookAdapter = new SmartNotebookAdapter(this, currentNotebook);
+            smartNotebookAdapter = new SmartNotebookAdapter(this, currentNotebook,
+                                                           smartNotebookRepository, handwrittenNoteRepository, textNotesDao, noteOcrTextDao);
             recyclerView.setAdapter(smartNotebookAdapter);
         }
 
@@ -389,6 +467,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             initializeNewNoteButton();
             initializeNoteTitle();
             initializeCreatedTimeAndPageNum();
+            initializeBackButton();
         }
 
         @Override
@@ -511,6 +590,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
             initializeSaveButton_VirtualNotebook();
             initializeNoteTitle_VirtualNotebook();
             initializeCreatedTimeAndPageNum();
+            initializeBackButton();
         }
 
         @Override

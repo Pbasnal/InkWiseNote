@@ -13,7 +13,6 @@ import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.*;
@@ -107,12 +106,16 @@ public class SmartNotebookViewModel extends AndroidViewModel {
         }
     }
 
-    public SmartNotebookViewModel(@NonNull Application application) {
+    public SmartNotebookViewModel(@NonNull Application application,
+                                 SmartNotebookRepository smartNotebookRepository,
+                                 AtomicNotesDomain atomicNotesDomain,
+                                 HandwrittenNoteRepository handwrittenNoteRepository,
+                                 TextNotesDao textNotesDao) {
         super(application);
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
-        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
-        textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.atomicNotesDomain = atomicNotesDomain;
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.textNotesDao = textNotesDao;
 
         EventBus.getDefault().register(this);
     }

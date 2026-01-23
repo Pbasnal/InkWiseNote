@@ -21,7 +21,6 @@ import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
@@ -57,16 +56,16 @@ public class NoteDebugDialog extends Dialog {
     private final NoteOcrTextDao noteOcrTextDao;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
 
-    public NoteDebugDialog(@NonNull Context context, AtomicNoteEntity atomicNote, SmartNotebook currentSmartNotebook) {
+    public NoteDebugDialog(@NonNull Context context, AtomicNoteEntity atomicNote, SmartNotebook currentSmartNotebook,
+                           SmartNotebookRepository smartNotebookRepository, TextNotesDao textNotesDao,
+                           NoteOcrTextDao noteOcrTextDao, HandwrittenNoteRepository handwrittenNoteRepository) {
         super(context);
         this.atomicNote = atomicNote;
         this.currentSmartNotebook = currentSmartNotebook;
-
-        // Get repositories
-        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        this.textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
-        this.noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
-        this.handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.textNotesDao = textNotesDao;
+        this.noteOcrTextDao = noteOcrTextDao;
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
     }
 
     @Override

@@ -19,8 +19,10 @@ import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate;
 import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
@@ -42,10 +44,19 @@ public class HandwrittenNoteFragment extends NoteFragment {
     private final HandwrittenNoteRepository handwrittenNoteRepository;
     private ConfigReader configReader;
 
+    // Additional dependencies for NoteDebugDialog
+    private TextNotesDao textNotesDao;
+    private NoteOcrTextDao noteOcrTextDao;
+    private SmartNotebookRepository smartNotebookRepository;
 
-    public HandwrittenNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote) {
+
+    public HandwrittenNoteFragment(SmartNotebook smartNotebook, AtomicNoteEntity atomicNote, HandwrittenNoteRepository handwrittenNoteRepository,
+                                  TextNotesDao textNotesDao, NoteOcrTextDao noteOcrTextDao, SmartNotebookRepository smartNotebookRepository) {
         super(smartNotebook, atomicNote);
-        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.textNotesDao = textNotesDao;
+        this.noteOcrTextDao = noteOcrTextDao;
+        this.smartNotebookRepository = smartNotebookRepository;
         configReader = ConfigReader.getInstance();
     }
 
@@ -91,6 +102,42 @@ public class HandwrittenNoteFragment extends NoteFragment {
         activatePencilMode();
 
         loadNote();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Hide navigation bar when fragment becomes active
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).hideNavigationBar();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Show navigation bar when fragment becomes inactive
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).showNavigationBar();
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // Ensure navigation bar is shown when fragment is destroyed
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).showNavigationBar();
+        }
+    }
+
+    /**
+     * Ensure navigation bar stays hidden during drawing
+     */
+    public void ensureNavigationBarHidden() {
+        if (getActivity() instanceof SmartNotebookActivity) {
+            ((SmartNotebookActivity) getActivity()).hideNavigationBar();
+        }
     }
 
     /**
@@ -158,7 +205,8 @@ public class HandwrittenNoteFragment extends NoteFragment {
 
     private void showDebugDialog() {
         if (getContext() != null) {
-            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook);
+            NoteDebugDialog dialog = new NoteDebugDialog(getContext(), atomicNote, smartNotebook,
+                                                        smartNotebookRepository, textNotesDao, noteOcrTextDao, handwrittenNoteRepository);
             dialog.show();
         }
     }

@@ -33,6 +33,19 @@ public class AtomicNoteEntity {
 
     @ColumnInfo(name = "last_modified_time_ms")
     private long lastModifiedTimeMillis;
+
+    public AtomicNoteEntity clone() {
+        AtomicNoteEntity noteToSave = new AtomicNoteEntity();
+        noteToSave.setNoteId(noteId);
+        noteToSave.setFilename(filename);
+        noteToSave.setFilepath(filepath);
+        noteToSave.setNoteType(noteType);
+        noteToSave.setPageTemplateId(pageTemplateId);
+        noteToSave.setCreatedTimeMillis(createdTimeMillis);
+        noteToSave.setLastModifiedTimeMillis(lastModifiedTimeMillis);
+
+        return noteToSave;
+    }
 }
 
 

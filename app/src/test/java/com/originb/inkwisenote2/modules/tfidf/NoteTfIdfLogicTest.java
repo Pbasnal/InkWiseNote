@@ -6,7 +6,6 @@ import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequency;
 import com.originb.inkwisenote2.common.NotesDatabase;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import org.junit.*;
 import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
@@ -35,19 +34,12 @@ public class NoteTfIdfLogicTest {
             dbFile.delete();
         }
 
-        Repositories.registerRepositories(context);
-        Repositories repositories = Repositories.getInstance();
-
         db = Room.inMemoryDatabaseBuilder(context, NotesDatabase.class)
                 .allowMainThreadQueries() // Use cautiously, only for tests
                 .build();
         noteTermFrequencyDao = db.noteTermFrequencyDao();
-        repositories.setNotesDb(db);
-//        noteTermFrequencyDbQueries = new NoteTermFrequencyDbQueries(context, testDbPath);
-//        SQLiteDatabase db = noteTermFrequencyDbQueries.getWritableDatabase();
-//        repositories.setNoteTermFrequencyDao(noteTermFrequencyDbQueries);
 
-        noteTfIdfLogic = new NoteTfIdfLogic(repositories);
+        noteTfIdfLogic = new NoteTfIdfLogic(noteTermFrequencyDao);
     }
 
     @After

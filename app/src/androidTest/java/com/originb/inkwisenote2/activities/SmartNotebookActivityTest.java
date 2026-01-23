@@ -16,11 +16,13 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteEnt
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteWithImage;
-import com.originb.inkwisenote2.modules.repositories.*;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.utils.DrawingTestUtils;
 import com.originb.inkwisenote2.AppMainActivity;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNotebookActivity;
 import com.originb.inkwisenote2.testutils.HandwritingStrokeHelper;
+import org.koin.java.KoinJavaComponent;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -88,7 +90,6 @@ public class SmartNotebookActivityTest {
     public void testWritingHelloWorld() {
         showTestStep("Writing 'Hello World!'");
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Repositories.registerRepositories(context);
 
         List<List<HandwritingStrokeHelper.Point>> allStrokes = HandwritingStrokeHelper.getHelloWorldStrokes(0, 0);
 
@@ -101,8 +102,8 @@ public class SmartNotebookActivityTest {
         waitFor(1000); // Final delay to see the result
 
         // Now verify the data persistence
-        HandwrittenNoteRepository repository = Repositories.getInstance().getHandwrittenNoteRepository();
-        SmartNotebookRepository smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        HandwrittenNoteRepository repository = KoinJavaComponent.get(HandwrittenNoteRepository.class);
+        SmartNotebookRepository smartNotebookRepository = KoinJavaComponent.get(SmartNotebookRepository.class);
         List<SmartNotebook> allBooks = smartNotebookRepository.getAllSmartNotebooks();
 
         assertEquals(1, allBooks.size());

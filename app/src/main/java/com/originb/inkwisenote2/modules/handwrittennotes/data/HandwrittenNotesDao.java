@@ -32,4 +32,7 @@ public interface HandwrittenNotesDao {
 
     @Query("DELETE FROM handwritten_notes WHERE note_id IN (:noteIds)")
     void deleteHandwrittenNotes(Set<Long> noteIds);
+
+    @Upsert
+    void upsert(HandwrittenNoteEntity note);
 }

@@ -16,13 +16,11 @@ import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
-import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNoteEntity;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 
@@ -34,27 +32,35 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class SmartHomePageViewModel extends ViewModel {
-    private SmartNotebookRepository smartNotebookRepository;
-    private NoteTermFrequencyDao noteTermFrequencyDao;
-    private AtomicNotesDomain atomicNotesDomain;
-    private QueryRepository queryRepository;
-    private TextNotesDao textNotesDao;
-    private NoteOcrTextDao noteOcrTextDao;
-    private HandwrittenNoteRepository handwrittenNoteRepository;
+    private final SmartNotebookRepository smartNotebookRepository;
+    private final NoteTermFrequencyDao noteTermFrequencyDao;
+    private final AtomicNotesDomain atomicNotesDomain;
+    private final QueryRepository queryRepository;
+    private final TextNotesDao textNotesDao;
+    private final NoteOcrTextDao noteOcrTextDao;
+    private final HandwrittenNoteRepository handwrittenNoteRepository;
 
+    private final MutableLiveData<List<SmartNotebook>> _userNotebooks = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> _showStandingQueryPrompt = new MutableLiveData<>(false);
     private final MutableLiveData<List<SmartNotebook>> userNotebooks = new MutableLiveData<>(new ArrayList<>());
-
     private final MutableLiveData<Map<String, Set<QueryNoteResult>>> liveQueryResults = new MutableLiveData<>(new HashMap<>());
 
-    public SmartHomePageViewModel() {
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
-        atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
-        queryRepository = Repositories.getInstance().getQueryRepository();
-
-        textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
-        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
-        handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
+    public SmartHomePageViewModel(
+            SmartNotebookRepository smartNotebookRepository,
+            NoteTermFrequencyDao noteTermFrequencyDao,
+            AtomicNotesDomain atomicNotesDomain,
+            QueryRepository queryRepository,
+            TextNotesDao textNotesDao,
+            NoteOcrTextDao noteOcrTextDao,
+            HandwrittenNoteRepository handwrittenNoteRepository
+    ) {
+        this.smartNotebookRepository = smartNotebookRepository;
+        this.noteTermFrequencyDao = noteTermFrequencyDao;
+        this.atomicNotesDomain = atomicNotesDomain;
+        this.queryRepository = queryRepository;
+        this.textNotesDao = textNotesDao;
+        this.noteOcrTextDao = noteOcrTextDao;
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
 
         EventBus.getDefault().register(this);
         BackgroundOps.execute(this::fetchUserCreatedNotebooks,
@@ -178,8 +184,22 @@ public class SmartHomePageViewModel extends ViewModel {
         liveQueryResults.postValue(queryResultsMap);
     }
 
-    public boolean userHasAnyQuery() {
-        return queryRepository.userHasAnyQuery();
+    public LiveData<Boolean> getShowStandingQueryPrompt() {
+        return _showStandingQueryPrompt;
+    }
+
+    public void refreshDashboardState() {
+        // Move your BackgroundOps logic here!
+        BackgroundOps.execute(() -> {
+            boolean hasQueries = queryRepository.userHasAnyQuery();
+            List<SmartNotebook> notebooks = userNotebooks.getValue();
+
+            // Logic: Show prompt only if they have notes but NO queries
+            boolean showPrompt = !hasQueries && !CollectionUtils.isEmpty(notebooks);
+
+            _showStandingQueryPrompt.postValue(showPrompt);
+            _userNotebooks.postValue(notebooks);
+        });
     }
 
     private QueryNoteResult transform(AtomicNoteEntity atomicNoteEntity,

@@ -7,7 +7,6 @@ import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequencyDao;
 import com.originb.inkwisenote2.modules.ocr.data.NoteTermFrequency;
 import com.originb.inkwisenote2.modules.ocr.data.TermOccurrence;
 import com.originb.inkwisenote2.common.MapsUtils;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 
 import java.util.*;
 
@@ -17,8 +16,8 @@ public class NoteTfIdfLogic {
 
     private NoteTermFrequencyDao noteTermFrequencyDao;
 
-    public NoteTfIdfLogic(Repositories repositories) {
-        noteTermFrequencyDao = repositories.getNotesDb().noteTermFrequencyDao();
+    public NoteTfIdfLogic(NoteTermFrequencyDao noteTermFrequencyDao) {
+        this.noteTermFrequencyDao = noteTermFrequencyDao;
     }
 
     public void addOrUpdateNote(Long noteId, List<String> termsList) {
