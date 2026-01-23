@@ -11,8 +11,8 @@ import java.util.Set;
 public class AtomicNotesDomain {
     private final AtomicNoteEntitiesDao atomicNoteEntitiesDao;
 
-    public AtomicNotesDomain() {
-        this.atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
+    public AtomicNotesDomain(AtomicNoteEntitiesDao atomicNoteEntitiesDao) {
+        this.atomicNoteEntitiesDao = atomicNoteEntitiesDao;
     }
 
     public static AtomicNoteEntity constructAtomicNote(String filename, String filepath, NoteType noteType) {

@@ -2,6 +2,7 @@ package com.originb.inkwisenote2.modules.backgroundjobs;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 
@@ -42,28 +43,44 @@ public class BackgroundOps {
     }
 
     public static <T> void execute(Callable<T> callable, Consumer<T> resultOnMainThread) {
-        try {
-            Future<T> callFuture = getInstance().executor.submit(callable);
-            T result = callFuture.get();
+        // 1. Capture the stack trace of the CALLER (the UI thread) right now
+        Exception clientStack = new Exception("Task submitted from here");
 
-            getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result));
+        getInstance().executor.execute(() -> {
+            try {
+                T result = callable.call();
+                getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result));
+            } catch (Exception e) {
+                // 2. Stitch the current background exception with the caller's stack trace
+                e.initCause(clientStack);
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+                // 3. Now when you log this, you see exactly where it was enqueued
+                handleError(e);
+            }
+        });
     }
 
     public static <T> void executeOpt(Callable<Optional<T>> callable, Consumer<T> resultOnMainThread) {
-        try {
-            Future<Optional<T>> callFuture = getInstance().executor.submit(callable);
-            Optional<T> result = callFuture.get();
-
-            if (result.isPresent()) {
-                getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result.get()));
+        getInstance().executor.execute(() -> {
+            try {
+                Optional<T> result = callable.call();
+                if (result.isPresent()) {
+                    getInstance().mainThreadHandler.post(() -> resultOnMainThread.accept(result.get()));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
+        });
+    }
 
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private static void handleError(Exception e) {
+        // Using a logger helps preserve the full cause chain
+        e.printStackTrace();
+        Log.e("BackgroundOps", "Background task failed", e);
+
+        // Optional: Post back to UI to show an error dialog/toast
+        getInstance().mainThreadHandler.post(() -> {
+            // You could add an Error Consumer to your execute method if needed
+        });
     }
 }

@@ -9,15 +9,17 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.originb.inkwisenote2.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FileGroupAdapter extends RecyclerView.Adapter<FileGroupAdapter.FileGroupViewHolder> {
 
-    private final List<FileGroup> fileGroups;
+    private final List<FileGroup> fileGroups = new ArrayList<>(); // Initialize here
     private final Context context;
     private final OnFileGroupClickListener fileGroupClickListener;
     private final OnFileGroupDeleteListener fileGroupDeleteListener;
@@ -30,11 +32,10 @@ public class FileGroupAdapter extends RecyclerView.Adapter<FileGroupAdapter.File
         void onFileGroupDelete(FileGroup fileGroup);
     }
 
-    public FileGroupAdapter(Context context, List<FileGroup> fileGroups, 
-                      OnFileGroupClickListener fileGroupClickListener,
-                      OnFileGroupDeleteListener fileGroupDeleteListener) {
+    public FileGroupAdapter(Context context,
+                            OnFileGroupClickListener fileGroupClickListener,
+                            OnFileGroupDeleteListener fileGroupDeleteListener) {
         this.context = context;
-        this.fileGroups = fileGroups;
         this.fileGroupClickListener = fileGroupClickListener;
         this.fileGroupDeleteListener = fileGroupDeleteListener;
     }
@@ -49,10 +50,9 @@ public class FileGroupAdapter extends RecyclerView.Adapter<FileGroupAdapter.File
     @Override
     public void onBindViewHolder(@NonNull FileGroupViewHolder holder, int position) {
         FileGroup fileGroup = fileGroups.get(position);
-        
-        // Set group name and timestamp
+
         holder.groupName.setText(fileGroup.getGroupName());
-        
+
         if (fileGroup.isGroup()) {
             holder.timestamp.setText(fileGroup.getTimestamp());
             holder.timestamp.setVisibility(View.VISIBLE);
@@ -62,25 +62,16 @@ public class FileGroupAdapter extends RecyclerView.Adapter<FileGroupAdapter.File
             holder.timestamp.setVisibility(View.GONE);
             holder.fileCount.setVisibility(View.GONE);
         }
-        
-        // Set appropriate icon based on whether it's a directory or file
-        if (fileGroup.isDirectory()) {
-            holder.groupIcon.setImageResource(R.drawable.ic_directory);
-        } else {
-            holder.groupIcon.setImageResource(R.drawable.ic_file);
-        }
-        
-        // Set click listeners
+
+        holder.groupIcon.setImageResource(fileGroup.isDirectory() ?
+                R.drawable.ic_directory : R.drawable.ic_file);
+
         holder.itemView.setOnClickListener(v -> {
-            if (fileGroupClickListener != null) {
-                fileGroupClickListener.onFileGroupClick(fileGroup);
-            }
+            if (fileGroupClickListener != null) fileGroupClickListener.onFileGroupClick(fileGroup);
         });
-        
+
         holder.deleteButton.setOnClickListener(v -> {
-            if (fileGroupDeleteListener != null) {
-                fileGroupDeleteListener.onFileGroupDelete(fileGroup);
-            }
+            if (fileGroupDeleteListener != null) fileGroupDeleteListener.onFileGroupDelete(fileGroup);
         });
     }
 
@@ -89,10 +80,14 @@ public class FileGroupAdapter extends RecyclerView.Adapter<FileGroupAdapter.File
         return fileGroups.size();
     }
 
+    /**
+     * Replaced notifyDataSetChanged with DiffUtil for performance and animations.
+     */
     public void updateFileGroups(List<FileGroup> newFileGroups) {
-        fileGroups.clear();
-        fileGroups.addAll(newFileGroups);
-        notifyDataSetChanged();
+        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new FileGroupDiffCallback(this.fileGroups, newFileGroups));
+        this.fileGroups.clear();
+        this.fileGroups.addAll(newFileGroups);
+        diffResult.dispatchUpdatesTo(this);
     }
 
     static class FileGroupViewHolder extends RecyclerView.ViewHolder {
@@ -111,4 +106,38 @@ public class FileGroupAdapter extends RecyclerView.Adapter<FileGroupAdapter.File
             deleteButton = itemView.findViewById(R.id.delete_button);
         }
     }
-} 
+
+    /**
+     * Internal class to handle the comparison logic
+     */
+    private static class FileGroupDiffCallback extends DiffUtil.Callback {
+        private final List<FileGroup> oldList;
+        private final List<FileGroup> newList;
+
+        public FileGroupDiffCallback(List<FileGroup> oldList, List<FileGroup> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+
+        @Override
+        public int getOldListSize() { return oldList.size(); }
+
+        @Override
+        public int getNewListSize() { return newList.size(); }
+
+        @Override
+        public boolean areItemsTheSame(int oldPos, int newPos) {
+            // Check if they are the same physical file/group (usually check ID or Path)
+            return oldList.get(oldPos).getGroupName().equals(newList.get(newPos).getGroupName());
+        }
+
+        @Override
+        public boolean areContentsTheSame(int oldPos, int newPos) {
+            // Check if the contents (like file count or timestamp) changed
+            FileGroup oldItem = oldList.get(oldPos);
+            FileGroup newItem = newList.get(newPos);
+            return oldItem.getFileCount() == newItem.getFileCount() &&
+                    oldItem.getTimestamp().equals(newItem.getTimestamp());
+        }
+    }
+}

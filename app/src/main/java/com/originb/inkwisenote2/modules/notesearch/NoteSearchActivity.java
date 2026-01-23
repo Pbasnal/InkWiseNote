@@ -1,152 +1,65 @@
 package com.originb.inkwisenote2.modules.notesearch;
 
 import android.os.Bundle;
-import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.R;
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.backgroundjobs.Events;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
-import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter;
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
+import org.koin.android.compat.ViewModelCompat;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class NoteSearchActivity extends AppCompatActivity {
     private EditText searchInput;
     private Button searchButton;
-    private List<SmartNotebook> resultsList;
-    private TextView titleTextView;
-
     private SmartNoteGridAdapter smartNoteGridAdapter;
-
-    private NoteOcrTextDao noteOcrTextDao;
-    private SmartNotebookRepository smartNotebookRepository;
-
-    private RecyclerView recyclerView;
-    private boolean isShowingAllNotebooks = false;
+    private NoteSearchViewModel viewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search_results);
 
-        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
-        smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
+        // 1. Initialize ViewModel with Koin DI
+        viewModel = ViewModelCompat.getViewModel(this, NoteSearchViewModel.class);
 
+        // 2. Initialize UI Components
         searchInput = findViewById(R.id.searchInput);
         searchButton = findViewById(R.id.searchButton);
-        titleTextView = findViewById(R.id.searchResultsTitle);
+        setupRecyclerView();
 
-        createGridLayoutToShowNotes();
+        // 3. Set up Observers (The "Reactive" part)
+        observeViewModel();
 
-        searchButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                performSearch(searchInput.getText().toString());
-            }
-        });
-
-        // Check if we should display all notebooks
-        isShowingAllNotebooks = getIntent().getBooleanExtra("show_all_notebooks", false);
-        if (isShowingAllNotebooks) {
-            titleTextView.setText("All Notebooks");
-            searchInput.setVisibility(View.GONE);
-            searchButton.setVisibility(View.GONE);
-            loadAllNotebooks();
-        }
+        // 4. Input events
+        searchButton.setOnClickListener(view ->
+                viewModel.performSearch(searchInput.getText().toString())
+        );
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onSmartNotebookSaved(Events.SmartNotebookSaved smartNotebookSaved) {
-        // Refresh the current view if we're showing all notebooks
-        if (isShowingAllNotebooks) {
-            loadAllNotebooks();
-        }
-    }
-
-    public void createGridLayoutToShowNotes() {
-        resultsList = new ArrayList<>();
-
-        recyclerView = findViewById(R.id.note_search_card_grid_view);
+    private void setupRecyclerView() {
+        RecyclerView recyclerView = findViewById(R.id.note_search_card_grid_view);
         smartNoteGridAdapter = new SmartNoteGridAdapter(this, new ArrayList<>(), false);
-
         recyclerView.setAdapter(smartNoteGridAdapter);
         recyclerView.setHasFixedSize(true);
     }
 
-    private void loadAllNotebooks() {
-        resultsList.clear();
-        BackgroundOps.execute(() -> {
-                    // Get all notebooks from repository
-                    List<SmartNotebook> notebooks = smartNotebookRepository.getAllSmartNotebooks();
-                    
-                    // Sort by last modified time (newest first)
-                    notebooks.sort(Comparator.comparing(
-                            notebook -> notebook.getSmartBook().getLastModifiedTimeMillis(),
-                            Comparator.reverseOrder()
-                    ));
-                    
-                    return notebooks;
-                },
-                notebooks -> {
-                    if (notebooks != null && !notebooks.isEmpty()) {
-                        resultsList.addAll(notebooks);
-                        smartNoteGridAdapter.setSmartNotebooks(resultsList);
-                    } else {
-                        Toast.makeText(this, "No notebooks found", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
+    private void observeViewModel() {
+        // Update list when search results change
+        viewModel.searchResults.observe(this, results -> {
+            smartNoteGridAdapter.setSmartNotebooks(results);
+        });
 
-    private void performSearch(String query) {
-        // Filter results based on query
-        if (query.length() < 3) {
-            Toast.makeText(this, "enter at least 3 characters to search", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        resultsList.clear();
-        BackgroundOps.execute(() -> {
-                    Set<SmartNotebook> smartNotebooks = smartNotebookRepository.getSmartNotebooks(query);
-                    List<NoteOcrText> noteOcrs = noteOcrTextDao.searchTextFromDb(query);
-                    if(noteOcrs != null && !noteOcrs.isEmpty()) {
-                        Set<Long> noteIds = noteOcrs.stream()
-                                .map(NoteOcrText::getNoteId)
-                                .collect(Collectors.toSet());
-                        smartNotebooks.addAll(smartNotebookRepository.getSmartNotebooksForNoteIds(noteIds));
-
-                    }
-                    return smartNotebooks;
-                },
-                smartNotebooks -> {
-                    resultsList.addAll(smartNotebooks);
-                    smartNoteGridAdapter.setSmartNotebooks(resultsList);
-                });
+        // Show toast when the ViewModel sends a message
+        viewModel.toastMessage.observe(this, message -> {
+            if (message != null) {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

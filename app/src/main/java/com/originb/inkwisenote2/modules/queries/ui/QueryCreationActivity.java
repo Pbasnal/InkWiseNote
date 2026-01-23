@@ -5,7 +5,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -13,6 +12,7 @@ import com.originb.inkwisenote2.R;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
+import org.koin.android.compat.ViewModelCompat;
 
 import java.util.ArrayList;
 
@@ -38,7 +38,8 @@ public class QueryCreationActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_query_creation);
 
-        viewModel = new ViewModelProvider(this).get(QueryViewModel.class);
+        // Get ViewModel from Koin
+        viewModel = ViewModelCompat.getViewModel(this, QueryViewModel.class);
 
         currentQueryNameTextView = findViewById(R.id.current_query_name);
 

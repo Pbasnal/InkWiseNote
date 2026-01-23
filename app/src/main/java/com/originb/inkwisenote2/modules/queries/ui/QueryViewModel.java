@@ -1,20 +1,17 @@
 package com.originb.inkwisenote2.modules.queries.ui;
 
 import android.app.Application;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.*;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 public class QueryViewModel extends AndroidViewModel {
 
@@ -27,11 +24,10 @@ public class QueryViewModel extends AndroidViewModel {
     private MutableLiveData<Map<String, QueryEntity>> allQueries;
 
 
-    public QueryViewModel(Application application) {
+    public QueryViewModel(Application application, QueryRepository repository) {
         super(application);
-
-        repository = Repositories.getInstance().getQueryRepository();
-        allQueries = new MutableLiveData<>(new HashMap<>());
+        this.repository = repository;
+        this.allQueries = new MutableLiveData<>(new HashMap<>());
     }
 
     public LiveData<Map<String, QueryEntity>> getAllQueries() {

@@ -20,11 +20,14 @@ public class SmartNotebookRepository {
     private final SmartBooksDao smartBooksDao;
     private final SmartBookPagesDao smartBookPagesDao;
 
-    public SmartNotebookRepository() {
-        this.atomicNoteEntitiesDao = Repositories.getInstance().getNotesDb().atomicNoteEntitiesDao();
-        this.smartBooksDao = Repositories.getInstance().getNotesDb().smartBooksDao();
-        this.smartBookPagesDao = Repositories.getInstance().getNotesDb().smartBookPagesDao();
-        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
+    public SmartNotebookRepository(AtomicNotesDomain atomicNotesDomain,
+                                   AtomicNoteEntitiesDao atomicNoteEntitiesDao,
+                                   SmartBooksDao smartBooksDao,
+                                   SmartBookPagesDao smartBookPagesDao) {
+        this.atomicNotesDomain = atomicNotesDomain;
+        this.atomicNoteEntitiesDao = atomicNoteEntitiesDao;
+        this.smartBooksDao = smartBooksDao;
+        this.smartBookPagesDao = smartBookPagesDao;
     }
 
     // Create the data and return the notebook entity

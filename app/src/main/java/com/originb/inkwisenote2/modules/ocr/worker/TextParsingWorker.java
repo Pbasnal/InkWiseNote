@@ -58,11 +58,15 @@ public class TextParsingWorker extends Worker {
         public long noteId;
     }
 
-    public TextParsingWorker(@NotNull Context context, @NotNull WorkerParameters workerParams) {
+    public TextParsingWorker(@NotNull Context context,
+                             @NotNull WorkerParameters workerParams,
+                             HandwrittenNoteRepository handwrittenNoteRepository,
+                             AtomicNotesDomain atomicNotesDomain,
+                             NoteOcrTextDao noteOcrTextDao) {
         super(context, workerParams);
-        this.handwrittenNoteRepository = Repositories.getInstance().getHandwrittenNoteRepository();
-        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
-        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        this.handwrittenNoteRepository = handwrittenNoteRepository;
+        this.atomicNotesDomain = atomicNotesDomain;
+        this.noteOcrTextDao = noteOcrTextDao;
         appConfig = ConfigReader.getInstance().getAppConfig();
         appSecrets = appConfig.getAppSecrets();
 

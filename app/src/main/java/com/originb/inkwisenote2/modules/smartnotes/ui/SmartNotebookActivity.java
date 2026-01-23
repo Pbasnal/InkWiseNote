@@ -12,7 +12,11 @@ import android.widget.TextView;
 import android.widget.ImageButton;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.ViewModelProvider;
+import org.koin.android.compat.ViewModelCompat;
+import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
+import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
+import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -30,7 +34,6 @@ import com.originb.inkwisenote2.modules.smartnotes.data.*;
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.ISmartNotebookActivityState;
 import com.originb.inkwisenote2.modules.smartnotes.ui.activitystates.IStateManager;
 import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModel;
-import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModelFactory;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +51,12 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     private SmartNotebookAdapter smartNotebookAdapter;
     private RecyclerView recyclerView;
 
+    // Dependencies from Koin
+    private HandwrittenNoteRepository handwrittenNoteRepository;
+    private TextNotesDao textNotesDao;
+    private SmartNotebookRepository smartNotebookRepository;
+    private NoteOcrTextDao noteOcrTextDao;
+
     private FloatingActionButton nextButton;
     private FloatingActionButton prevButton;
     private FloatingActionButton newNotePageBtn;
@@ -64,9 +73,14 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_smart_note);
 
-        // Initialize ViewModel using the factory
-        SmartNotebookViewModelFactory factory = new SmartNotebookViewModelFactory(getApplication());
-        viewModel = new ViewModelProvider(this, factory).get(SmartNotebookViewModel.class);
+        // Initialize ViewModel with Koin DI
+        viewModel = ViewModelCompat.getViewModel(this, SmartNotebookViewModel.class);
+
+        // Get dependencies from Koin
+        handwrittenNoteRepository = org.koin.java.KoinJavaComponent.get(HandwrittenNoteRepository.class);
+        textNotesDao = org.koin.java.KoinJavaComponent.get(TextNotesDao.class);
+        smartNotebookRepository = org.koin.java.KoinJavaComponent.get(SmartNotebookRepository.class);
+        noteOcrTextDao = org.koin.java.KoinJavaComponent.get(NoteOcrTextDao.class);
 
         // Load notebook data
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
@@ -257,7 +271,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         }
 
         if (smartNotebookAdapter == null) {
-            smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook);
+            smartNotebookAdapter = new SmartNotebookAdapter(this, notebookUpdate.smartNotebook,
+                                                           smartNotebookRepository, handwrittenNoteRepository, textNotesDao, noteOcrTextDao);
             if (recyclerView != null) {
                 recyclerView.setAdapter(smartNotebookAdapter);
             }
@@ -403,7 +418,8 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
 
         // Create new adapter with the notebook data
         if (currentNotebook != null) {
-            smartNotebookAdapter = new SmartNotebookAdapter(this, currentNotebook);
+            smartNotebookAdapter = new SmartNotebookAdapter(this, currentNotebook,
+                                                           smartNotebookRepository, handwrittenNoteRepository, textNotesDao, noteOcrTextDao);
             recyclerView.setAdapter(smartNotebookAdapter);
         }
 

@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -17,6 +16,7 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.modules.queries.data.QueryEntity;
 import com.originb.inkwisenote2.modules.smarthome.NotesAdapter;
 import com.originb.inkwisenote2.modules.smarthome.QueryNoteResult;
+import org.koin.android.compat.ViewModelCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,8 +61,8 @@ public class QueryResultsActivity extends AppCompatActivity {
         notesAdapter = new NotesAdapter(this);
         resultsRecyclerView.setAdapter(notesAdapter);
         
-        // Initialize ViewModel
-        viewModel = new ViewModelProvider(this).get(QueryResultsViewModel.class);
+        // Get ViewModel from Koin
+        viewModel = ViewModelCompat.getViewModel(this, QueryResultsViewModel.class);
         
         // If we have an initial query, load its results directly
         if (initialQueryName != null) {

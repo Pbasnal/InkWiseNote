@@ -20,7 +20,6 @@ import com.originb.inkwisenote2.functionalUtils.Try;
 import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType;
@@ -35,22 +34,27 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class TextProcessingWorker extends Worker {
-    private NoteTfIdfLogic noteTfIdfLogic;
-    private NoteOcrTextDao noteOcrTextDao;
-    private TextNotesDao textNotesDao;
+    private final NoteTfIdfLogic noteTfIdfLogic;
+    private final NoteOcrTextDao noteOcrTextDao;
+    private final TextNotesDao textNotesDao;
     private final AtomicNotesDomain atomicNotesDomain;
+    private final SmartNotebookRepository smartNotebookRepository;
 
     private final Logger logger = new Logger("TextProcessingWorker");
 
-    private final SmartNotebookRepository smartNotebookRepository;
-
-    public TextProcessingWorker(@NotNull Context context, @NotNull WorkerParameters workerParams) {
+    public TextProcessingWorker(@NotNull Context context, 
+                                @NotNull WorkerParameters workerParams,
+                                NoteTfIdfLogic noteTfIdfLogic,
+                                NoteOcrTextDao noteOcrTextDao,
+                                TextNotesDao textNotesDao,
+                                AtomicNotesDomain atomicNotesDomain,
+                                SmartNotebookRepository smartNotebookRepository) {
         super(context, workerParams);
-        this.noteTfIdfLogic = new NoteTfIdfLogic(Repositories.getInstance());
-        this.smartNotebookRepository = Repositories.getInstance().getSmartNotebookRepository();
-        this.atomicNotesDomain = Repositories.getInstance().getAtomicNotesDomain();
-        this.textNotesDao = Repositories.getInstance().getNotesDb().textNotesDao();
-        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
+        this.noteTfIdfLogic = noteTfIdfLogic;
+        this.noteOcrTextDao = noteOcrTextDao;
+        this.textNotesDao = textNotesDao;
+        this.atomicNotesDomain = atomicNotesDomain;
+        this.smartNotebookRepository = smartNotebookRepository;
     }
 
     @AllArgsConstructor

@@ -3,6 +3,7 @@ import java.util.*
 
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 val properties = Properties()
@@ -12,7 +13,7 @@ file("secrets.properties").takeIf { it.exists() }?.apply {
 
 android {
     namespace = "com.originb.inkwisenote2"
-    compileSdk = 34
+    compileSdk = 36
 
     buildFeatures {
         buildConfig = true
@@ -43,12 +44,15 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     testOptions {
         animationsDisabled = false
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
+    }
+    kotlinOptions {
+        jvmTarget = "17"
     }
 }
 
@@ -68,10 +72,18 @@ dependencies {
     implementation("io.noties.markwon:core:4.6.2")
     implementation("org.greenrobot:eventbus:3.3.1")
 
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.22"))
+    implementation("org.jetbrains.kotlin:kotlin-stdlib")
+
+    implementation("io.insert-koin:koin-android:3.1.6")
+    implementation("io.insert-koin:koin-android-compat:3.1.6")
+    implementation("io.insert-koin:koin-androidx-workmanager:3.1.6")
+
     implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime:2.6.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.core:core-ktx:1.17.0")
 
     annotationProcessor("org.projectlombok:lombok:1.18.30")
     annotationProcessor("org.projectlombok:lombok:1.18.30")
