@@ -14,7 +14,6 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
-import com.originb.inkwisenote2.modules.backgroundjobs.Events;
 import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType;
 
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
@@ -27,10 +26,6 @@ import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
 
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData;
-
-import org.greenrobot.eventbus.EventBus;
-
-import java.io.File;
 
 /**
  * Fragment for displaying and editing handwritten notes

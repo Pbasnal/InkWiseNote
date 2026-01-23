@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.originb.inkwisenote2.config.ConfigKeys;
 import com.originb.inkwisenote2.config.ConfigReader;
 import com.originb.inkwisenote2.config.AppState;
+import com.originb.inkwisenote2.modules.bootstrap.NotebookBootstrapper;
 import com.originb.inkwisenote2.modules.handwrittennotes.HandwrittenNoteEventListener;
 import com.originb.inkwisenote2.modules.textnote.TextNoteListener;
 import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener;
@@ -18,8 +19,16 @@ import org.koin.android.java.KoinAndroidApplication;
 import org.koin.core.KoinApplication;
 import org.koin.core.context.GlobalContext;
 import org.koin.java.KoinJavaComponent;
+import com.originb.inkwisenote2.common.Logger;
+import com.originb.inkwisenote2.R;
+
+import java.io.File;
+import java.util.List;
 
 public class AppMainActivity extends AppCompatActivity {
+    private static final String TAG = "AppMainActivity";
+    private final Logger logger = new Logger(TAG);
+
     private SmartNotebookEventListener notebookEventListner;
     private HandwrittenNoteEventListener handwrittenNoteEventListener;
     private NoteRelationEventListener noteRelationEventListener;
@@ -34,6 +43,8 @@ public class AppMainActivity extends AppCompatActivity {
         registerModules();
 
         AppState.updateState();
+
+        // Bootstrap notebooks and notes from working directory
 //        KoinApplication koinApp = KoinAndroidApplication.create(this)
 //                .modules(AppModulesKt.getAppModule());
 //        GlobalContext.INSTANCE.startKoin(koinApp);
@@ -50,7 +61,31 @@ public class AppMainActivity extends AppCompatActivity {
         // Initialize event listeners after Koin is started so they can use dependency injection
         initializeEventListeners();
 
+        bootstrapNotebooksAndNotes();
         Routing.HomePageActivity.openSmartHomePageAndStartFresh(this);
+    }
+
+    /**
+     * Bootstrap notebooks and notes from the working directory
+     */
+    private void bootstrapNotebooksAndNotes() {
+        try {
+            // Get the root notes directory from config
+            String rootNotesDirectory = this.getFilesDir().getPath();
+            File workingDirectory = new File(rootNotesDirectory);
+
+            // Initialize bootstrapper
+            NotebookBootstrapper bootstrapper = new NotebookBootstrapper();
+
+            // Bootstrap notebooks and notes
+            List<NotebookBootstrapper.NotebookFolder> bootstrappedNotebooks = bootstrapper.bootstrapFromDirectory(this, workingDirectory);
+
+            // Log bootstrap results
+            logger.debug("Bootstrap completed. Found " + bootstrappedNotebooks.size() + " notebooks");
+
+        } catch (Exception e) {
+            logger.exception("Error during bootstrap process", e);
+        }
     }
 
     private void registerModules() {
