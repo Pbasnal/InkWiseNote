@@ -20,7 +20,7 @@ import com.originb.inkwisenote2.common.DateTimeUtils;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrText;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
@@ -53,12 +53,12 @@ public class NoteDebugDialog extends Dialog {
 
     private final SmartNotebookRepository smartNotebookRepository;
     private final TextNotesDao textNotesDao;
-    private final NoteOcrTextDao noteOcrTextDao;
+    private final NoteOcrTextsDao noteOcrTextDao;
     private final HandwrittenNoteRepository handwrittenNoteRepository;
 
     public NoteDebugDialog(@NonNull Context context, AtomicNoteEntity atomicNote, SmartNotebook currentSmartNotebook,
                            SmartNotebookRepository smartNotebookRepository, TextNotesDao textNotesDao,
-                           NoteOcrTextDao noteOcrTextDao, HandwrittenNoteRepository handwrittenNoteRepository) {
+                           NoteOcrTextsDao noteOcrTextDao, HandwrittenNoteRepository handwrittenNoteRepository) {
         super(context);
         this.atomicNote = atomicNote;
         this.currentSmartNotebook = currentSmartNotebook;
@@ -104,8 +104,8 @@ public class NoteDebugDialog extends Dialog {
         // Add loading indicator to tables before background loading
         addRowToTable(relatedNotesTable, "Loading related notes...", "");
         addRowToTable(smartbooksTable, "Loading smartbooks...", "");
-        parsedTextContent.setText("Loading parsed text...");
-        markdownStrokesContent.setText("Loading markdown strokes data...");
+        parsedTextContent.setText(getContext().getString(R.string.loading_parsed_text));
+        markdownStrokesContent.setText(getContext().getString(R.string.loading_markdown_strokes));
 
         // Load related notes and smartbooks in background
         BackgroundOps.execute(this::collectDebugData, this::updateDebugUI);
@@ -215,14 +215,14 @@ public class NoteDebugDialog extends Dialog {
         if (data.parsedText != null && !data.parsedText.isEmpty()) {
             parsedTextContent.setText(data.parsedText);
         } else {
-            parsedTextContent.setText("No parsed text available");
+            parsedTextContent.setText(getContext().getString(R.string.no_parsed_text));
         }
         
         // Update markdown strokes content
         if (data.markdownContent != null && !data.markdownContent.isEmpty()) {
             markdownStrokesContent.setText(data.markdownContent);
         } else {
-            markdownStrokesContent.setText("No markdown strokes data available");
+            markdownStrokesContent.setText(getContext().getString(R.string.no_markdown_strokes));
         }
     }
 

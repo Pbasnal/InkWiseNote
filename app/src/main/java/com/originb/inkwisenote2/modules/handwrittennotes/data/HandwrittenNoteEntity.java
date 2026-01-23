@@ -1,9 +1,6 @@
 package com.originb.inkwisenote2.modules.handwrittennotes.data;
 
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.PrimaryKey;
+import androidx.room.*;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;
 import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity;
 import lombok.Getter;
@@ -23,6 +20,10 @@ import lombok.Setter;
                         parentColumns = "note_id",
                         childColumns = "note_id",
                         onDelete = ForeignKey.CASCADE)
+        },
+        indices = {
+                @Index("book_id"),
+                @Index("note_id")
         })
 public class HandwrittenNoteEntity {
 

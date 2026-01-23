@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import android.database.sqlite.SQLiteConstraintException;
 
 public class QueryRepository {
-    private final QueryDao queryDao;
+    private final QueriesDao queryDao;
 
-    public QueryRepository(QueryDao queryDao) {
+    public QueryRepository(QueriesDao queryDao) {
         this.queryDao = queryDao;
     }
 

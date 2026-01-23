@@ -160,12 +160,12 @@ public class AdminActivity extends AppCompatActivity {
         // Navigation Row
         TableRow navRow = new TableRow(this);
         TextView pathView = new TextView(this);
-        pathView.setText("Path: " + state.currentDir.getAbsolutePath());
+        pathView.setText(getString(R.string.path_label) + state.currentDir.getAbsolutePath());
         pathView.setPadding(16, 16, 16, 16);
         navRow.addView(pathView);
 
         Button upBtn = new Button(this);
-        upBtn.setText("↑ Up");
+        upBtn.setText(getString(R.string.up_button));
         upBtn.setOnClickListener(v -> viewModel.navigateToDir(state.currentDir.getParentFile()));
         navRow.addView(upBtn);
         tableLayout.addView(navRow);
@@ -184,12 +184,12 @@ public class AdminActivity extends AppCompatActivity {
                 LinearLayout actions = new LinearLayout(this);
                 if (file.isDirectory()) {
                     Button open = new Button(this);
-                    open.setText("Open");
+                    open.setText(getString(R.string.open_button));
                     open.setOnClickListener(v -> viewModel.navigateToDir(file));
                     actions.addView(open);
                 }
                 Button del = new Button(this);
-                del.setText("Del");
+                del.setText(getString(R.string.delete_button));
                 del.setOnClickListener(v -> viewModel.deleteFile(file));
                 actions.addView(del);
 

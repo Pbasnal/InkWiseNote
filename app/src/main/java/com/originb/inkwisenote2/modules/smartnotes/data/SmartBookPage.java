@@ -1,9 +1,6 @@
 package com.originb.inkwisenote2.modules.smartnotes.data;
 
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.ForeignKey;
-import androidx.room.PrimaryKey;
+import androidx.room.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +18,10 @@ import lombok.Setter;
                         parentColumns = "note_id",
                         childColumns = "note_id",
                         onDelete = ForeignKey.RESTRICT)
+        },
+        indices = {
+                @Index("book_id"),
+                @Index("note_id")
         })
 public class SmartBookPage {
     @PrimaryKey(autoGenerate = true)

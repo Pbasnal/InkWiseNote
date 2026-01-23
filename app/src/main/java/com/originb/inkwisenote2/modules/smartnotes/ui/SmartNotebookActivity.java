@@ -16,7 +16,7 @@ import org.koin.android.compat.ViewModelCompat;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
-import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextDao;
+import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -55,7 +55,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
     private HandwrittenNoteRepository handwrittenNoteRepository;
     private TextNotesDao textNotesDao;
     private SmartNotebookRepository smartNotebookRepository;
-    private NoteOcrTextDao noteOcrTextDao;
+    private NoteOcrTextsDao noteOcrTextDao;
 
     private FloatingActionButton nextButton;
     private FloatingActionButton prevButton;
@@ -80,7 +80,7 @@ public class SmartNotebookActivity extends AppCompatActivity implements IStateMa
         handwrittenNoteRepository = org.koin.java.KoinJavaComponent.get(HandwrittenNoteRepository.class);
         textNotesDao = org.koin.java.KoinJavaComponent.get(TextNotesDao.class);
         smartNotebookRepository = org.koin.java.KoinJavaComponent.get(SmartNotebookRepository.class);
-        noteOcrTextDao = org.koin.java.KoinJavaComponent.get(NoteOcrTextDao.class);
+        noteOcrTextDao = org.koin.java.KoinJavaComponent.get(NoteOcrTextsDao.class);
 
         // Load notebook data
         Long bookIdToOpen = getIntent().getLongExtra("bookId", -1);
