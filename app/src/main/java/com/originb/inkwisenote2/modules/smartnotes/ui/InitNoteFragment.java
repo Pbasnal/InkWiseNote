@@ -12,7 +12,6 @@ import com.originb.inkwisenote2.R;
 import com.originb.inkwisenote2.common.Logger;
 import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps;
 import com.originb.inkwisenote2.modules.backgroundjobs.Events;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook;
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository;
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity;

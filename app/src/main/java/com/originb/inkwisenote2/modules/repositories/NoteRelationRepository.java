@@ -10,10 +10,12 @@ public class NoteRelationRepository {
     private final NoteOcrTextDao noteOcrTextDao;
     private final NoteTermFrequencyDao noteTermFrequencyDao;
 
-    public NoteRelationRepository() {
-        noteRelationDao = Repositories.getInstance().getNotesDb().noteRelationDao();
-        noteOcrTextDao = Repositories.getInstance().getNotesDb().noteOcrTextDao();
-        noteTermFrequencyDao = Repositories.getInstance().getNotesDb().noteTermFrequencyDao();
+    public NoteRelationRepository(NoteRelationDao noteRelationDao,
+                                  NoteOcrTextDao noteOcrTextDao,
+                                  NoteTermFrequencyDao noteTermFrequencyDao) {
+        this.noteRelationDao = noteRelationDao;
+        this.noteOcrTextDao = noteOcrTextDao;
+        this.noteTermFrequencyDao = noteTermFrequencyDao;
     }
 
     public void deleteNoteRelationData(AtomicNoteEntity atomicNote) {

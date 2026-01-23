@@ -10,7 +10,6 @@ import com.originb.inkwisenote2.modules.handwrittennotes.HandwrittenNoteEventLis
 import com.originb.inkwisenote2.modules.textnote.TextNoteListener;
 import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener;
 import com.originb.inkwisenote2.modules.ocr.worker.NoteOcrEventListener;
-import com.originb.inkwisenote2.modules.repositories.Repositories;
 import com.originb.inkwisenote2.common.Routing;
 import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener;
 import androidx.work.Configuration;
@@ -70,7 +69,7 @@ public class AppMainActivity extends AppCompatActivity {
 
     public static void registerRepos(AppCompatActivity appCompatActivity) {
         ConfigReader.fromContext(appCompatActivity);
-        Repositories.registerRepositories(appCompatActivity);
+        // Repositories are now managed by Koin, no need to register them manually
     }
 
     public static void registerConfigs(AppCompatActivity appCompatActivity) {

@@ -6,6 +6,7 @@ import androidx.room.Room;
 import com.originb.inkwisenote2.common.NotesDatabase;
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository;
 import com.originb.inkwisenote2.modules.queries.data.QueryRepository;
+import org.koin.java.KoinJavaComponent;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -40,17 +41,13 @@ public class Repositories {
     }
 
     private void registerRepositoriesInternal(Context appContext) {
-        notesDb = Room.databaseBuilder(appContext,
-                        NotesDatabase.class, "NoteText.db")
-                .fallbackToDestructiveMigration()
-                .build();
-
-        atomicNotesDomain = new AtomicNotesDomain(notesDb.atomicNoteEntitiesDao());
-        handwrittenNoteRepository = new HandwrittenNoteRepository(notesDb.handwrittenNotesDao(),
-                atomicNotesDomain);
-        noteRelationRepository = new NoteRelationRepository();
-        queryRepository = new QueryRepository(notesDb.queryDao());
-        smartNotebookRepository = new SmartNotebookRepository();
+        // Get dependencies from Koin since they are now managed by dependency injection
+        notesDb = KoinJavaComponent.get(NotesDatabase.class);
+        atomicNotesDomain = KoinJavaComponent.get(AtomicNotesDomain.class);
+        handwrittenNoteRepository = KoinJavaComponent.get(HandwrittenNoteRepository.class);
+        noteRelationRepository = KoinJavaComponent.get(NoteRelationRepository.class);
+        queryRepository = KoinJavaComponent.get(QueryRepository.class);
+        smartNotebookRepository = KoinJavaComponent.get(SmartNotebookRepository.class);
     }
 
     public SmartNotebookRepository getSmartNotebookRepository() {
@@ -59,17 +56,5 @@ public class Repositories {
 
     public HandwrittenNoteRepository getHandwrittenNoteRepository() {
         return handwrittenNoteRepository;
-    }
-
-    public NoteRelationRepository getNoteRelationRepository() {
-        return noteRelationRepository;
-    }
-
-    public AtomicNotesDomain getAtomicNotesDomain() {
-        return atomicNotesDomain;
-    }
-
-    public NotesDatabase getNotesDb() {
-        return notesDb;
     }
 }

@@ -52,10 +52,10 @@ val appModule = module {
 
     // 3. Single instances of Repositories
     single { HandwrittenNoteRepository(get(), get()) }
-    single { NoteRelationRepository() }
+    single { NoteRelationRepository(get(), get(), get()) }
     single { AtomicNotesDomain(get()) }
     single { QueryRepository(get()) }
-    single { SmartNotebookRepository() }
+    single { SmartNotebookRepository(get(), get(), get(), get()) }
 
     // 3.5. Single instances of Services
     single { NoteTfIdfLogic(get()) }
