@@ -14,7 +14,9 @@
     <color name="red">#F44336</color>
     <color name="light_pink">#FF9FF5</color>
     <color name="dark_gray">#212121</color>
+    <color name="light_gray">#969696</color>
     <color name="yellow">#FFA303</color>
+    <color name="green">#4CAF50</color>
     
     <!-- Light theme specific colors -->
     <color name="background_light">#FFFFFF</color>
@@ -34,7 +36,10 @@
     <color name="surface_dark">#1E1E1E</color>
     <color name="on_background_dark">#FFFFFF</color>
     <color name="on_surface_dark">#FFFFFF</color>
+    <color name="card_background_dark">#2D2D2D</color>
     <color name="card_stroke_dark">#424242</color>
+    <color name="toolbar_background_dark">#1E1E1E</color>
+    <color name="toolbar_text_dark">#FFFFFF</color>
 
     <!-- Dark theme containers -->
     <color name="primary_container_dark">#081063</color>
