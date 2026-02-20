@@ -47,8 +47,8 @@ public class NoteTextDaoTest {
         NoteOcrText result = noteOcrTextDao.readTextFromDb(1L);
 
         assertFalse(result == null);
-        assertEquals(testNote.getNoteId(), result.getNoteId());
-        assertEquals(testNote.getExtractedText(), result.getExtractedText());
+        assertEquals(testNote.noteId, result.noteId);
+        assertEquals(testNote.extractedText, result.extractedText);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class NoteTextDaoTest {
         NoteOcrText result = noteOcrTextDao.readTextFromDb(1L);
 
         assertFalse(result == null);
-        assertEquals("Updated text", result.getExtractedText());
+        assertEquals("Updated text", result.extractedText);
     }
 
     @Test

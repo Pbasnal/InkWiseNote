@@ -47,14 +47,14 @@ public class NoteTermFrequencyDaoTest {
         // Insert data
         noteTermFrequencyDao.insertTermFrequenciesToDb(noteTermFrequencyList);
 
-        List<NoteTermFrequency> termFrequencies = noteTermFrequencyDao.getAllTermFrequencies();
+        List<NoteTermFrequency> termFrequencies = noteTermFrequencyDao.allTermFrequencies;
         assertEquals(noteTermFrequencyList.size(), termFrequencies.size());
 
         for (NoteTermFrequency expected : noteTermFrequencyList) {
             boolean areTheyEqual = termFrequencies.stream().anyMatch(actual ->
-                    actual.getNoteId() == expected.getNoteId()
-                            && actual.getTerm().equals(expected.getTerm())
-                            && actual.getTermFrequency() == expected.getTermFrequency()
+                    actual.noteId == expected.noteId
+                            && actual.term.equals(expected.term)
+                            && actual.termFrequency == expected.termFrequency
             );
             assertTrue(areTheyEqual);
         }
@@ -85,9 +85,9 @@ public class NoteTermFrequencyDaoTest {
 
         assertEquals(occurrences.size(), 3);
 
-        assertTrue(occurrences.stream().anyMatch(to -> "apple".equals(to.getTerm()) && to.getOccurrenceCount() == 2));
-        assertTrue(occurrences.stream().anyMatch(to -> "banana".equals(to.getTerm()) && to.getOccurrenceCount() == 1));
-        assertTrue(occurrences.stream().anyMatch(to -> "orange".equals(to.getTerm()) && to.getOccurrenceCount() == 1));
+        assertTrue(occurrences.stream().anyMatch(to -> "apple".equals(to.term) && to.occurrenceCount == 2));
+        assertTrue(occurrences.stream().anyMatch(to -> "banana".equals(to.term) && to.occurrenceCount == 1));
+        assertTrue(occurrences.stream().anyMatch(to -> "orange".equals(to.term) && to.occurrenceCount == 1));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class NoteTermFrequencyDaoTest {
         noteTermFrequencyList.add(new NoteTermFrequency(noteId, "orange", 1));
         noteTermFrequencyDao.insertTermFrequenciesToDb(noteTermFrequencyList);
 
-        assertEquals(2, noteTermFrequencyDao.getDistinctNoteIdCount());
+        assertEquals(2, noteTermFrequencyDao.distinctNoteIdCount);
     }
 
     @Test
@@ -152,8 +152,8 @@ public class NoteTermFrequencyDaoTest {
 
         List<NoteTermFrequency> result = noteTermFrequencyDao.getNoteIdsForTerms(termsToQuery);
 
-        assertTrue(result.stream().anyMatch(to -> "apple".equals(to.getTerm()) && to.getNoteId() == 1));
-        assertTrue(result.stream().anyMatch(to -> "apple".equals(to.getTerm()) && to.getNoteId() == 2));
-        assertTrue(result.stream().anyMatch(to -> "banana".equals(to.getTerm()) && to.getNoteId() == 1));
+        assertTrue(result.stream().anyMatch(to -> "apple".equals(to.term) && to.noteId == 1));
+        assertTrue(result.stream().anyMatch(to -> "apple".equals(to.term) && to.noteId == 2));
+        assertTrue(result.stream().anyMatch(to -> "banana".equals(to.term) && to.noteId == 1));
     }
 }

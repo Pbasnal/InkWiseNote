@@ -4,6 +4,7 @@ import java.util.*
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin("kapt")
 }
 
 val properties = Properties()
@@ -20,6 +21,12 @@ android {
         compose = true
     }
 
+    configurations.all {
+        resolutionStrategy {
+            force("org.projectlombok:lombok:1.18.30")
+        }
+    }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
     }
@@ -32,6 +39,12 @@ android {
         versionName = "Release 0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments["lombok.config.stopBubbling"] = "true"
+            }
+        }
 
         val visionApiKey: String = System.getenv("VISION_API_KEY")
             ?: properties.getProperty("VISION_API_KEY")
@@ -74,6 +87,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     implementation("androidx.work:work-runtime:2.9.0")
     implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("org.greenrobot:eventbus:3.3.1")
 
@@ -105,11 +119,11 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
-    annotationProcessor("org.projectlombok:lombok:1.18.30")
-    annotationProcessor("org.projectlombok:lombok:1.18.30")
+    kapt("org.projectlombok:lombok:1.18.30")
+    compileOnly("org.projectlombok:lombok:1.18.30")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")

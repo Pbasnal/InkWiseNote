@@ -1,0 +1,76 @@
+package com.originb.inkwisenote2.modules.repositories
+
+import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity
+import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity
+import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookPage
+import lombok.Getter
+import lombok.Setter
+import java.util.*
+
+@Getter
+@Setter
+class SmartNotebook {
+    @JvmField
+    var smartBook: SmartBookEntity?
+    @JvmField
+    var smartBookPages: MutableList<SmartBookPage>
+    @JvmField
+    var atomicNotes: MutableList<AtomicNoteEntity?>
+
+    constructor(
+        smartBook: SmartBookEntity?,
+        smartBookPage: SmartBookPage?,
+        atomicNoteEntity: AtomicNoteEntity?
+    ) {
+        this.smartBookPages = ArrayList<SmartBookPage>()
+        this.atomicNotes = ArrayList<AtomicNoteEntity?>()
+
+        this.smartBook = smartBook
+        smartBookPages.add(smartBookPage!!)
+        atomicNotes.add(atomicNoteEntity)
+    }
+
+    constructor(
+        smartBook: SmartBookEntity?,
+        smartBookPages: MutableList<SmartBookPage>,
+        atomicNoteEntities: MutableList<AtomicNoteEntity?>
+    ) {
+        this.smartBook = smartBook
+        this.smartBookPages = smartBookPages
+        this.atomicNotes = atomicNoteEntities
+    }
+
+    fun insertAtomicNoteAndPage(position: Int, atomicNote: AtomicNoteEntity?, newPage: SmartBookPage?) {
+        atomicNotes.add(position, atomicNote)
+        smartBookPages.add(position, newPage!!)
+        var pageOrder = 0
+        for (smartBookPage in smartBookPages) {
+            smartBookPage.pageOrder = pageOrder
+            pageOrder++
+        }
+    }
+
+    fun removeNote(noteId: Long) {
+        smartBookPages.removeIf { p: SmartBookPage? -> p!!.noteId == noteId }
+        atomicNotes.removeIf { p: AtomicNoteEntity? -> p!!.noteId == noteId }
+    }
+
+
+    // Custom equals that compares only 'id'
+    override fun equals(obj: Any?): Boolean {
+        if (this === obj) return true // Reference equality
+
+        if (obj == null || javaClass != obj.javaClass) return false // Type check
+
+        val that = obj as SmartNotebook
+
+        if (that.smartBook == null) return false
+
+        return smartBook!!.bookId == that.smartBook!!.bookId
+    }
+
+    // Custom hashCode that considers only 'id'
+    override fun hashCode(): Int {
+        return Objects.hash(smartBook!!.bookId) // Hash based on 'id'
+    }
+}

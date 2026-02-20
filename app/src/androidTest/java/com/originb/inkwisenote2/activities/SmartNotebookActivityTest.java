@@ -118,7 +118,7 @@ public class SmartNotebookActivityTest {
         assertNotNull("HandwrittenNoteWithImage should exist in database", savedNote);
         assertNotNull("HandwrittenNoteEntity should exist in database", savedNote.handwrittenNoteEntity);
         assertNotNull("Note image should get loaded", savedNote.noteImage);
-        assertEquals("Note ID should match", atomicNote.getNoteId(), savedNote.handwrittenNoteEntity.getNoteId());
+        assertEquals("Note ID should match", atomicNote.noteId, savedNote.handwrittenNoteEntity.noteId);
 
         // Try to load the bitmap to verify it's valid
         Optional<Bitmap> savedBitmap = savedNote.noteImage;
@@ -126,17 +126,17 @@ public class SmartNotebookActivityTest {
         assertNotNull("Bitmap should be valid", savedBitmap.get());
 
         // Verify template file exists
-        File templateFile = new File(savedNote.handwrittenNoteEntity.getPageTemplateFilePath());
+        File templateFile = new File(savedNote.handwrittenNoteEntity.pageTemplateFilePath);
         assertTrue("Template file should exist", templateFile.exists());
         assertTrue("Template file should not be empty", templateFile.length() > 0);
 
 
         HandwrittenNoteEntity handwrittenNoteEntity = savedNote.handwrittenNoteEntity;
         // Verify timestamps
-        assertTrue("Creation time should be set", handwrittenNoteEntity.getCreatedTimeMillis() > 0);
-        assertTrue("Last modified time should be set", handwrittenNoteEntity.getLastModifiedTimeMillis() > 0);
+        assertTrue("Creation time should be set", handwrittenNoteEntity.createdTimeMillis > 0);
+        assertTrue("Last modified time should be set", handwrittenNoteEntity.lastModifiedTimeMillis > 0);
         assertTrue("Last modified time should be after creation time",
-                handwrittenNoteEntity.getLastModifiedTimeMillis() >= handwrittenNoteEntity.getCreatedTimeMillis());
+                handwrittenNoteEntity.lastModifiedTimeMillis >= handwrittenNoteEntity.createdTimeMillis);
     }
 
     // Custom ViewAction to draw strokes

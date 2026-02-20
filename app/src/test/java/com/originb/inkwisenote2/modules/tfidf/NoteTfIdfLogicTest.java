@@ -151,7 +151,7 @@ public class NoteTfIdfLogicTest {
     private Map<String, Integer> toTermFrequencyMap(List<NoteTermFrequency> noteTermFrequencies) {
         Map<String, Integer> termFrequenciesOfNote = new HashMap<>();
         for (NoteTermFrequency noteTermFrequency : noteTermFrequencies) {
-            termFrequenciesOfNote.put(noteTermFrequency.getTerm(), noteTermFrequency.getTermFrequency());
+            termFrequenciesOfNote.put(noteTermFrequency.term, noteTermFrequency.termFrequency);
         }
         return termFrequenciesOfNote;
     }
