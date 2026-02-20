@@ -5,57 +5,55 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.Logger
 import com.originb.inkwisenote2.functionalUtils.Try
-import lombok.Getter
 import java.io.InputStreamReader
 import java.util.*
 import java.util.concurrent.Callable
 
 class ConfigReader private constructor(context: Context) {
-    @Getter
     private var appConfig: AppConfig? = null
 
     private val om = ObjectMapper()
 
+    fun getAppConfig(): AppConfig? = appConfig
+
     init {
         try {
-            var `is` = context.getResources().openRawResource(R.raw.config)
-            val reader = InputStreamReader(`is`, "UTF-8")
-            appConfig = om.readValue<AppConfig>(reader, AppConfig::class.java)
+            var inputStream = context.resources.openRawResource(R.raw.config)
+            val reader = InputStreamReader(inputStream, "UTF-8")
+            appConfig = om.readValue(reader, AppConfig::class.java)
             reader.close()
-            `is`.close()
+            inputStream.close()
 
             if (isFeatureEnabled(Feature.AZURE_OCR)) {
-                var appSecrets: AppSecrets = AppSecrets.Companion.loadFromEnv()
-                if (!appSecrets.isAzureOcrEnabled()) {
-                    `is` = context.getResources().openRawResource(R.raw.app)
-                    appSecrets = AppSecrets.Companion.loadFromInputStream(`is`)
+                var appSecrets: AppSecrets = AppSecrets.loadFromEnv()
+                if (!appSecrets.isAzureOcrEnabled) {
+                    inputStream = context.resources.openRawResource(R.raw.app)
+                    AppSecrets.loadFromInputStream(inputStream)?.let { appSecrets = it }
                 }
-                appConfig!!.setAppSecrets(appSecrets)
+                appConfig!!.appSecrets = appSecrets
             }
-            `is`.close()
+            inputStream.close()
         } catch (e: Exception) {
-            appConfig = AppConfig.Companion.createDefault()
+            appConfig = AppConfig.createDefault()
             e.printStackTrace()
         }
     }
 
     fun isFeatureEnabled(featureName: Feature?): Boolean {
-        if (appConfig!!.getEnabledFeatures() != null) {
-            return appConfig!!.getEnabledFeatures().contains(featureName)
-        }
-        return false
+        val features = appConfig!!.enabledFeatures ?: return false
+        return features.contains(featureName)
     }
 
-    fun <T> runIfFeatureEnabled(feature: Feature, callable: Callable<T?>?): Optional<T?> {
-        if (isFeatureEnabled(feature)) {
-            Try.to<T?>(callable, Logger(feature.getFeatureName())).get()
+    fun <T> runIfFeatureEnabled(feature: Feature, callable: Callable<T>): Optional<T> {
+        if (isFeatureEnabled(feature) && callable != null) {
+            return Try.to(callable, Logger(feature.featureName)).get()
         }
-        return Optional.empty<T?>()
+        return Optional.empty()
     }
 
     fun runIfFeatureEnabled(feature: Feature, runnable: Runnable?) {
-        if (isFeatureEnabled(feature)) {
-            Try.to<Any?>(runnable, Logger(feature.getFeatureName())).get()
+        if (isFeatureEnabled(feature) && runnable != null) {
+            Try.to<Any?>(runnable, Logger(feature.featureName)).get()
         }
     }
 
@@ -79,20 +77,19 @@ class ConfigReader private constructor(context: Context) {
         }
 
         fun setRuntimeSetting(configKey: ConfigKeys?, value: String?) {
-            getInstance().getAppConfig().getRuntimeSettings().put(configKey, value)
+            getInstance().getAppConfig()!!.getRuntimeSettings()!!.put(configKey, value)
         }
 
         fun getRuntimeSetting(configKey: ConfigKeys?, defaultValue: String?): String? {
-            return getInstance().getAppConfig().getRuntimeSettings().getOrDefault(configKey, defaultValue)
+            return getInstance().getAppConfig()!!.getRuntimeSettings()!!.getOrDefault(configKey, defaultValue)
         }
 
         @JvmStatic
         val isAzureOcrEnabled: Boolean
             get() {
-                val appSecrets: AppSecrets = getInstance().getAppConfig().getAppSecrets()
-                return getInstance()
-                    .isFeatureEnabled(Feature.AZURE_OCR) &&
-                        appSecrets.isAzureOcrEnabled()
+                val appSecrets = getInstance().getAppConfig()!!.appSecrets!!
+                return getInstance().isFeatureEnabled(Feature.AZURE_OCR) &&
+                    appSecrets.isAzureOcrEnabled
             }
     }
 }

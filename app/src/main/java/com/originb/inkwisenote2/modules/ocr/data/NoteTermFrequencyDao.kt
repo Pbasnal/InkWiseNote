@@ -10,7 +10,6 @@ interface NoteTermFrequencyDao {
     @Query("SELECT * FROM note_term_frequency WHERE note_id = :noteIdToRead")
     fun readTermFrequenciesOfNote(noteIdToRead: Long): MutableList<NoteTermFrequency>
 
-    @JvmField
     @get:Query("SELECT * FROM note_term_frequency")
     val allTermFrequencies: MutableList<NoteTermFrequency>
 
@@ -26,7 +25,6 @@ interface NoteTermFrequencyDao {
     @Query("SELECT term, COUNT(*) as occurrenceCount FROM note_term_frequency WHERE term IN (:terms) GROUP BY term")
     fun getTermOccurrences(terms: MutableSet<String>): MutableList<TermOccurrence>
 
-    @JvmField
     @get:Query("SELECT COUNT(DISTINCT note_id) as distinct_count FROM note_term_frequency")
     val distinctNoteIdCount: Int
 

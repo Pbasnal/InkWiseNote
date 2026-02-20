@@ -20,10 +20,10 @@ class AppState private constructor() {
     private fun loadConfiguredState(configReader: ConfigReader?) {
         if (Looper.myLooper() == Looper.getMainLooper()) {
             // We are on the main thread
-            isAzureOcrRunning.setValue(ConfigReader.Companion.isAzureOcrEnabled())
+            isAzureOcrRunning.setValue(ConfigReader.Companion.isAzureOcrEnabled)
         } else {
             // We are on a background thread
-            isAzureOcrRunning.postValue(ConfigReader.Companion.isAzureOcrEnabled())
+            isAzureOcrRunning.postValue(ConfigReader.Companion.isAzureOcrEnabled)
         }
     }
 

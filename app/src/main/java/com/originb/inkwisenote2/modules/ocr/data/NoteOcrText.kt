@@ -12,23 +12,19 @@ import java.time.format.DateTimeFormatter
 @Entity(tableName = "note_text", indices = [Index("note_id")])
 class NoteOcrText : Serializable {
     // Getters and Setters
-    @JvmField
     @PrimaryKey
     @ColumnInfo(name = "note_id")
     var noteId: Long? = null
 
-    @JvmField
     @ColumnInfo(name = "extracted_text")
     var extractedText: String? = null
 
-    @JvmField
     @ColumnInfo(name = "note_hash")
     var noteHash: String? = null
 
     @ColumnInfo(name = "created_time_ms")
     private var createdTimeMillis: Long? = null
 
-    @JvmField
     @ColumnInfo(name = "last_modified_time_ms")
     var lastModifiedTimeMillis: Long? = null
 

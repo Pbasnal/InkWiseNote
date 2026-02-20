@@ -10,11 +10,8 @@ import java.util.*
 @Getter
 @Setter
 class SmartNotebook {
-    @JvmField
     var smartBook: SmartBookEntity?
-    @JvmField
     var smartBookPages: MutableList<SmartBookPage>
-    @JvmField
     var atomicNotes: MutableList<AtomicNoteEntity?>
 
     constructor(

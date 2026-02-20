@@ -6,12 +6,9 @@ import java.io.Serializable
  * Represents a single point in a stroke with coordinates, pressure and timestamp
  */
 class StrokePoint : Serializable {
-    @JvmField
     var x: Float = 0f
-    @JvmField
     var y: Float = 0f
     var pressure: Float = 0f
-    @JvmField
     var timestamp: Long
 
     constructor() {

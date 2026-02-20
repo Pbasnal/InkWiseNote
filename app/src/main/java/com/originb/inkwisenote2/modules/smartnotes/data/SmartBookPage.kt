@@ -19,19 +19,15 @@ import androidx.room.*
 )
 class SmartBookPage {
     // Getters and Setters
-    @JvmField
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
 
-    @JvmField
     @ColumnInfo(name = "book_id")
     var bookId: Long = 0
 
-    @JvmField
     @ColumnInfo(name = "note_id")
     var noteId: Long = 0
 
-    @JvmField
     @ColumnInfo(name = "page_order")
     var pageOrder: Int = 0
 

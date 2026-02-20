@@ -10,25 +10,25 @@ class Try<T> private constructor(private val callable: Callable<T?>, private val
     private var exceptionMessage: String? = "Failed to execute callable"
 
 
-    fun logIfError(exceptionMessage: String?): Try<T?> {
+    fun logIfError(exceptionMessage: String?): Try<T> {
         this.exceptionMessage = exceptionMessage
         return this
     }
 
-    fun get(): Optional<T?> {
+    fun get(): T? {
         try {
-            return Optional.ofNullable<T?>(callable.call())
+            return callable.call()
         } catch (e: Exception) {
             exception = e
             logger.exception(exceptionMessage, exception)
         }
 
-        return Optional.empty<T?>()
+        return null
     }
 
     companion object {
-        fun <T> to(callable: Callable<T?>, logger: Logger): Try<T?> {
-            return Try<T?>(callable, logger)
+        fun <T> to(callable: Callable<T?>, logger: Logger): Try<T> {
+            return Try<T>(callable, logger)
         }
 
         @JvmStatic

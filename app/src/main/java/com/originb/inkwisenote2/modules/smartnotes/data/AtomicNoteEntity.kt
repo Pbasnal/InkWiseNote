@@ -8,32 +8,25 @@ import androidx.room.PrimaryKey
 class AtomicNoteEntity  // No-args constructor required by Room
 {
     // Getters and Setters
-    @JvmField
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "note_id")
     var noteId: Long = 0
 
-    @JvmField
     @ColumnInfo(name = "filename")
     var filename: String? = null
 
-    @JvmField
     @ColumnInfo(name = "filepath")
     var filepath: String? = null
 
-    @JvmField
     @ColumnInfo(name = "note_type")
     var noteType: String? = null // for handwritten and text
 
-    @JvmField
     @ColumnInfo(name = "page_template_id")
     var pageTemplateId: Long = 0
 
-    @JvmField
     @ColumnInfo(name = "created_time_ms")
     var createdTimeMillis: Long = 0
 
-    @JvmField
     @ColumnInfo(name = "last_modified_time_ms")
     var lastModifiedTimeMillis: Long = 0
 

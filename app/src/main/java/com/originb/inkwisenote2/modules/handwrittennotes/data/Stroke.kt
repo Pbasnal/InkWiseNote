@@ -8,7 +8,6 @@ import java.io.Serializable
 class Stroke : Serializable {
     var color: Int = 0
     var width: Float = 0f
-    @JvmField
     var points: MutableList<StrokePoint?>?
 
     constructor() {

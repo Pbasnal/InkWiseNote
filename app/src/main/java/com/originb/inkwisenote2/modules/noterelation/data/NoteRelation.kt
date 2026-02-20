@@ -31,18 +31,13 @@ import java.util.*
     indices = [Index("note_id"), Index("book_id"), Index("related_note_id"), Index("related_book_id")]
 )
 class NoteRelation(
-    @JvmField @field:ColumnInfo(name = "note_id") var noteId: Long,
-    @JvmField @field:ColumnInfo(name = "related_note_id") var relatedNoteId: Long,
-    @JvmField @field:ColumnInfo(
-        name = "book_id"
-    ) var bookId: Long,
-    @JvmField @field:ColumnInfo(name = "related_book_id") var relatedBookId: Long,
-    @JvmField @field:ColumnInfo(
-        name = "relation_type"
-    ) var relationType: Int
+    @field:ColumnInfo(name = "note_id") var noteId: Long,
+    @field:ColumnInfo(name = "related_note_id") var relatedNoteId: Long,
+    @field:ColumnInfo(name = "book_id") var bookId: Long,
+    @field:ColumnInfo(name = "related_book_id") var relatedBookId: Long,
+    @field:ColumnInfo(name = "relation_type") var relationType: Int
 ) {
     // Getters and Setters
-    @JvmField
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0
 

@@ -4,25 +4,15 @@ import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.originb.inkwisenote2.BuildConfig
 import com.originb.inkwisenote2.common.Strings
-import lombok.AllArgsConstructor
-import lombok.NoArgsConstructor
 import java.io.InputStream
 import java.io.InputStreamReader
 
-@AllArgsConstructor
-@NoArgsConstructor
-class AppSecrets {
-    @JvmField
-    var visionApi: VisionApi? = null
+class AppSecrets(var visionApi: VisionApi? = null) {
 
-    @AllArgsConstructor
-    @NoArgsConstructor
-    class VisionApi {
-        @JvmField
-        var visionApiKey: String? = null
-        @JvmField
+    class VisionApi(
+        var visionApiKey: String? = null,
         var visionApiEndpoint: String? = null
-    }
+    )
 
     val isAzureOcrEnabled: Boolean
         get() = Strings.isNotEmpty(visionApi!!.visionApiEndpoint!!) &&
@@ -40,10 +30,10 @@ class AppSecrets {
             return AppSecrets(visionApi)
         }
 
-        fun loadFromInputStream(`is`: InputStream?): AppSecrets? {
+        fun loadFromInputStream(inputStream: InputStream): AppSecrets {
             try {
-                val reader = InputStreamReader(`is`, "UTF-8")
-                val appSecrets: AppSecrets? = om.readValue<AppSecrets?>(reader, AppSecrets::class.java)
+                val reader = InputStreamReader(inputStream, "UTF-8")
+                val appSecrets: AppSecrets = om.readValue<AppSecrets>(reader, AppSecrets::class.java)
                 reader.close()
                 return appSecrets
             } catch (ex: Exception) {

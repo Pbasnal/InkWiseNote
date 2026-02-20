@@ -9,23 +9,23 @@ import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity
 class Events {
     open class EventData
 
-    class DeleteNotebookCommand(@JvmField var smartNotebook: SmartNotebook?) : EventData()
+    class DeleteNotebookCommand(var smartNotebook: SmartNotebook?) : EventData()
 
-    class DeleteNoteCommand(@JvmField var smartNotebook: SmartNotebook?, @JvmField var atomicNote: AtomicNoteEntity?) : EventData()
+    class DeleteNoteCommand(var smartNotebook: SmartNotebook?, var atomicNote: AtomicNoteEntity?) : EventData()
 
-    class NotebookDeleted(@JvmField var smartNotebook: SmartNotebook?) : EventData()
+    class NotebookDeleted(var smartNotebook: SmartNotebook?) : EventData()
 
-    class NoteDeleted(var smartNotebook: SmartNotebook?, @JvmField var atomicNote: AtomicNoteEntity?) : EventData()
+    class NoteDeleted(var smartNotebook: SmartNotebook?, var atomicNote: AtomicNoteEntity?) : EventData()
 
-    class NoteStatus(@JvmField var bookId: Long, @JvmField var status: TextProcessingStage?) : EventData()
+    class NoteStatus(var bookId: Long, var status: TextProcessingStage?) : EventData()
 
-    class SmartNotebookSaved(@JvmField var smartNotebook: SmartNotebook?, var context: Context?) : EventData()
+    class SmartNotebookSaved(var smartNotebook: SmartNotebook?, var context: Context?) : EventData()
 
-    class HandwrittenNoteSaved(@JvmField var bookId: Long, @JvmField var atomicNote: AtomicNoteEntity?, @JvmField var context: Context?) : EventData()
+    class HandwrittenNoteSaved(var bookId: Long, var atomicNote: AtomicNoteEntity?, var context: Context?) : EventData()
 
-    class TextNoteSaved(@JvmField var bookId: Long, @JvmField var atomicNote: AtomicNoteEntity?, @JvmField var context: Context?) : EventData()
+    class TextNoteSaved(var bookId: Long, var atomicNote: AtomicNoteEntity?, var context: Context?) : EventData()
 
-    class QueryUpdated(@JvmField var query: QueryEntity?) : EventData()
+    class QueryUpdated(var query: QueryEntity?) : EventData()
 
-    class QueryDeleted(@JvmField var query: QueryEntity?) : EventData()
+    class QueryDeleted(var query: QueryEntity?) : EventData()
 }
