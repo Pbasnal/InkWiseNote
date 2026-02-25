@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "inkwisenote2"
 include(":androidApp")
- 
+include(":shared")
