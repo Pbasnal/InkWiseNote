@@ -1,7 +1,10 @@
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
+    id("org.jetbrains.kotlin.plugin.compose")
+    id("org.jetbrains.compose")
     id("com.android.kotlin.multiplatform.library")
     id("com.android.lint")
+    id("app.cash.sqldelight")
 }
 
 kotlin {
@@ -63,7 +66,13 @@ kotlin {
         commonMain {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-stdlib:2.3.10")
-                // Add KMP dependencies here
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                implementation("io.insert-koin:koin-core:3.5.6")
+                implementation("app.cash.sqldelight:runtime:2.0.2")
             }
         }
 
@@ -106,4 +115,12 @@ kotlin {
         }
     }
 
+}
+
+sqldelight {
+    databases {
+        create("NotesDatabase") {
+            packageName.set("org.basnalcorp.shared.db")
+        }
+    }
 }

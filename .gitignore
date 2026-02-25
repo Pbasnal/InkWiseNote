@@ -1,12 +1,16 @@
-﻿*/.vs
+*/.vs
 */bin
 */obj
 .DS_Store
 .vscode/
 
+# Kotlin build cache / metadata (do not commit)
+.kotlin/
+
 # Gradle files
 .gradle/
 build/
+out/
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -14,11 +18,13 @@ local.properties
 # Log/OS Files
 *.log
 
-# Android Studio generated files and folders
+# Android Studio / IDE generated files and folders
 captures/
 .externalNativeBuild/
 .cxx/
 *.apk
+*.ap_
+*.aab
 output.json
 
 # IntelliJ
@@ -28,15 +34,23 @@ misc.xml
 deploymentTargetDropDown.xml
 render.experimental.xml
 
-# Keystore files
+# Keystore and secrets
 *.jks
 *.keystore
 *.secrets
+.env
+.env.local
+.env.*.local
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
 
 # Android Profiling
 *.hprof
-*.secrets
+
+# Secrets (per-module; do not commit)
 */secrets.properties
+secrets.properties
+
+# Compose Desktop / native distribution outputs (optional)
+# desktopApp/build/compose/

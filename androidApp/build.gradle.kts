@@ -26,6 +26,7 @@ android {
     configurations.all {
         resolutionStrategy {
             force("org.projectlombok:lombok:1.18.30")
+            force("io.insert-koin:koin-core:3.5.6")
         }
     }
 
@@ -96,9 +97,10 @@ dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom:1.9.22"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-    implementation("io.insert-koin:koin-android:3.1.6")
-    implementation("io.insert-koin:koin-android-compat:3.1.6")
-    implementation("io.insert-koin:koin-androidx-workmanager:3.1.6")
+    implementation("io.insert-koin:koin-core:3.5.6")
+    implementation("io.insert-koin:koin-android:3.5.6")
+    implementation("io.insert-koin:koin-android-compat:3.5.6")
+    implementation("io.insert-koin:koin-androidx-workmanager:3.5.6")
 
     implementation("androidx.lifecycle:lifecycle-livedata-core:2.6.1") // or use the latest version available
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")

@@ -1,0 +1,7 @@
+-- Placeholder for Phase 1. Full schema added in Phase 3.
+CREATE TABLE Placeholder (
+    id INTEGER PRIMARY KEY
+);
+
+selectPlaceholder:
+SELECT * FROM Placeholder;
