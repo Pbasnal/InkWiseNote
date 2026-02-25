@@ -76,6 +76,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":shared"))
     implementation("com.google.android.gms:play-services-base:18.5.0") // Ensure this is added
     implementation("com.google.mlkit:digital-ink-recognition:18.0.0")
     implementation("androidx.appcompat:appcompat:1.7.0")

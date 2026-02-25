@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.kotlin.multiplatform.library")
     id("com.android.lint")
@@ -51,6 +51,9 @@ kotlin {
         }
     }
 
+    // JVM desktop (Windows, Linux, macOS)
+    jvm()
+
     // Source set declarations.
     // Declaring a target automatically creates a source set with the same name. By default, the
     // Kotlin Gradle Plugin creates additional source sets that depend on each other, since it is
@@ -93,6 +96,12 @@ kotlin {
                 // part of KMP’s default source set hierarchy. Note that this source set depends
                 // on common by default and will correctly pull the iOS artifacts of any
                 // KMP dependencies declared in commonMain.
+            }
+        }
+
+        jvmMain {
+            dependencies {
+                // Add JVM/Desktop-specific dependencies here (Windows, Linux).
             }
         }
     }

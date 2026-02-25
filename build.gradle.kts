@@ -6,4 +6,5 @@ plugins {
     id("org.jetbrains.kotlin.multiplatform") version "2.3.10" apply false
     id("com.android.kotlin.multiplatform.library") version "8.12.3" apply false
     id("com.android.lint") version "8.12.3" apply false
+    id("org.jetbrains.compose") version "1.6.10" apply false
 }
