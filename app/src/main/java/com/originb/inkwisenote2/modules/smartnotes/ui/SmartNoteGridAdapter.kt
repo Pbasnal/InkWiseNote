@@ -55,8 +55,12 @@ class SmartNoteGridAdapter(
         this.noteRelationRepository = get<NoteRelationRepository?>(NoteRelationRepository::class.java)
 
         AppState.observeNoteRelationships(
-            parentActivity,
-            { updatedNoteRelationMap: MutableSet<NoteRelation?> -> this.updateNoteRelations(updatedNoteRelationMap) })
+            parentActivity
+        ) { updatedNoteRelationMap: MutableSet<NoteRelation> ->
+            updateNoteRelations(
+                updatedNoteRelationMap
+            )
+        }
         EventBus.getDefault().register(this)
     }
 
@@ -73,7 +77,7 @@ class SmartNoteGridAdapter(
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onSmartNotebookSaved(smartNotebookSaved: SmartNotebookSaved) {
         val savedNotebook = smartNotebookSaved.smartNotebook
-        val bookId: Long = savedNotebook.getSmartBook().getBookId()
+        val bookId: Long = savedNotebook.smartBook!!.bookId
 
         if (bookCards.containsKey(bookId)) {
             val holder = bookCards.get(bookId)
@@ -81,33 +85,33 @@ class SmartNoteGridAdapter(
         }
     }
 
-    fun updateNoteRelations(updatedNoteRelationMap: MutableSet<NoteRelation?>) {
+    fun updateNoteRelations(updatedNoteRelationMap: MutableSet<NoteRelation>) {
         logger.debug("Updating note relations", updatedNoteRelationMap)
 
         val relatedBookIds: MutableSet<Long?> = updatedNoteRelationMap.stream()
-            .map<Any?>(NoteRelation::getBookId)
+            .map { it?.bookId }
             .collect(Collectors.toSet())
         relatedBookIds.addAll(
             updatedNoteRelationMap.stream()
-                .map<Any?>(NoteRelation::getRelatedBookId)
+                .map { it?.relatedBookId }
                 .collect(Collectors.toSet())
         )
 
         for (bookId in bookCards.keys) {
             val isBookRelated = relatedBookIds.contains(bookId)
-            val bookHolder = bookCards.get(bookId)
+            val bookHolder = bookCards[bookId]
             bookHolder!!.updateNoteRelation(isBookRelated)
-            bookRelationMap.put(bookId, isBookRelated)
+            bookRelationMap[bookId] = isBookRelated
         }
 
         // sets that the book is related even if bookCards haven't been loaded
         for (bookId in relatedBookIds) {
-            bookRelationMap.put(bookId, true)
+            bookRelationMap[bookId] = true
         }
     }
 
-    fun setSmartNotebooks(smartNotebooks: MutableList<SmartNotebook?>) {
-        this.smartNotebooks = ArrayList<SmartNotebook>(smartNotebooks)
+    fun setSmartNotebooks(smartNotebooks: MutableList<SmartNotebook>) {
+        this.smartNotebooks = smartNotebooks.toMutableList()
 
         notifyDataSetChanged()
     }
@@ -118,8 +122,8 @@ class SmartNoteGridAdapter(
 
         return GridNoteCardHolder(
             this, itemView, parentActivity,
-            handwrittenNoteRepository, textNotesDao,
-            smartNotebookRepository, noteRelationRepository
+            handwrittenNoteRepository!!, textNotesDao!!,
+            smartNotebookRepository!!, noteRelationRepository!!
         )
     }
 
@@ -127,17 +131,17 @@ class SmartNoteGridAdapter(
         val smartNotebook = smartNotebooks.get(position)
 
         if (isCompact) {
-            val params = gridNoteCardHolder.getItemView().getLayoutParams()
+            val params = gridNoteCardHolder.itemView.layoutParams
             params.height = pxToDp(200, parentActivity)
             params.width = pxToDp(200, parentActivity)
-            gridNoteCardHolder.getItemView().setLayoutParams(params)
+            gridNoteCardHolder.itemView.layoutParams = params
         }
 
-        logger.debug("Setting book at position: " + position, smartNotebook.getSmartBook())
+        logger.debug("Setting book at position: " + position, smartNotebook.smartBook)
         gridNoteCardHolder.setNote(smartNotebook)
-        bookCards.put(smartNotebook.getSmartBook().getBookId(), gridNoteCardHolder)
+        bookCards.put(smartNotebook.smartBook!!.bookId, gridNoteCardHolder)
 
-        val bookId: Long = smartNotebook.getSmartBook().getBookId()
+        val bookId: Long = smartNotebook.smartBook!!.bookId
         if (!bookRelationMap.containsKey(bookId)) {
             logger.debug("Book doesn't have any relations yet. bookId: " + bookId)
             return
@@ -149,15 +153,15 @@ class SmartNoteGridAdapter(
     // Callback when an item is detached (item goes out of view)
     override fun onViewDetachedFromWindow(holder: GridNoteCardHolder) {
         super.onViewDetachedFromWindow(holder)
-        val position = holder.getAdapterPosition()
+        val position = holder.adapterPosition
 
         if (position < 0 || smartNotebooks.size <= position) return
 
-        val index = holder.getAdapterPosition() - 1
+        val index = holder.adapterPosition - 1
         if (index < 0 || index >= smartNotebooks.size) return
-        val smartNotebook = smartNotebooks.get(index)
+        val smartNotebook = smartNotebooks[index]
 
-        bookCards.remove(smartNotebook.getSmartBook().getBookId())
+        bookCards.remove(smartNotebook.smartBook!!.bookId)
     }
 
     override fun getItemCount(): Int {

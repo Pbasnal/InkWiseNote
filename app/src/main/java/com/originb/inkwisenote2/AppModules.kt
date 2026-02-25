@@ -139,7 +139,6 @@ val appModule = module {
             get(),  // NoteOcrTextsDao
             get(),  // TextNotesDao
             get(),  // AtomicNotesDomain
-            get()   // SmartNotebookRepository
         )
     }
 }

@@ -12,7 +12,9 @@ import android.widget.TableRow
 import android.widget.TextView
 import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.DateTimeUtils.msToDateTime
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps.Companion.execute
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps
+import java.util.concurrent.Callable
+import java.util.function.Consumer
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook
@@ -25,7 +27,6 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
-import java.util.stream.Collectors
 
 /**
  * Dialog for displaying debug information about a note
@@ -82,37 +83,38 @@ class NoteDebugDialog(
         markdownStrokesContent!!.setText(getContext().getString(R.string.loading_markdown_strokes))
 
         // Load related notes and smartbooks in background
-        execute(Runnable { this.collectDebugData() }, Runnable { this.updateDebugUI() })
+        BackgroundOps.execute(
+            Callable { collectDebugData() },
+            Consumer { data -> if (data != null) updateDebugUI(data) }
+        )
     }
 
     private fun collectDebugData(): DebugData {
         val data = DebugData()
+        val note = atomicNote ?: return data
 
         // Get related notes (notes in the same smartbook)
         if (currentSmartNotebook != null) {
-            data.relatedNotes = ArrayList<Any?>(currentSmartNotebook.getAtomicNotes())
-            // Remove the current note
-            data.relatedNotes!!.remove(atomicNote!!)
+            data.relatedNotes = ArrayList(currentSmartNotebook.atomicNotes)
+            data.relatedNotes!!.remove(note)
         }
 
         // Get all smartbooks containing this note
-        data.smartbooks = smartNotebookRepository.getSmartNotebookContainingNote(atomicNote!!.getNoteId())
-            .stream().map<Any?>(SmartNotebook::getSmartBook)
-            .collect(Collectors.toList())
+        data.smartbooks = smartNotebookRepository.getSmartNotebookContainingNote(note.noteId)
+            .mapNotNull { it?.smartBook }
+            .toMutableList()
 
-        val noteType: NoteType = NoteType.Companion.fromString(atomicNote.getNoteType())
+        val noteType: NoteType = NoteType.fromString(note.noteType ?: "not_set")
         when (noteType) {
             NoteType.TEXT_NOTE -> {
-                // Get parsed text if it's a text note
-                val textNote = textNotesDao.getTextNoteForNote(atomicNote.getNoteId())
+                val textNote = textNotesDao.getTextNoteForNote(note.noteId)
                 if (textNote != null) {
-                    data.parsedText = textNote.getNoteText()
+                    data.parsedText = textNote.noteText
                 }
             }
 
             NoteType.HANDWRITTEN_PNG -> {
-                // Get parsed text if it's a text note
-                val noteOcrText = noteOcrTextDao.readTextFromDb(atomicNote.getNoteId())
+                val noteOcrText = noteOcrTextDao.readTextFromDb(note.noteId)
                 if (noteOcrText != null) {
                     data.parsedText = noteOcrText.extractedText
                 }
@@ -134,7 +136,7 @@ class NoteDebugDialog(
      * @return The markdown file content or a message if not found
      */
     private fun readMarkdownFile(note: AtomicNoteEntity): String {
-        val markdownPath = note.getFilepath() + "/" + note.getFilename() + ".md"
+        val markdownPath = (note.filepath ?: "") + "/" + (note.filename ?: "") + ".md"
         val file = File(markdownPath)
 
         if (!file.exists() || !file.isFile()) {
@@ -161,12 +163,12 @@ class NoteDebugDialog(
         smartbooksTable!!.removeAllViews()
 
         // Update related notes table
-        if (data.relatedNotes != null && !data.relatedNotes!!.isEmpty()) {
-            for (relatedNote in data.relatedNotes) {
-                addRowToTable(relatedNotesTable!!, "Note ID", relatedNote.getNoteId().toString())
-                addRowToTable(relatedNotesTable!!, "Note Type", relatedNote.getNoteType())
-                addRowToTable(relatedNotesTable!!, "Created", msToDateTime(relatedNote.getCreatedTimeMillis()))
-                addRowToTable(relatedNotesTable!!, "Modified", msToDateTime(relatedNote.getLastModifiedTimeMillis()))
+        if (data.relatedNotes != null && data.relatedNotes!!.isNotEmpty()) {
+            for (relatedNote in data.relatedNotes!!) {
+                addRowToTable(relatedNotesTable!!, "Note ID", relatedNote.noteId.toString())
+                addRowToTable(relatedNotesTable!!, "Note Type", relatedNote.noteType ?: "")
+                addRowToTable(relatedNotesTable!!, "Created", msToDateTime(relatedNote.createdTimeMillis))
+                addRowToTable(relatedNotesTable!!, "Modified", msToDateTime(relatedNote.lastModifiedTimeMillis))
                 addSeparatorToTable(relatedNotesTable!!)
             }
         } else {
@@ -174,12 +176,12 @@ class NoteDebugDialog(
         }
 
         // Update smartbooks table
-        if (data.smartbooks != null && !data.smartbooks!!.isEmpty()) {
-            for (smartbook in data.smartbooks) {
-                addRowToTable(smartbooksTable!!, "Book ID", smartbook.getBookId().toString())
-                addRowToTable(smartbooksTable!!, "Title", smartbook.getTitle())
-                addRowToTable(smartbooksTable!!, "Created", msToDateTime(smartbook.getCreatedTimeMillis()))
-                addRowToTable(smartbooksTable!!, "Modified", msToDateTime(smartbook.getLastModifiedTimeMillis()))
+        if (data.smartbooks != null && data.smartbooks!!.isNotEmpty()) {
+            for (smartbook in data.smartbooks!!) {
+                addRowToTable(smartbooksTable!!, "Book ID", smartbook.bookId.toString())
+                addRowToTable(smartbooksTable!!, "Title", smartbook.title ?: "")
+                addRowToTable(smartbooksTable!!, "Created", msToDateTime(smartbook.createdTimeMillis))
+                addRowToTable(smartbooksTable!!, "Modified", msToDateTime(smartbook.lastModifiedTimeMillis))
                 addSeparatorToTable(smartbooksTable!!)
             }
         } else {
@@ -203,20 +205,20 @@ class NoteDebugDialog(
     }
 
     private fun addBasicNoteInfo() {
-        addRowToTable(noteInfoTable!!, "Note ID", atomicNote!!.getNoteId().toString())
-        addRowToTable(noteInfoTable!!, "Note Type", atomicNote.getNoteType())
-        addRowToTable(noteInfoTable!!, "Created", msToDateTime(atomicNote.getCreatedTimeMillis()))
-        addRowToTable(noteInfoTable!!, "Last Modified", msToDateTime(atomicNote.getLastModifiedTimeMillis()))
+        val note = atomicNote!!
+        addRowToTable(noteInfoTable!!, "Note ID", note.noteId.toString())
+        addRowToTable(noteInfoTable!!, "Note Type", note.noteType ?: "")
+        addRowToTable(noteInfoTable!!, "Created", msToDateTime(note.createdTimeMillis))
+        addRowToTable(noteInfoTable!!, "Last Modified", msToDateTime(note.lastModifiedTimeMillis))
         addRowToTable(
             noteInfoTable!!,
             "Working Note Path",
-            atomicNote.getFilepath() + "/" + atomicNote.getFilename()
+            (note.filepath ?: "") + "/" + (note.filename ?: "")
         )
 
-
         // Add markdown file path if it's a handwritten note
-        if (NoteType.HANDWRITTEN_PNG.name == atomicNote.getNoteType()) {
-            val markdownPath = atomicNote.getFilepath() + "/" + atomicNote.getFilename() + ".md"
+        if (NoteType.HANDWRITTEN_PNG.name == note.noteType) {
+            val markdownPath = (note.filepath ?: "") + "/" + (note.filename ?: "") + ".md"
             val markdownFile = File(markdownPath)
             val markdownStatus = if (markdownFile.exists()) "Exists" else "Not created yet"
             addRowToTable(noteInfoTable!!, "Markdown File", markdownPath + " (" + markdownStatus + ")")

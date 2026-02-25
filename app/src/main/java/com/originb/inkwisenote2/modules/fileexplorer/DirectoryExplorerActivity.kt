@@ -22,14 +22,15 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.Logger
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps.Companion.execute
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps
 import com.originb.inkwisenote2.modules.fileexplorer.FileGroupAdapter.OnFileGroupClickListener
 import com.originb.inkwisenote2.modules.fileexplorer.FileGroupAdapter.OnFileGroupDeleteListener
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.IOException
-import java.util.function.Function
+import java.util.concurrent.Callable
+import java.util.function.Consumer
 import kotlin.math.max
 
 class DirectoryExplorerActivity : AppCompatActivity(), OnFileGroupClickListener, OnFileGroupDeleteListener {
@@ -78,8 +79,9 @@ class DirectoryExplorerActivity : AppCompatActivity(), OnFileGroupClickListener,
     private fun setupObservers() {
         // Observe file data
         viewModel!!.fileGroups.observe(this, Observer { groups: MutableList<FileGroup?>? ->
-            fileGroupAdapter!!.updateFileGroups(groups)
-            if (groups!!.isEmpty()) {
+            val list = groups?.filterNotNull()?.toMutableList() ?: mutableListOf()
+            fileGroupAdapter!!.updateFileGroups(list)
+            if (list.isEmpty()) {
                 emptyView!!.setVisibility(View.VISIBLE)
                 recyclerView!!.setVisibility(View.GONE)
             } else {
@@ -128,27 +130,26 @@ class DirectoryExplorerActivity : AppCompatActivity(), OnFileGroupClickListener,
         recyclerView!!.setAdapter(fileGroupAdapter)
     }
 
-    override fun onFileGroupClick(fileGroup: FileGroup) {
-        if (fileGroup.isDirectory()) {
-            viewModel!!.navigateInto(fileGroup.getPrimaryFile().getFile())
-        } else if (fileGroup.isGroup()) {
+    override fun onFileGroupClick(fileGroup: FileGroup?) {
+        if (fileGroup == null) return
+        if (fileGroup.isDirectory) {
+            fileGroup.primaryFile?.let { viewModel!!.navigateInto(it.file) }
+        } else if (fileGroup.isGroup) {
             showFileGroupContents(fileGroup)
         } else {
-            val singleFile = fileGroup.getPrimaryFile()
-            if (singleFile != null) {
-                showFileByType(singleFile)
-            }
+            fileGroup.primaryFile?.let { showFileByType(it) }
         }
     }
 
-    override fun onFileGroupDelete(fileGroup: FileGroup) {
+    override fun onFileGroupDelete(fileGroup: FileGroup?) {
+        if (fileGroup == null) return
         val message: String?
-        if (fileGroup.isGroup()) {
-            message = "Delete all " + fileGroup.getFileCount() + " files in '" + fileGroup.getGroupName() + "'?"
+        if (fileGroup.isGroup) {
+            message = "Delete all " + fileGroup.fileCount + " files in '" + fileGroup.groupName + "'?"
         } else {
-            val item = fileGroup.getPrimaryFile()
+            val item = fileGroup.primaryFile
             if (item == null) return
-            message = "Delete " + (if (item.isDirectory()) "directory" else "file") + " '" + item.getName() + "'?"
+            message = "Delete " + (if (item.isDirectory) "directory" else "file") + " '" + item.name + "'?"
         }
 
         AlertDialog.Builder(this)
@@ -165,24 +166,24 @@ class DirectoryExplorerActivity : AppCompatActivity(), OnFileGroupClickListener,
 
     // --- File Preview Logic (View Layer) ---
     private fun showFileByType(fileItem: FileItem) {
-        val fileType = getFileType(fileItem.getName())
+        val fileType = getFileType(fileItem.name)
         when (fileType) {
-            FILE_TYPE_IMAGE -> showImageFile(fileItem.getFile())
-            FILE_TYPE_MARKDOWN -> showMarkdownFile(fileItem.getFile())
-            else -> showUnknownFileError(fileItem.getName())
+            FILE_TYPE_IMAGE -> showImageFile(fileItem.file)
+            FILE_TYPE_MARKDOWN -> showMarkdownFile(fileItem.file)
+            else -> showUnknownFileError(fileItem.name)
         }
     }
 
     private fun showImageFile(file: File) {
         try {
             val options = BitmapFactory.Options()
-            if (file.getName().lowercase().endsWith(".png")) {
+            if (file.name.lowercase().endsWith(".png")) {
                 options.inPreferredConfig = Bitmap.Config.ARGB_8888
             }
             val bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), options)
 
             if (bitmap == null) {
-                showUnknownFileError(file.getName())
+                showUnknownFileError(file.name)
                 return
             }
 
@@ -195,62 +196,56 @@ class DirectoryExplorerActivity : AppCompatActivity(), OnFileGroupClickListener,
             lp.width = (getResources().getDisplayMetrics().widthPixels * 0.9).toInt()
             dialog.getWindow()!!.setAttributes(lp)
 
-            (dialog.findViewById<View?>(R.id.image_title) as TextView).setText(file.getName())
+            (dialog.findViewById<View?>(R.id.image_title) as TextView).setText(file.name)
             (dialog.findViewById<View?>(R.id.image_preview) as ImageView).setImageBitmap(bitmap)
             dialog.findViewById<View?>(R.id.close_button)
                 .setOnClickListener(View.OnClickListener { v: View? -> dialog.dismiss() })
             dialog.show()
         } catch (e: Exception) {
-            showUnknownFileError(file.getName())
+            showUnknownFileError(file.name)
         }
     }
 
     private fun showMarkdownFile(file: File) {
-        // We use BackgroundOps here because reading the file is a temporary UI-only task
-        execute(Runnable {
+        BackgroundOps.execute(Callable {
             val content = StringBuilder()
             try {
                 BufferedReader(FileReader(file)).use { reader ->
                     var line: String?
-                    while ((reader.readLine().also { line = it }) != null) content.append(line).append("\n")
-                    return@execute content.toString()
+                    while (reader.readLine().also { line = it } != null) content.append(line).append("\n")
                 }
+                content.toString()
             } catch (e: IOException) {
-                return@execute null
+                null
             }
-        }, Runnable { content ->
+        }, Consumer { content: String? ->
             if (content == null) {
-                showUnknownFileError(file.getName())
-                return@execute
+                showUnknownFileError(file.name)
+                return@Consumer
             }
             val dialog = Dialog(this)
             dialog.setContentView(R.layout.dialog_text_preview)
 
-            // Adjust dialog size
             val lp = WindowManager.LayoutParams()
-            lp.copyFrom(dialog.getWindow()!!.getAttributes())
-            lp.width = (getResources().getDisplayMetrics().widthPixels * 0.9).toInt()
-            lp.height = (getResources().getDisplayMetrics().heightPixels * 0.8).toInt()
-            dialog.getWindow()!!.setAttributes(lp)
+            lp.copyFrom(dialog.window!!.attributes)
+            lp.width = (resources.displayMetrics.widthPixels * 0.9).toInt()
+            lp.height = (resources.displayMetrics.heightPixels * 0.8).toInt()
+            dialog.window!!.attributes = lp
 
-            (dialog.findViewById<View?>(R.id.text_title) as TextView).setText(file.getName())
-            (dialog.findViewById<View?>(R.id.text_content) as TextView).setText(content)
-            dialog.findViewById<View?>(R.id.close_button)
-                .setOnClickListener(View.OnClickListener { v: View? -> dialog.dismiss() })
+            (dialog.findViewById<View?>(R.id.text_title) as TextView).text = file.name
+            (dialog.findViewById<View?>(R.id.text_content) as TextView).text = content
+            dialog.findViewById<View?>(R.id.close_button).setOnClickListener { dialog.dismiss() }
             dialog.show()
         })
     }
 
     private fun showFileGroupContents(fileGroup: FileGroup) {
-        val files = fileGroup.getFiles()
-        val names = files.stream().map<String?> { obj: Function<in R?, out V?>? -> obj.getName() }
-            .toArray<String?> { _Dummy_.__Array__() }
+        val files = fileGroup.files
+        val names = files.map { it.name }.toTypedArray()
 
         AlertDialog.Builder(this)
-            .setTitle("Files in " + fileGroup.getGroupName())
-            .setItems(
-                names,
-                DialogInterface.OnClickListener { d: DialogInterface?, which: Int -> showFileByType(files.get(which)!!) })
+            .setTitle("Files in " + fileGroup.groupName)
+            .setItems(names) { _: DialogInterface?, which: Int -> showFileByType(files[which]) }
             .setPositiveButton("Close", null)
             .show()
     }

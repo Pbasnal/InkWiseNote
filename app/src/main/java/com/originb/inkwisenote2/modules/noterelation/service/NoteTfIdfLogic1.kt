@@ -13,25 +13,26 @@ import kotlin.math.ln
 class NoteTfIdfLogic(private val noteTermFrequencyDao: NoteTermFrequencyDao) {
     private val logger = Logger("NoteTfIdfLogic")
 
-    fun addOrUpdateNote(noteId: Long, termsList: MutableList<String?>) {
+    fun addOrUpdateNote(noteId: Long, termsList: MutableList<String>) {
         val termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId))
 
         if (termFrequenciesOfNote.isEmpty()) {
-            logger.debug("Insert document terms for noteId: " + noteId, termsList)
+            logger.debug("Insert document terms for noteId: $noteId", termsList)
             insertDocument(noteId, termsList)
         } else {
-            logger.debug("Update document terms for noteId: " + noteId, termsList)
+            logger.debug("Update document terms for noteId: $noteId", termsList)
             updateDocument(noteId, termFrequenciesOfNote, termsList)
         }
     }
 
     // IDF is calculated by dividing the total number of documents
     // by the number of documents in the collection containing the term.
-    private fun calculateIdf(terms: MutableSet<String?>?, N: Int): MutableMap<String?, Double?> {
-        val termDf = toTermOccuranceMap(noteTermFrequencyDao.getTermOccurrences(terms))
+    private fun calculateIdf(terms: Set<String>?, N: Int): MutableMap<String?, Double?> {
+        val safeTerms = terms?.toMutableSet() ?: mutableSetOf()
+        val termDf = toTermOccuranceMap(noteTermFrequencyDao.getTermOccurrences(safeTerms))
         val termIdfScore: MutableMap<String?, Double?> = HashMap<String?, Double?>()
         for (term in termDf.keys) {
-            val df: Int = termDf.getOrDefault(term, 0)!!
+            val df: Int = termDf.getOrDefault(term, 0) ?: 0
             Log.d("Value of df", "" + df)
             val idf = if (df > 0) ln(N.toDouble() / df) else 0.0
             termIdfScore.putIfAbsent(term, idf)
@@ -47,35 +48,34 @@ class NoteTfIdfLogic(private val noteTermFrequencyDao: NoteTermFrequencyDao) {
         return termFrequenciesOfNote
     }
 
-    private fun toTermFrequencyMap(noteTermFrequencies: MutableList<NoteTermFrequency>?): MutableMap<String?, Int?> {
-        val termFrequenciesOfNote: MutableMap<String?, Int?> = HashMap<String?, Int?>()
+    private fun toTermFrequencyMap(noteTermFrequencies: MutableList<NoteTermFrequency>): MutableMap<String, Int> {
+        val termFrequenciesOfNote: MutableMap<String, Int> = HashMap<String, Int>()
         if (CollectionUtils.isEmpty(noteTermFrequencies)) return termFrequenciesOfNote
-        for (noteTermFrequency in noteTermFrequencies!!) {
-            termFrequenciesOfNote.put(noteTermFrequency.term, noteTermFrequency.termFrequency)
+        for (noteTermFrequency in noteTermFrequencies) {
+            termFrequenciesOfNote[noteTermFrequency.term] = noteTermFrequency.termFrequency
         }
         return termFrequenciesOfNote
     }
 
 
-    private fun insertDocument(noteId: Long, termsList: MutableList<String?>) {
-        val termFrequencies: MutableMap<String?, NoteTermFrequency?> = HashMap<String?, NoteTermFrequency?>()
+    private fun insertDocument(noteId: Long, termsList: MutableList<String>) {
+        val termFrequencies: MutableMap<String, NoteTermFrequency> = HashMap()
         for (term in termsList) {
             val termFq = termFrequencies.getOrDefault(term, NoteTermFrequency(noteId, term, 0))
-            termFq!!.termFrequency = termFq.termFrequency + 1
-            termFrequencies.put(term, termFq)
+            termFq.termFrequency += 1
+            termFrequencies[term] = termFq
         }
-
-        noteTermFrequencyDao.insertTermFrequenciesToDb(ArrayList<NoteTermFrequency?>(termFrequencies.values))
+        noteTermFrequencyDao.insertTermFrequenciesToDb(termFrequencies.values.toMutableList())
     }
 
     fun updateDocument(
         noteId: Long,
-        oldTermFrequenciesOfNote: MutableMap<String?, Int?>,
-        newTerms: MutableList<String?>
+        oldTermFrequenciesOfNote: MutableMap<String, Int>,
+        newTerms: MutableList<String>
     ) {
         val oldTerms = oldTermFrequenciesOfNote.keys
         val removedTerms: MutableSet<String?> = HashSet<String?>(oldTerms)
-        removedTerms.removeAll(newTerms)
+        removedTerms.removeAll(newTerms.toSet())
         val addedTerms: MutableSet<String?> = HashSet<String?>(newTerms)
         addedTerms.removeAll(oldTerms)
 
@@ -87,18 +87,19 @@ class NoteTfIdfLogic(private val noteTermFrequencyDao: NoteTermFrequencyDao) {
     }
 
     fun deleteDocument(noteId: Long?) {
+        if (noteId == null) return
         val termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId))
-        if (Objects.isNull(termFrequenciesOfNote) || termFrequenciesOfNote.isEmpty()) return
+        if (termFrequenciesOfNote.isEmpty()) return
 
         noteTermFrequencyDao.deleteTermFrequencies(noteId)
 
         // todo: is this needed?
         val N = noteTermFrequencyDao.distinctNoteIdCount
-        val termIdfScores = calculateIdf(termFrequenciesOfNote.keys, N)
+        calculateIdf(termFrequenciesOfNote.keys, N)
     }
 
-    fun getTfIdf(noteId: Long?): MutableMap<String?, Double?> {
-        val tfIdfScores: MutableMap<String?, Double?> = HashMap<String?, Double?>()
+    fun getTfIdf(noteId: Long): MutableMap<String, Double> {
+        val tfIdfScores: MutableMap<String, Double> = HashMap<String, Double>()
 
         val termFrequenciesOfNote = toTermFrequencyMap(noteTermFrequencyDao.readTermFrequenciesOfNote(noteId))
         if (isEmpty(termFrequenciesOfNote)) return tfIdfScores
@@ -108,30 +109,31 @@ class NoteTfIdfLogic(private val noteTermFrequencyDao: NoteTermFrequencyDao) {
 
         if (isEmpty(termIdfScores)) return tfIdfScores
 
-        val totalTerms = termFrequenciesOfNote.values.stream().mapToInt { obj: Int? -> obj!!.toInt() }.sum()
+        val totalTerms = termFrequenciesOfNote.values.sum()
 
         for (entry in termFrequenciesOfNote.entries) {
             val term = entry.key
-            val tf: Int = entry.value!!
-            val idf = termIdfScores.getOrDefault(term, 0.0)
-            tfIdfScores.put(term, (tf / totalTerms.toDouble()) * idf!!)
+            val tf: Int = entry.value
+            val idf = termIdfScores.getOrDefault(term, 0.0) ?: 0.0
+            tfIdfScores[term] = (tf / totalTerms.toDouble()) * idf
         }
 
         return tfIdfScores
     }
 
     fun getRelatedDocuments(terms: MutableSet<String?>?): MutableMap<String?, MutableSet<Long?>?> {
-        val termNoteIds = toTermNoteIdsMap(noteTermFrequencyDao.getNoteIdsForTerms(terms))
+        val safeTerms = terms?.filterNotNull()?.toMutableSet() ?: mutableSetOf()
+        val termNoteIds = toTermNoteIdsMap(noteTermFrequencyDao.getNoteIdsForTerms(safeTerms))
         if (isEmpty(termNoteIds)) return HashMap<String?, MutableSet<Long?>?>()
         return termNoteIds
     }
 
     private fun toTermNoteIdsMap(termFrequencies: MutableList<NoteTermFrequency>): MutableMap<String?, MutableSet<Long?>?> {
-        val termNoteIds: MutableMap<String?, MutableSet<Long?>?> = HashMap<String?, MutableSet<Long?>?>()
+        val termNoteIds: MutableMap<String?, MutableSet<Long?>?> = HashMap()
         for (noteTermFrequency in termFrequencies) {
-            val noteIds = termNoteIds.getOrDefault(noteTermFrequency.term, HashSet<Long?>())
-            noteIds!!.add(noteTermFrequency.noteId)
-            termNoteIds.put(noteTermFrequency.term, noteIds)
+            val noteIds = termNoteIds.getOrDefault(noteTermFrequency.term, HashSet()) ?: HashSet<Long?>()
+            noteIds.add(noteTermFrequency.noteId)
+            termNoteIds[noteTermFrequency.term] = noteIds
         }
         return termNoteIds
     } // Example usage

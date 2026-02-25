@@ -4,6 +4,6 @@ import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteWit
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook
 
 class RelatedNotesUiState(
-    val rootNotebook: SmartNotebook?, val rootImage: HandwrittenNoteWithImage?,
-    val relations: MutableSet<NoteRelation?>?, val relatedBooks: MutableList<SmartNotebook?>?
+    val rootNotebook: SmartNotebook, val rootImage: HandwrittenNoteWithImage?,
+    val relations: MutableSet<NoteRelation>, val relatedBooks: MutableList<SmartNotebook>
 ) 

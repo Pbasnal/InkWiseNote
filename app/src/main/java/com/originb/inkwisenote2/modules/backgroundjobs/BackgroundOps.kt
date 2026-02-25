@@ -3,20 +3,15 @@ package com.originb.inkwisenote2.modules.backgroundjobs
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.function.Consumer
 
 class BackgroundOps private constructor() {
-    private val mainThreadHandler: Handler
+    private val mainThreadHandler: Handler = Handler(Looper.getMainLooper())
 
     private val executor: ExecutorService = Executors.newFixedThreadPool(10)
-
-    init {
-        mainThreadHandler = Handler(Looper.getMainLooper())
-    }
 
     companion object {
         var instance: BackgroundOps? = null
@@ -37,12 +32,13 @@ class BackgroundOps private constructor() {
         fun execute(runnable: Runnable?, continueOnMainThread: Runnable) {
             try {
                 instance!!.executor.execute(runnable)
-                instance!!.mainThreadHandler.post(Runnable { continueOnMainThread.run() })
+                instance!!.mainThreadHandler.post { continueOnMainThread.run() }
             } catch (e: Exception) {
                 throw RuntimeException(e)
             }
         }
 
+        @JvmStatic
         fun <T> execute(callable: Callable<T?>, resultOnMainThread: Consumer<T?>) {
             // 1. Capture the stack trace of the CALLER (the UI thread) right now
             val clientStack = Exception("Task submitted from here")
@@ -61,17 +57,17 @@ class BackgroundOps private constructor() {
             })
         }
 
-        fun <T> executeOpt(callable: Callable<Optional<T?>>, resultOnMainThread: Consumer<T?>) {
-            instance!!.executor.execute(Runnable {
+        fun <T> executeOpt(callable: Callable<T?>, resultOnMainThread: Consumer<T?>) {
+            instance!!.executor.execute {
                 try {
                     val result = callable.call()
-                    if (result.isPresent()) {
-                        instance!!.mainThreadHandler.post(Runnable { resultOnMainThread.accept(result.get()) })
+                    if (result != null) {
+                        instance!!.mainThreadHandler.post { resultOnMainThread.accept(result) }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-            })
+            }
         }
 
         private fun handleError(e: Exception) {

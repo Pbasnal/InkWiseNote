@@ -18,15 +18,15 @@ class NoteRelationEventListener(private val noteRelationRepository: NoteRelation
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     fun onDataUpdateEvent(notebookToDelete: NotebookDeleted) {
-        execute(Runnable {
+        execute {
             val smartNotebook = notebookToDelete.smartNotebook
-            smartNotebook!!.atomicNotes.forEach(Consumer { note: AtomicNoteEntity? ->
+            smartNotebook.atomicNotes.forEach(Consumer { note: AtomicNoteEntity ->
                 noteRelationRepository.deleteNoteRelationData(
                     note
                 )
             }
             )
-        })
+        }
     }
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)

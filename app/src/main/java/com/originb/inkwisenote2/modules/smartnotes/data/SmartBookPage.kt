@@ -6,14 +6,14 @@ import androidx.room.*
     tableName = "smart_book_pages",
     foreignKeys = [ForeignKey(
         entity = SmartBookEntity::class,
-        parentColumns = "book_id",
-        childColumns = "book_id",
-        onDelete = ForeignKey.Companion.RESTRICT
+        parentColumns = ["book_id"],
+        childColumns = ["book_id"],
+        onDelete = ForeignKey.CASCADE
     ), ForeignKey(
         entity = AtomicNoteEntity::class,
-        parentColumns = "note_id",
-        childColumns = "note_id",
-        onDelete = ForeignKey.Companion.RESTRICT
+        parentColumns = ["note_id"],
+        childColumns = ["note_id"],
+        onDelete = ForeignKey.CASCADE
     )],
     indices = [Index("book_id"), Index("note_id")]
 )

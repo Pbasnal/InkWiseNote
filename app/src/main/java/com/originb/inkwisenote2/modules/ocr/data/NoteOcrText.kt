@@ -14,24 +14,24 @@ class NoteOcrText : Serializable {
     // Getters and Setters
     @PrimaryKey
     @ColumnInfo(name = "note_id")
-    var noteId: Long? = null
+    var noteId: Long = 1
 
     @ColumnInfo(name = "extracted_text")
-    var extractedText: String? = null
+    var extractedText: String = ""
 
     @ColumnInfo(name = "note_hash")
-    var noteHash: String? = null
+    var noteHash: String = ""
 
     @ColumnInfo(name = "created_time_ms")
-    private var createdTimeMillis: Long? = null
+    private var createdTimeMillis: Long = 1
 
     @ColumnInfo(name = "last_modified_time_ms")
-    var lastModifiedTimeMillis: Long? = null
+    var lastModifiedTimeMillis: Long = 1
 
     // No-args constructor required by Room
     constructor()
 
-    constructor(noteId: Long?, noteHash: String?, text: String?) {
+    constructor(noteId: Long, noteHash: String, text: String) {
         this.noteId = noteId
         this.noteHash = noteHash
         this.extractedText = text

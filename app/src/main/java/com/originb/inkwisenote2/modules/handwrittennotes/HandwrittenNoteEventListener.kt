@@ -17,8 +17,8 @@ class HandwrittenNoteEventListener(private val handwrittenNoteRepository: Handwr
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     fun onNotebookDelete(notebookToDelete: NotebookDeleted) {
         val smartNotebook = notebookToDelete.smartNotebook
-        smartNotebook!!.atomicNotes.forEach(Consumer { note: AtomicNoteEntity? ->
-            handwrittenNoteRepository.deleteHandwrittenNote(note)
+        smartNotebook!!.atomicNotes.forEach(Consumer { note: AtomicNoteEntity ->
+             handwrittenNoteRepository.deleteHandwrittenNote(note)
         }
         )
     }

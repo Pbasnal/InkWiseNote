@@ -13,40 +13,38 @@ object QueriedNotesLogic {
     const val ONLY_FIND_WORDS: Int = 2
     const val FIND_AND_FILTER: Int = 3
 
-    fun splitAndSanitize(wordsStr: String): MutableSet<String?> {
-        val wordsArr: Array<String?> = wordsStr.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        val wordsSet: MutableSet<String?> = HashSet<String?>()
-        if (wordsArr != null) {
-            for (i in wordsArr.indices) {
-                wordsSet.add(wordsArr[i]!!.trim { it <= ' ' })
-            }
+    fun splitAndSanitize(wordsStr: String?): MutableSet<String> {
+        val wordsArr: Array<String?> =
+            wordsStr?.split(",".toRegex())?.dropLastWhile { it.isEmpty() }?.toTypedArray() ?: emptyArray()
+        val wordsSet: MutableSet<String> = HashSet<String>()
+        for (i in wordsArr.indices) {
+            wordsSet.add(wordsArr[i]!!.trim { it <= ' ' })
         }
         return wordsSet
     }
 
-    fun getQueryScenario(wordsToFind: MutableSet<String?>?, wordsToIgnore: MutableSet<String?>?): Int {
-        if (wordsToFind == null || wordsToFind.isEmpty()) {
-            if (wordsToIgnore == null || wordsToIgnore.isEmpty()) {
+    fun getQueryScenario(wordsToFind: MutableSet<String>, wordsToIgnore: MutableSet<String>): Int {
+        if (wordsToFind.isEmpty()) {
+            if (wordsToIgnore.isEmpty()) {
                 return IGNORE
             } else {
                 return ONLY_IGNORE_WORDS
             }
-        } else if (wordsToIgnore == null || wordsToIgnore.isEmpty()) {
+        } else if (wordsToIgnore.isEmpty()) {
             return ONLY_FIND_WORDS
         }
         return FIND_AND_FILTER
     }
 
     fun getNotesThatHaveWords(
-        wordsToFind: MutableSet<String?>?,
+        wordsToFind: MutableSet<String>,
         noteTermFrequencyDao: NoteTermFrequencyDao,
-        atomicNotesDomain: AtomicNotesDomain,
-        bookId: Optional<Long?>?
-    ): MutableList<AtomicNoteEntity?>? {
+        atomicNotesDomain: AtomicNotesDomain
+    ): MutableList<AtomicNoteEntity> {
         val noteTermFrequencies = noteTermFrequencyDao.getNoteIdsForTerms(wordsToFind)
-        val noteIds: MutableSet<Long?> = noteTermFrequencies!!.stream()
-            .map<Any?>(NoteTermFrequency::getNoteId)
-            .collect(Collectors.toSet())
+        val noteIds: MutableSet<Long> = noteTermFrequencies
+            .map(NoteTermFrequency::noteId)
+            .toMutableSet()
         val atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds)
 
         return atomicNoteEntities
@@ -54,31 +52,29 @@ object QueriedNotesLogic {
 
     // hopefully this will not be used a lot
     fun getNotesThatDontHaveWords(
-        wordsToIgnore: MutableSet<String?>?,
+        wordsToIgnore: MutableSet<String>,
         noteTermFrequencyDao: NoteTermFrequencyDao,
-        atomicNotesDomain: AtomicNotesDomain,
-        bookId: Optional<Long?>?
-    ): MutableList<AtomicNoteEntity?>? {
+        atomicNotesDomain: AtomicNotesDomain
+    ): MutableList<AtomicNoteEntity> {
         val noteTermFrequencies = noteTermFrequencyDao.getNoteIdsForAllTermsExcept(wordsToIgnore)
-        val noteIds: MutableSet<Long?> = noteTermFrequencies!!.stream()
-            .map<Any?>(NoteTermFrequency::getNoteId)
-            .collect(Collectors.toSet())
+        val noteIds: MutableSet<Long> = noteTermFrequencies
+            .map(NoteTermFrequency::noteId)
+            .toMutableSet()
         val atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds)
         return atomicNoteEntities
     }
 
     fun getNotesWithWordsAndFilter(
-        wordsToFind: MutableSet<String?>?,
-        wordsToIgnore: MutableSet<String?>,
+        wordsToFind: MutableSet<String>,
+        wordsToIgnore: MutableSet<String>,
         noteTermFrequencyDao: NoteTermFrequencyDao,
-        atomicNotesDomain: AtomicNotesDomain,
-        bookId: Optional<Long?>?
-    ): MutableList<AtomicNoteEntity?>? {
+        atomicNotesDomain: AtomicNotesDomain
+    ): MutableList<AtomicNoteEntity> {
         val noteTermFrequencies = noteTermFrequencyDao.getNoteIdsForTerms(wordsToFind)
-        val noteIds: MutableSet<Long?> = noteTermFrequencies!!.stream()
+        val noteIds: MutableSet<Long> = noteTermFrequencies
             .filter { tf: NoteTermFrequency? -> !wordsToIgnore.contains(tf!!.term) }
-            .map<Any?>(NoteTermFrequency::getNoteId)
-            .collect(Collectors.toSet())
+            .map(NoteTermFrequency::noteId)
+            .toMutableSet()
         val atomicNoteEntities = atomicNotesDomain.getAtomicNotes(noteIds)
 
         return atomicNoteEntities

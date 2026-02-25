@@ -30,7 +30,7 @@ class AtomicNoteEntity  // No-args constructor required by Room
     @ColumnInfo(name = "last_modified_time_ms")
     var lastModifiedTimeMillis: Long = 0
 
-    public override fun clone(): AtomicNoteEntity {
+    fun copy(): AtomicNoteEntity {
         val noteToSave = AtomicNoteEntity()
         noteToSave.noteId = noteId
         noteToSave.filename = filename
@@ -39,7 +39,6 @@ class AtomicNoteEntity  // No-args constructor required by Room
         noteToSave.pageTemplateId = pageTemplateId
         noteToSave.createdTimeMillis = createdTimeMillis
         noteToSave.lastModifiedTimeMillis = lastModifiedTimeMillis
-
         return noteToSave
     }
 }

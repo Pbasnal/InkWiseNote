@@ -15,7 +15,7 @@ class NoteTermFrequency {
     var noteId: Long = 0
 
     @ColumnInfo(name = "term")
-    var term: String? = null
+    var term: String = ""
 
     @ColumnInfo(name = "fq_in_doc")
     var termFrequency: Int = 0
@@ -23,7 +23,7 @@ class NoteTermFrequency {
     // No-args constructor required by Room
     constructor()
 
-    constructor(noteId: Long, term: String?, termFrequency: Int) {
+    constructor(noteId: Long, term: String, termFrequency: Int) {
         this.noteId = noteId
         this.term = term
         this.termFrequency = termFrequency

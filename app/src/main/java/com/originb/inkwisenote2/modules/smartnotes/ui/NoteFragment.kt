@@ -20,13 +20,12 @@ abstract class NoteFragment(protected var smartNotebook: SmartNotebook?, var ato
         AlertDialog.Builder(getContext()!!)
             .setTitle("Delete Note")
             .setMessage("Are you sure you want to delete this note?")
-            .setPositiveButton("Delete", DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
-                EventBus.getDefault().post(
-                    DeleteNoteCommand(
-                        smartNotebook,
-                        atomicNote
-                    )
-                )
+            .setPositiveButton("Delete", DialogInterface.OnClickListener { _: DialogInterface?, _: Int ->
+                val book = smartNotebook
+                val note = atomicNote
+                if (book != null && note != null) {
+                    EventBus.getDefault().post(DeleteNoteCommand(book, note))
+                }
             })
             .setIcon(android.R.drawable.ic_dialog_alert)
             .setNegativeButton("Cancel", null)

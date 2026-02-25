@@ -151,13 +151,13 @@ class AdminActivity : AppCompatActivity() {
         // Navigation Row
         val navRow = TableRow(this)
         val pathView = TextView(this)
-        pathView.setText(getString(R.string.path_label) + state.currentDir.getAbsolutePath())
+        pathView.setText(getString(R.string.path_label) + state.currentDir?.getAbsolutePath())
         pathView.setPadding(16, 16, 16, 16)
         navRow.addView(pathView)
 
         val upBtn = Button(this)
         upBtn.setText(getString(R.string.up_button))
-        upBtn.setOnClickListener(View.OnClickListener { v: View? -> viewModel!!.navigateToDir(state.currentDir.getParentFile()) })
+        upBtn.setOnClickListener(View.OnClickListener { v: View? -> viewModel!!.navigateToDir(state.currentDir?.getParentFile()) })
         navRow.addView(upBtn)
         tableLayout!!.addView(navRow)
 
@@ -170,7 +170,7 @@ class AdminActivity : AppCompatActivity() {
         if (state.files != null) {
             for (file in state.files) {
                 val row = TableRow(this)
-                addCells(row, file.getName(), file.length().toString(), if (file.isDirectory()) "DIR" else "FILE")
+                addCells(row, file?.getName(), file?.length().toString(), if (file!!.isDirectory()) "DIR" else "FILE")
 
                 val actions = LinearLayout(this)
                 if (file.isDirectory()) {

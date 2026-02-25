@@ -8,13 +8,13 @@ import com.originb.inkwisenote2.modules.smartnotes.data.SmartBookEntity
     tableName = "text_notes",
     foreignKeys = [ForeignKey(
         entity = SmartBookEntity::class,
-        parentColumns = "book_id",
-        childColumns = "book_id",
+        parentColumns = ["book_id"],
+        childColumns = ["book_id"],
         onDelete = ForeignKey.Companion.CASCADE
     ), ForeignKey(
         entity = AtomicNoteEntity::class,
-        parentColumns = "note_id",
-        childColumns = "note_id",
+        parentColumns = ["note_id"],
+        childColumns = ["note_id"],
         onDelete = ForeignKey.Companion.CASCADE
     )],
     indices = [Index("book_id"), Index("note_id")]

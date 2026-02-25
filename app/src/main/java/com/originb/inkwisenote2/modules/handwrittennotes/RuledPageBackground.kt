@@ -8,8 +8,6 @@ import android.graphics.Paint
 import com.originb.inkwisenote2.common.ScreenUtils.pxToDp
 import com.originb.inkwisenote2.config.ConfigReader
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate
-import lombok.Getter
-import lombok.Setter
 
 class RuledPageBackground(
     private val context: Context,
@@ -17,11 +15,9 @@ class RuledPageBackground(
     width: Int,
     height: Int
 ) {
-    @Getter
-    @Setter
-    private val pageTemplate: PageTemplate
-    private var pageTemplateBitmap: Bitmap?
-    private var templateCanvas: Canvas
+    var pageTemplate: PageTemplate
+    var pageTemplateBitmap: Bitmap?
+    var templateCanvas: Canvas
 
     init {
         pageTemplateBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -38,19 +34,17 @@ class RuledPageBackground(
     }
 
     fun drawTemplate(): Bitmap? {
-        val density = context.getResources().getDisplayMetrics().density
+        val density = context.resources.displayMetrics.density
 
-        val canvasWidth = templateCanvas.getWidth()
-        val canvasHeight = templateCanvas.getHeight()
-        val lineSpacing = pxToDp(
-            pageTemplate.getLineSpacing(),
-            context
-        ) // Space between each line, you can change to your desired value
+        val canvasWidth = templateCanvas.width
+        val canvasHeight = templateCanvas.height
+        val lineSpacing = pxToDp(pageTemplate.lineSpacing, context)
 
-        val color = Color.parseColor(pageTemplate.getLineColor())
-        val linePaint = Paint()
-        linePaint.setColor(color)
-        linePaint.setStrokeWidth(pageTemplate.getLineWidth() * density) // You can change the thickness of the lines here
+        val color = Color.parseColor(pageTemplate.lineColor ?: "#000000")
+        val linePaint = Paint().apply {
+            this.color = color
+            strokeWidth = pageTemplate.lineWidth * density
+        }
 
         // Draw horizontal lines
         var y = lineSpacing
@@ -63,6 +57,7 @@ class RuledPageBackground(
     }
 
     private fun loadPageTemplate(): PageTemplate {
-        return configReader.getAppConfig().getPageTemplates().get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name)
+        return configReader.getAppConfig()?.getPageTemplates()?.get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name)
+            ?: PageTemplate()
     }
 }

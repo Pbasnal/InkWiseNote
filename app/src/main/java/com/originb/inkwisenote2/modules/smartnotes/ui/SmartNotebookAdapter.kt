@@ -17,21 +17,25 @@ import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao
 
 class SmartNotebookAdapter(
     private val parentActivity: AppCompatActivity,
-    private var smartNotebook: SmartNotebook?,
+    private var smartNotebook: SmartNotebook,
     private val smartNotebookRepository: SmartNotebookRepository,
     private val handwrittenNoteRepository: HandwrittenNoteRepository?,
     private val textNotesDao: TextNotesDao?,
     private val noteOcrTextDao: NoteOcrTextsDao?
-) : RecyclerView.Adapter<FragmentViewHolder?>() {
+) : RecyclerView.Adapter<FragmentViewHolder>() {
     // noteId to card mapping
     private val noteCards: MutableMap<Long?, FragmentViewHolder?> = HashMap<Long?, FragmentViewHolder?>()
 
-    fun setSmartNotebook(smartNotebook: SmartNotebook?) {
+    fun setSmartNotebook(smartNotebook: SmartNotebook) {
         this.smartNotebook = smartNotebook
         notifyDataSetChanged()
     }
 
-    fun setSmartNotebook(smartNotebook: SmartNotebook?, indexOfUpdatedNote: Int) {
+    fun refreshFragments() {
+        notifyDataSetChanged()
+    }
+
+    fun setSmartNotebook(smartNotebook: SmartNotebook, indexOfUpdatedNote: Int) {
         this.smartNotebook = smartNotebook
         notifyItemInserted(indexOfUpdatedNote)
     }
@@ -41,7 +45,7 @@ class SmartNotebookAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): FragmentViewHolder {
-        val view = LayoutInflater.from(parent.getContext())
+        val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.fragment_note_page, parent, false)
 
         // Create a truly unique ID for the fragment container
@@ -56,46 +60,45 @@ class SmartNotebookAdapter(
     }
 
     override fun onBindViewHolder(holder: FragmentViewHolder, position: Int) {
-        val atomicNotes: MutableList<AtomicNoteEntity> = smartNotebook.getAtomicNotes()
+        val atomicNotes: MutableList<AtomicNoteEntity> = smartNotebook.atomicNotes
 
         if (position < 0 || position >= atomicNotes.size) return
 
-        val atomicNote = atomicNotes.get(position)
-        holder.setNote(smartNotebook, atomicNotes.get(position), position)
-        noteCards.put(atomicNote.getNoteId(), holder)
+        val atomicNote = atomicNotes[position]
+        holder.setNote(smartNotebook, atomicNotes[position], position)
+        noteCards[atomicNote.noteId] = holder
     }
 
     fun updateNoteType(atomicNote: AtomicNoteEntity, newNoteType: String?) {
-        if (smartNotebook == null) return
 
-        val position: Int = smartNotebook.getAtomicNotes().indexOf(atomicNote)
+        val position: Int = smartNotebook.atomicNotes.indexOf(atomicNote)
         if (position == -1) {
             return
         }
-        atomicNote.setNoteType(newNoteType)
-        execute(Runnable { smartNotebookRepository.updateNotebook(smartNotebook!!, parentActivity) })
+        atomicNote.noteType = newNoteType
+        execute { smartNotebookRepository.updateNotebook(smartNotebook, parentActivity) }
         notifyItemChanged(position)
     }
 
     fun removeNoteCard(noteId: Long) {
-        if (smartNotebook == null || !noteCards.containsKey(noteId)) return
+        if (!noteCards.containsKey(noteId)) return
 
-        val position = noteCards.get(noteId)!!.getAdapterPosition()
+        val position = noteCards[noteId]!!.getAdapterPosition()
         noteCards.remove(noteId)
         notifyItemRemoved(position)
     }
 
     override fun getItemCount(): Int {
-        return if (smartNotebook != null) smartNotebook!!.atomicNotes.size else 0
+        return smartNotebook.atomicNotes.size
     }
 
     fun getNoteData(noteId: Long): NoteHolderData? {
-        return noteCards.get(noteId)!!.getNoteHolderData()
+        return noteCards[noteId]!!.noteHolderData
     }
 
     fun setNoteData(index: Int, currentNote: AtomicNoteEntity) {
-        if (noteCards.containsKey(currentNote.getNoteId())) {
-            noteCards.get(currentNote.getNoteId())!!.setNote(smartNotebook, currentNote, index)
+        if (noteCards.containsKey(currentNote.noteId)) {
+            noteCards[currentNote.noteId]!!.setNote(smartNotebook, currentNote, index)
         }
     }
 

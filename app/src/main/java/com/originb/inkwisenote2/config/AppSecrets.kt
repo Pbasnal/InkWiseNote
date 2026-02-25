@@ -3,7 +3,7 @@ package com.originb.inkwisenote2.config
 import android.util.Log
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.originb.inkwisenote2.BuildConfig
-import com.originb.inkwisenote2.common.Strings
+import com.originb.inkwisenote2.common.isNotEmpty
 import java.io.InputStream
 import java.io.InputStreamReader
 
@@ -15,8 +15,8 @@ class AppSecrets(var visionApi: VisionApi? = null) {
     )
 
     val isAzureOcrEnabled: Boolean
-        get() = Strings.isNotEmpty(visionApi!!.visionApiEndpoint!!) &&
-                Strings.isNotEmpty(visionApi!!.visionApiKey!!)
+        get() = isNotEmpty(visionApi!!.visionApiEndpoint!!) &&
+                isNotEmpty(visionApi!!.visionApiKey!!)
 
     override fun toString(): String {
         return visionApi!!.visionApiKey + " | " + visionApi!!.visionApiEndpoint

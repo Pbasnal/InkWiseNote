@@ -35,19 +35,19 @@ object NoteFileStorage {
         builder.append("{")
 
         // Add stroke properties
-        builder.append("\"color\":").append(stroke.getColor()).append(",")
-        builder.append("\"width\":").append(stroke.getWidth()).append(",")
+        builder.append("\"color\":").append(stroke.color).append(",")
+        builder.append("\"width\":").append(stroke.width).append(",")
 
         // Add points
         builder.append("\"points\":[")
-        val points = stroke.getPoints()
+        val points = stroke.points
         for (i in points.indices) {
             val point = points.get(i)
             builder.append("{")
-                .append("\"x\":").append(point.getX()).append(",")
-                .append("\"y\":").append(point.getY()).append(",")
-                .append("\"p\":").append(point.getPressure()).append(",")
-                .append("\"t\":").append(point.getTimestamp())
+                .append("\"x\":").append(point.x).append(",")
+                .append("\"y\":").append(point.y).append(",")
+                .append("\"p\":").append(point.pressure).append(",")
+                .append("\"t\":").append(point.timestamp)
                 .append("}")
 
             if (i < points.size - 1) {
@@ -65,8 +65,8 @@ object NoteFileStorage {
         val strokeJson = JSONObject(strokeStr)
 
         val stroke = Stroke()
-        stroke.setColor(strokeJson.getInt("color"))
-        stroke.setWidth(strokeJson.getDouble("width").toFloat())
+        stroke.color = strokeJson.getInt("color")
+        stroke.width = strokeJson.getDouble("width").toFloat()
 
         val pointsArray = strokeJson.getJSONArray("points")
         for (i in 0..<pointsArray.length()) {

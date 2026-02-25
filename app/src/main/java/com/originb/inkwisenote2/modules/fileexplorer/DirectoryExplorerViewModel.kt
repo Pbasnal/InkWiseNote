@@ -3,9 +3,11 @@ package com.originb.inkwisenote2.modules.fileexplorer
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps.Companion.execute
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps
 import java.io.File
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.function.Consumer
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -40,20 +42,20 @@ class DirectoryExplorerViewModel : ViewModel() {
         if (currentDirectory == null) return
 
         _isRefreshing.setValue(true)
-        _toolbarTitle.setValue(if (currentDirectory!!.getName().isEmpty()) "Files" else currentDirectory!!.getName())
+        _toolbarTitle.setValue(if (currentDirectory!!.name.isEmpty()) "Files" else currentDirectory!!.name)
 
-        execute(Runnable {
-            val fileItems: MutableList<FileItem> = ArrayList<FileItem>()
+        BackgroundOps.execute(Callable {
+            val fileItems = ArrayList<FileItem>()
             val files = currentDirectory!!.listFiles()
-
-            if (files != null && files.size > 0) {
+            if (files != null && files.isNotEmpty()) {
                 for (file in files) {
                     fileItems.add(FileItem(file))
                 }
-                return@execute groupFilesByTimestamp(fileItems)
+                groupFilesByTimestamp(fileItems)
+            } else {
+                ArrayList<FileGroup?>()
             }
-            ArrayList<FileGroup?>()
-        }, Runnable { result ->
+        }, Consumer { result: MutableList<FileGroup?>? ->
             _fileGroups.setValue(result)
             _isRefreshing.setValue(false)
         })
@@ -63,27 +65,23 @@ class DirectoryExplorerViewModel : ViewModel() {
      * Grouping logic moved from Activity to ViewModel for testability.
      */
     private fun groupFilesByTimestamp(fileItems: MutableList<FileItem>): MutableList<FileGroup?> {
-        val groupMap: MutableMap<String?, MutableList<FileItem?>?> = HashMap<String?, MutableList<FileItem?>?>()
-        val ungroupedFiles: MutableList<FileItem?> = ArrayList<FileItem?>()
+        val groupMap = HashMap<String?, MutableList<FileItem>>()
+        val ungroupedFiles = ArrayList<FileItem>()
 
         for (item in fileItems) {
-            if (item.isDirectory()) {
+            if (item.isDirectory) {
                 ungroupedFiles.add(item)
                 continue
             }
-
-            val timestamp = extractTimestamp(item.getName())
+            val timestamp = extractTimestamp(item.name)
             if (timestamp.isEmpty()) {
                 ungroupedFiles.add(item)
             } else {
-                if (!groupMap.containsKey(timestamp)) {
-                    groupMap.put(timestamp, ArrayList<FileItem?>())
-                }
-                groupMap.get(timestamp)!!.add(item)
+                groupMap.getOrPut(timestamp) { ArrayList() }.add(item)
             }
         }
 
-        val result: MutableList<FileGroup?> = ArrayList<FileGroup?>()
+        val result = ArrayList<FileGroup?>()
         for (entry in groupMap.entries) {
             result.add(FileGroup(entry.key, entry.value))
         }
@@ -91,15 +89,16 @@ class DirectoryExplorerViewModel : ViewModel() {
             result.add(FileGroup(item))
         }
 
-        Collections.sort<FileGroup?>(result, Comparator { a: FileGroup?, b: FileGroup? ->
-            if (a!!.isDirectory() && !b!!.isDirectory()) return@sort -1
-            if (!a.isDirectory() && b!!.isDirectory()) return@sort 1
-            if (a.isGroup() && !b!!.isGroup()) return@sort -1
-            if (!a.isGroup() && b!!.isGroup()) return@sort 1
-            if (a.isGroup() && b!!.isGroup()) return@sort b.getTimestamp().compareTo(a.getTimestamp())
-            a.getGroupName().compareTo(b!!.getGroupName(), ignoreCase = true)
+        Collections.sort(result, Comparator { a: FileGroup?, b: FileGroup? ->
+            when {
+                a!!.isDirectory && !b!!.isDirectory -> -1
+                !a.isDirectory && b!!.isDirectory -> 1
+                a.isGroup && !b!!.isGroup -> -1
+                !a.isGroup && b!!.isGroup -> 1
+                a.isGroup && b!!.isGroup -> (b.timestamp ?: "").compareTo(a.timestamp ?: "")
+                else -> (a.groupName ?: "").compareTo(b!!.groupName ?: "", ignoreCase = true)
+            }
         })
-
         return result
     }
 
@@ -131,25 +130,24 @@ class DirectoryExplorerViewModel : ViewModel() {
      * Delete Logic
      */
     fun deleteFileGroup(fileGroup: FileGroup) {
-        execute(Runnable {
+        BackgroundOps.execute(Callable {
             var success = true
-            if (fileGroup.isGroup()) {
-                for (file in fileGroup.getAllRawFiles()) {
-                    if (!file.delete()) success = false
+            if (fileGroup.isGroup) {
+                for (file in fileGroup.allRawFiles) {
+                    if (file != null && !file.delete()) success = false
                 }
             } else {
-                val singleFile = fileGroup.getPrimaryFile()
-                if (singleFile != null) {
-                    if (singleFile.isDirectory()) {
-                        success = deleteRecursive(singleFile.getFile())
+                fileGroup.primaryFile?.let { singleFile ->
+                    success = if (singleFile.isDirectory) {
+                        deleteRecursive(singleFile.file)
                     } else {
-                        success = singleFile.getFile().delete()
+                        singleFile.file.delete()
                     }
                 }
             }
             success
-        }, Runnable { success ->
-            if (success) {
+        }, Consumer { success: Boolean? ->
+            if (success == true) {
                 _toastMessage.setValue("Deleted successfully")
                 loadCurrentDirectory()
             } else {
@@ -159,7 +157,7 @@ class DirectoryExplorerViewModel : ViewModel() {
     }
 
     private fun deleteRecursive(fileOrDirectory: File): Boolean {
-        if (fileOrDirectory.isDirectory()) {
+        if (fileOrDirectory.isDirectory) {
             val children = fileOrDirectory.listFiles()
             if (children != null) {
                 for (child in children) {

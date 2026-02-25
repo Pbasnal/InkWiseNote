@@ -10,34 +10,34 @@ import java.util.*
 @Getter
 @Setter
 class SmartNotebook {
-    var smartBook: SmartBookEntity?
+    var smartBook: SmartBookEntity
     var smartBookPages: MutableList<SmartBookPage>
-    var atomicNotes: MutableList<AtomicNoteEntity?>
+    var atomicNotes: MutableList<AtomicNoteEntity>
 
     constructor(
-        smartBook: SmartBookEntity?,
-        smartBookPage: SmartBookPage?,
-        atomicNoteEntity: AtomicNoteEntity?
+        smartBook: SmartBookEntity,
+        smartBookPage: SmartBookPage,
+        atomicNoteEntity: AtomicNoteEntity
     ) {
         this.smartBookPages = ArrayList<SmartBookPage>()
-        this.atomicNotes = ArrayList<AtomicNoteEntity?>()
+        this.atomicNotes = ArrayList<AtomicNoteEntity>()
 
         this.smartBook = smartBook
-        smartBookPages.add(smartBookPage!!)
+        smartBookPages.add(smartBookPage)
         atomicNotes.add(atomicNoteEntity)
     }
 
     constructor(
-        smartBook: SmartBookEntity?,
+        smartBook: SmartBookEntity,
         smartBookPages: MutableList<SmartBookPage>,
-        atomicNoteEntities: MutableList<AtomicNoteEntity?>
+        atomicNoteEntities: MutableList<AtomicNoteEntity>
     ) {
         this.smartBook = smartBook
         this.smartBookPages = smartBookPages
         this.atomicNotes = atomicNoteEntities
     }
 
-    fun insertAtomicNoteAndPage(position: Int, atomicNote: AtomicNoteEntity?, newPage: SmartBookPage?) {
+    fun insertAtomicNoteAndPage(position: Int, atomicNote: AtomicNoteEntity, newPage: SmartBookPage?) {
         atomicNotes.add(position, atomicNote)
         smartBookPages.add(position, newPage!!)
         var pageOrder = 0

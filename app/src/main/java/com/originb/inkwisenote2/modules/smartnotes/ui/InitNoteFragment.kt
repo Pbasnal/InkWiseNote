@@ -28,37 +28,35 @@ class InitNoteFragment(
         val itemView = inflater.inflate(R.layout.note_init_fragment, container, false)
 
         cardToHandwriting = itemView.findViewById<CardView>(R.id.touch_to_write)
-        cardToHandwriting!!.setOnClickListener(View.OnClickListener { view: View? -> this.createHandwrittenNote(view) })
+        cardToHandwriting!!.setOnClickListener { createHandwrittenNote(null) }
 
         cardToText = itemView.findViewById<CardView>(R.id.tap_to_text)
-        cardToText!!.setOnClickListener(View.OnClickListener { view: View? -> this.createTextNote(view) })
+        cardToText!!.setOnClickListener { createTextNote(null) }
 
         deleteNote = itemView.findViewById<ImageButton>(R.id.delete_note)
 
         // TODO: What happens if the 2nd last not was deleted while this note was visible on screen
-        if (smartNotebook.getAtomicNotes().size() <= 1) {
+        if ((smartNotebook?.atomicNotes?.size ?: 0) <= 1) {
             deleteNote!!.setVisibility(View.GONE)
         } else {
             deleteNote!!.setVisibility(View.VISIBLE)
         }
 
-        deleteNote!!.setOnClickListener(View.OnClickListener { v: View? -> confirmDeleteNote() }
-        )
+        deleteNote!!.setOnClickListener { confirmDeleteNote() }
 
         return itemView
     }
 
     private fun createTextNote(view: View?) {
-        if (atomicNote == null) return
-        adapter.updateNoteType(atomicNote, NoteType.TEXT_NOTE.toString())
+        val note = atomicNote ?: return
+        adapter.updateNoteType(note, NoteType.TEXT_NOTE.toString())
     }
 
     private fun createHandwrittenNote(view: View?) {
-        if (atomicNote == null) return
-        adapter.updateNoteType(atomicNote, NoteType.HANDWRITTEN_PNG.toString())
+        val note = atomicNote ?: return
+        adapter.updateNoteType(note, NoteType.HANDWRITTEN_PNG.toString())
     }
 
-    override fun getNoteHolderData(): NoteHolderData {
-        return NoteHolderData.Companion.initNoteData()
-    }
+    override val noteHolderData: NoteHolderData
+        get() = NoteHolderData.initNoteData()
 }

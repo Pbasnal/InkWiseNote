@@ -14,6 +14,7 @@ import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.DateTimeUtils.msToDateTime
 import com.originb.inkwisenote2.common.Routing.HomePageActivity.openSmartHomePageAndStartFresh
 import com.originb.inkwisenote2.common.Routing.SmartNotebookActivity.openNotebookIntent
+import com.originb.inkwisenote2.common.isNullOrWhitespace
 import com.originb.inkwisenote2.modules.noterelation.data.RelatedNotesUiState
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter
@@ -49,7 +50,7 @@ class RelatedNotesActivity : AppCompatActivity() {
         })
 
         viewModel!!.noteDeletedEvent.observe(this, Observer { deleted: Boolean? ->
-            if (deleted) openSmartHomePageAndStartFresh(this)
+            if (deleted!!) openSmartHomePageAndStartFresh(this)
         })
     }
 
@@ -59,30 +60,29 @@ class RelatedNotesActivity : AppCompatActivity() {
         val cardTitle = includedCard.findViewById<TextView>(R.id.card_name)
         val deleteButton = includedCard.findViewById<ImageButton>(R.id.btn_dlt_note)
 
-        state.rootImage.noteImage!!.ifPresent(Consumer { bm: Bitmap? -> cardImage.setImageBitmap(bm) })
-        val smartBook = state.rootNotebook.getSmartBook()
+        state.rootImage?.noteImage.let { bm: Bitmap? -> cardImage.setImageBitmap(bm) }
+        val smartBook = state.rootNotebook.smartBook
 
-        val noteTitle = Optional.ofNullable<String?>(smartBook.getTitle())
-            .filter(Predicate { title: String? -> !title!!.trim { it <= ' ' }.isEmpty() })
-            .orElse(msToDateTime(smartBook.getLastModifiedTimeMillis()))
+        var noteTitle = smartBook.title?.trim()
+        if (isNullOrWhitespace(noteTitle)) noteTitle = msToDateTime(smartBook.lastModifiedTimeMillis)
 
-        cardTitle.setText(noteTitle)
+        cardTitle.text = noteTitle
 
-        cardImage.setOnClickListener(View.OnClickListener { v: View? ->
+        cardImage.setOnClickListener { v: View? ->
             openNotebookIntent(
                 this,
-                getFilesDir().getPath(),
-                smartBook.getBookId()
+                filesDir.path,
+                smartBook.bookId
             )
-        })
+        }
 
-        deleteButton.setOnClickListener(View.OnClickListener { v: View? -> viewModel!!.deleteRootNote(state.rootNotebook) })
+        deleteButton.setOnClickListener { v: View? -> viewModel!!.deleteRootNote(state.rootNotebook) }
     }
 
     private fun setupRecyclerView() {
         recyclerView = findViewById<RecyclerView>(R.id.related_note_card_grid_view)
         recyclerView!!.setLayoutManager(GridLayoutManager(this, 2))
-        smartNoteGridAdapter = SmartNoteGridAdapter(this, ArrayList<SmartNotebook?>(), false)
+        smartNoteGridAdapter = SmartNoteGridAdapter(this, ArrayList<SmartNotebook>(), false)
         recyclerView!!.setAdapter(smartNoteGridAdapter)
     }
 }

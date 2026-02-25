@@ -25,7 +25,7 @@ object ThumbnailGenerator {
         strokes: MutableList<Stroke>?,
         targetWidth: Int = DEFAULT_THUMBNAIL_WIDTH,
         targetHeight: Int = DEFAULT_THUMBNAIL_HEIGHT
-    ): Bitmap? {
+    ): Bitmap {
         if (strokes == null || strokes.isEmpty()) {
             // If no strokes, return a blank thumbnail
             return createBlankThumbnail(targetWidth, targetHeight)
@@ -68,12 +68,12 @@ object ThumbnailGenerator {
         var hasPoints = false
 
         for (stroke in strokes) {
-            val points = stroke.getPoints()
-            if (points != null && !points.isEmpty()) {
+            val points = stroke.points
+            if (!points.isEmpty()) {
                 hasPoints = true
                 for (point in points) {
-                    val x = point.getX()
-                    val y = point.getY()
+                    val x = point.x
+                    val y = point.y
 
                     minX = min(minX, x)
                     minY = min(minY, y)
@@ -137,7 +137,7 @@ object ThumbnailGenerator {
         return bounds
     }
 
-    private fun createCroppedBitmap(fullBitmap: Bitmap?, strokes: MutableList<Stroke>, bounds: RectF): Bitmap? {
+    private fun createCroppedBitmap(fullBitmap: Bitmap, strokes: MutableList<Stroke>, bounds: RectF): Bitmap {
         val width = bounds.width().toInt()
         val height = bounds.height().toInt()
 
@@ -147,8 +147,8 @@ object ThumbnailGenerator {
 
 
         // Create a bitmap for the cropped area
-        val croppedBitmap: Bitmap? = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(croppedBitmap!!)
+        val croppedBitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(croppedBitmap)
 
 
         // Draw with the right offset
@@ -160,7 +160,7 @@ object ThumbnailGenerator {
 
 
         // If we have a full bitmap, draw the cropped portion
-        if (fullBitmap != null && !fullBitmap.isRecycled()) {
+        if (!fullBitmap.isRecycled) {
             canvas.drawBitmap(fullBitmap, 0f, 0f, null)
         } else {
             // Otherwise, redraw the strokes directly
@@ -178,23 +178,23 @@ object ThumbnailGenerator {
      */
     private fun drawStrokesOnCanvas(canvas: Canvas, strokes: MutableList<Stroke>) {
         for (stroke in strokes) {
-            val points = stroke.getPoints()
-            if (points != null && points.size > 0) {
+            val points = stroke.points
+            if (points.isNotEmpty()) {
                 val paint = Paint()
-                paint.setColor(stroke.getColor())
-                paint.setStrokeWidth(stroke.getWidth())
-                paint.setStyle(Paint.Style.STROKE)
-                paint.setStrokeCap(Paint.Cap.ROUND)
-                paint.setStrokeJoin(Paint.Join.ROUND)
-                paint.setAntiAlias(true)
+                paint.setColor(stroke.color)
+                paint.strokeWidth = stroke.width
+                paint.style = Paint.Style.STROKE
+                paint.strokeCap = Paint.Cap.ROUND
+                paint.strokeJoin = Paint.Join.ROUND
+                paint.isAntiAlias = true
 
                 val path = Path()
-                val firstPoint = points.get(0)
-                path.moveTo(firstPoint.getX(), firstPoint.getY())
+                val firstPoint = points[0]
+                path.moveTo(firstPoint.x, firstPoint.y)
 
                 for (i in 1..<points.size) {
-                    val point = points.get(i)
-                    path.lineTo(point.getX(), point.getY())
+                    val point = points[i]
+                    path.lineTo(point.x, point.y)
                 }
 
                 canvas.drawPath(path, paint)
@@ -210,8 +210,8 @@ object ThumbnailGenerator {
      * @param targetHeight Target height
      * @return Scaled bitmap
      */
-    private fun scaleBitmap(source: Bitmap?, targetWidth: Int, targetHeight: Int): Bitmap? {
-        if (source == null || source.isRecycled()) {
+    private fun scaleBitmap(source: Bitmap?, targetWidth: Int, targetHeight: Int): Bitmap {
+        if (source == null || source.isRecycled) {
             return createBlankThumbnail(targetWidth, targetHeight)
         }
 
@@ -240,8 +240,8 @@ object ThumbnailGenerator {
 
         // If the scaled bitmap doesn't match target dimensions exactly, center it in a new bitmap
         if (scaledWidth != targetWidth || scaledHeight != targetHeight) {
-            val finalBitmap: Bitmap? = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(finalBitmap!!)
+            val finalBitmap: Bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(finalBitmap)
             canvas.drawColor(Color.WHITE)
 
 
@@ -266,9 +266,9 @@ object ThumbnailGenerator {
      * @param height Height of the thumbnail
      * @return A blank (white) bitmap
      */
-    private fun createBlankThumbnail(width: Int, height: Int): Bitmap? {
-        val bitmap: Bitmap? = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap!!)
+    private fun createBlankThumbnail(width: Int, height: Int): Bitmap {
+        val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         return bitmap
     }

@@ -45,16 +45,16 @@ class NoteSearchActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         val recyclerView = findViewById<RecyclerView>(R.id.note_search_card_grid_view)
-        smartNoteGridAdapter = SmartNoteGridAdapter(this, ArrayList<SmartNotebook?>(), false)
+        smartNoteGridAdapter = SmartNoteGridAdapter(this, ArrayList<SmartNotebook>(), false)
         recyclerView.setAdapter(smartNoteGridAdapter)
         recyclerView.setHasFixedSize(true)
     }
 
     private fun observeViewModel() {
         // Update list when search results change
-        viewModel!!.searchResults.observe(this, Observer { results: MutableList<SmartNotebook?>? ->
-            smartNoteGridAdapter!!.setSmartNotebooks(results)
-        })
+        viewModel!!.searchResults.observe(this) { results: MutableList<SmartNotebook> ->
+            smartNoteGridAdapter!!.setSmartNotebooks(results.toMutableList())
+        }
 
         // Show toast when the ViewModel sends a message
         viewModel!!.toastMessage.observe(this, Observer { message: String? ->

@@ -5,7 +5,7 @@ import androidx.room.*
 @Dao
 interface SmartBooksDao {
     @Query("SELECT * FROM smart_books WHERE book_id = :bookId")
-    fun getSmartbook(bookId: Long): SmartBookEntity
+    fun getSmartbook(bookId: Long): SmartBookEntity?
 
     @Query("SELECT * FROM smart_books WHERE title like :title")
     fun getSmartbooksWithMatchingTitle(title: String): MutableList<SmartBookEntity>

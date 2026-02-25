@@ -23,7 +23,7 @@ class TextNoteListener(private val textNotesDao: TextNotesDao) {
     fun onNotebookDelete(notebookToDelete: NotebookDeleted) {
         val smartNotebook = notebookToDelete.smartNotebook
         smartNotebook!!.atomicNotes.forEach(Consumer { note: AtomicNoteEntity? ->
-            textNotesDao.deleteTextNote(note!!.getNoteId())
+            textNotesDao.deleteTextNote(note!!.noteId)
             deleteNoteMarkdown(note)
         }
         )
@@ -32,10 +32,10 @@ class TextNoteListener(private val textNotesDao: TextNotesDao) {
 
     @Subscribe(threadMode = ThreadMode.BACKGROUND)
     fun onNoteDelete(noteDeleted: NoteDeleted) {
-        textNotesDao.deleteTextNote(noteDeleted.atomicNote!!.getNoteId())
+        textNotesDao.deleteTextNote(noteDeleted.atomicNote!!.noteId)
         deleteNoteMarkdown(noteDeleted.atomicNote!!)
 
-        val notebookDir = File(noteDeleted.atomicNote!!.getFilepath())
+        val notebookDir = File(noteDeleted.atomicNote!!.filepath!!)
         if (notebookDir.exists() && notebookDir.isDirectory()) {
             // Delete all files in the directory
             val files = notebookDir.listFiles()
@@ -46,8 +46,8 @@ class TextNoteListener(private val textNotesDao: TextNotesDao) {
     }
 
     fun deleteNoteMarkdown(atomicNote: AtomicNoteEntity) {
-        if (Strings.isEmptyOrWhitespace(atomicNote.getFilepath())) return
-        val path = Paths.get(atomicNote.getFilepath(), atomicNote.getFilename())
+        if (Strings.isEmptyOrWhitespace(atomicNote.filepath)) return
+        val path = Paths.get(atomicNote.filepath!!, atomicNote.filename!!)
         val pathWithExtension = Paths.get(path.toString() + ".md")
         try {
             Files.delete(pathWithExtension)

@@ -11,7 +11,7 @@ interface QueriesDao {
     fun hasAnyQuery(): MutableList<QueryEntity>
 
     @Query("SELECT * FROM queries WHERE name = :query_name")
-    fun getQuery(query_name: String): QueryEntity
+    fun getQuery(query_name: String): QueryEntity?
 
     @Insert
     fun insertQuery(query: QueryEntity): Long

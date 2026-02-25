@@ -6,15 +6,15 @@ import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.Logger
 import com.originb.inkwisenote2.functionalUtils.Try
 import java.io.InputStreamReader
-import java.util.*
+
 import java.util.concurrent.Callable
 
 class ConfigReader private constructor(context: Context) {
-    private var appConfig: AppConfig? = null
+    private var appConfig: AppConfig
 
     private val om = ObjectMapper()
 
-    fun getAppConfig(): AppConfig? = appConfig
+    fun getAppConfig(): AppConfig = appConfig
 
     init {
         try {
@@ -28,9 +28,9 @@ class ConfigReader private constructor(context: Context) {
                 var appSecrets: AppSecrets = AppSecrets.loadFromEnv()
                 if (!appSecrets.isAzureOcrEnabled) {
                     inputStream = context.resources.openRawResource(R.raw.app)
-                    AppSecrets.loadFromInputStream(inputStream)?.let { appSecrets = it }
+                    AppSecrets.loadFromInputStream(inputStream).let { appSecrets = it }
                 }
-                appConfig!!.appSecrets = appSecrets
+                appConfig.appSecrets = appSecrets
             }
             inputStream.close()
         } catch (e: Exception) {
@@ -40,19 +40,20 @@ class ConfigReader private constructor(context: Context) {
     }
 
     fun isFeatureEnabled(featureName: Feature?): Boolean {
-        val features = appConfig!!.enabledFeatures ?: return false
+        val features = appConfig.enabledFeatures
         return features.contains(featureName)
     }
 
-    fun <T> runIfFeatureEnabled(feature: Feature, callable: Callable<T>): Optional<T> {
-        if (isFeatureEnabled(feature) && callable != null) {
+    @Suppress("UNCHECKED_CAST")
+    fun <T> runIfFeatureEnabled(feature: Feature, callable: Callable<T?>): T? {
+        if (isFeatureEnabled(feature)) {
             return Try.to(callable, Logger(feature.featureName)).get()
         }
-        return Optional.empty()
+        return null
     }
 
-    fun runIfFeatureEnabled(feature: Feature, runnable: Runnable?) {
-        if (isFeatureEnabled(feature) && runnable != null) {
+    fun runIfFeatureEnabled(feature: Feature, runnable: Runnable) {
+        if (isFeatureEnabled(feature) ) {
             Try.to<Any?>(runnable, Logger(feature.featureName)).get()
         }
     }
@@ -76,18 +77,18 @@ class ConfigReader private constructor(context: Context) {
             return instance!!
         }
 
-        fun setRuntimeSetting(configKey: ConfigKeys?, value: String?) {
-            getInstance().getAppConfig()!!.getRuntimeSettings()!!.put(configKey, value)
+        fun setRuntimeSetting(configKey: ConfigKeys, value: String) {
+            getInstance().getAppConfig().getRuntimeSettings()[configKey] = value
         }
 
-        fun getRuntimeSetting(configKey: ConfigKeys?, defaultValue: String?): String? {
-            return getInstance().getAppConfig()!!.getRuntimeSettings()!!.getOrDefault(configKey, defaultValue)
+        fun getRuntimeSetting(configKey: ConfigKeys, defaultValue: String): String {
+            return getInstance().getAppConfig().getRuntimeSettings().getOrDefault(configKey, defaultValue)
         }
 
         @JvmStatic
         val isAzureOcrEnabled: Boolean
             get() {
-                val appSecrets = getInstance().getAppConfig()!!.appSecrets!!
+                val appSecrets = getInstance().getAppConfig().appSecrets!!
                 return getInstance().isFeatureEnabled(Feature.AZURE_OCR) &&
                     appSecrets.isAzureOcrEnabled
             }

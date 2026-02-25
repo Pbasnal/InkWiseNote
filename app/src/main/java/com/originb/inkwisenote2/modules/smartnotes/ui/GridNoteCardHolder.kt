@@ -19,7 +19,7 @@ import com.originb.inkwisenote2.common.BitmapScale
 import com.originb.inkwisenote2.common.DateTimeUtils.msToDateTime
 import com.originb.inkwisenote2.common.Routing.RelatedNotesActivity.openRelatedNotesIntent
 import com.originb.inkwisenote2.common.Routing.SmartNotebookActivity.openNotebookIntent
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps.Companion.execute
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps
 import com.originb.inkwisenote2.modules.backgroundjobs.Events.NoteStatus
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository
 import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage
@@ -29,56 +29,35 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao
-import lombok.Getter
-import java.util.*
 import java.util.function.Consumer
-import java.util.function.Predicate
 
 class GridNoteCardHolder(
     private val smartNoteGridAdapter: SmartNoteGridAdapter, itemView: View,
     private val parentActivity: ComponentActivity,
-    handwrittenNoteRepository: HandwrittenNoteRepository,
-    textNotesDao: TextNotesDao,
-    smartNotebookRepository: SmartNotebookRepository,
-    noteRelationRepository: NoteRelationRepository
+    private val handwrittenNoteRepository: HandwrittenNoteRepository,
+    private val textNotesDao: TextNotesDao,
+    private val smartNotebookRepository: SmartNotebookRepository,
+    private val noteRelationRepository: NoteRelationRepository
 ) : RecyclerView.ViewHolder(itemView), View.OnClickListener {
-    @Getter
-    private val itemView: View?
 
-    private val noteImage: ImageView
-    private val textPreview: TextView
-    private val noteTitle: TextView
-    private val deleteBtn: ImageButton
-    private val noteStatusImg: ImageView
-    private val relationViewBtn: ImageView
+    private val noteImage: ImageView = itemView.findViewById<ImageView>(R.id.card_image)
+    private val textPreview: TextView = itemView.findViewById<TextView>(R.id.note_text_preview)
+    private val noteTitle: TextView = itemView.findViewById<TextView>(R.id.card_name)
+    private val deleteBtn: ImageButton = itemView.findViewById<ImageButton>(R.id.btn_dlt_note)
+    private val noteStatusImg: ImageView = itemView.findViewById<ImageView>(R.id.img_note_status)
+    private val relationViewBtn: ImageView = itemView.findViewById<ImageView>(R.id.btn_relation_view)
     private var rotateAnimation: Animation?
 
     private var smartNotebook: SmartNotebook? = null
-    private val handwrittenNoteRepository: HandwrittenNoteRepository
-    private val textNotesDao: TextNotesDao
-    private val smartNotebookRepository: SmartNotebookRepository
-    private val noteRelationRepository: NoteRelationRepository
 
     private var rotateAnimator: ObjectAnimator? = null
 
     init {
-        this.itemView = itemView
-        this.handwrittenNoteRepository = handwrittenNoteRepository
-        this.textNotesDao = textNotesDao
-        this.smartNotebookRepository = smartNotebookRepository
-        this.noteRelationRepository = noteRelationRepository
-
-        noteImage = itemView.findViewById<ImageView>(R.id.card_image)
-        textPreview = itemView.findViewById<TextView>(R.id.note_text_preview)
-        noteTitle = itemView.findViewById<TextView>(R.id.card_name)
-        deleteBtn = itemView.findViewById<ImageButton>(R.id.btn_dlt_note)
-        relationViewBtn = itemView.findViewById<ImageView>(R.id.btn_relation_view)
-        noteStatusImg = itemView.findViewById<ImageView>(R.id.img_note_status)
         rotateAnimation = AnimationUtils.loadAnimation(parentActivity, R.anim.anim_rotate)
 
-        noteImage.setOnClickListener(View.OnClickListener { view: View? -> onClick(itemView) })
-        textPreview.setOnClickListener(View.OnClickListener { view: View? -> onClick(itemView) })
-        deleteBtn.setOnClickListener(View.OnClickListener { view: View? -> onClickDelete() })
+        noteImage.setOnClickListener { onClick(itemView) }
+        textPreview.setOnClickListener { onClick(itemView) }
+        deleteBtn.setOnClickListener { onClickDelete() }
         relationViewBtn.setVisibility(View.GONE)
 
         initializeAnimation()
@@ -86,35 +65,34 @@ class GridNoteCardHolder(
 
     fun setNote(smartNotebook: SmartNotebook) {
         this.smartNotebook = smartNotebook
-        val noteTitle: String? = Optional.ofNullable<T?>(smartNotebook.getSmartBook().getTitle())
-            .filter(Predicate { title: T? -> !title.trim().isEmpty() })
-            .orElse(msToDateTime(smartNotebook.getSmartBook().getLastModifiedTimeMillis()))
-        this.noteTitle.setText(noteTitle)
+        val book = smartNotebook.smartBook
+        val noteTitle = book.title?.trim() ?: msToDateTime(book.lastModifiedTimeMillis)
+        this.noteTitle.text = noteTitle
 
-        val numberOfNotes: Int = smartNotebook.getAtomicNotes().size()
-        if (numberOfNotes == 0) return
-        val firstNote: AtomicNoteEntity = smartNotebook.getAtomicNotes().get(0)
+        val notes = smartNotebook.atomicNotes
+        if (notes.isEmpty()) return
+        val firstNote: AtomicNoteEntity = notes[0]
 
-        if (NoteType.TEXT_NOTE.equals(firstNote.getNoteType())) {
-            execute(
-                Runnable { textNotesDao.getTextNoteForNote(firstNote.getNoteId()) },
-                Runnable { textNote ->
-                    noteImage.setVisibility(View.GONE)
-                    textPreview.setVisibility(View.VISIBLE)
+        if (firstNote.noteType == NoteType.TEXT_NOTE.name) {
+            BackgroundOps.execute(
+                { textNotesDao.getTextNoteForNote(firstNote.noteId) },
+                { textNote ->
+                    noteImage.visibility = View.GONE
+                    textPreview.visibility = View.VISIBLE
                     if (textNote != null) {
-                        textPreview.setText(textNote.getNoteText())
+                        textPreview.text = textNote.noteText
                     }
-                })
+                }
+            )
         } else {
-            execute(
-                Runnable { handwrittenNoteRepository.getNoteImage(firstNote, BitmapScale.THUMBNAIL) },
-                Runnable { handwrittenNoteWithImage ->
-                    handwrittenNoteWithImage.noteImage.ifPresent({ bm: Bitmap? ->
-                        noteImage.setImageBitmap(
-                            bm
-                        )
-                    })
-                })
+            BackgroundOps.execute(
+                { handwrittenNoteRepository.getNoteImage(firstNote, BitmapScale.THUMBNAIL) },
+                { handwrittenNoteWithImage ->
+                    handwrittenNoteWithImage?.noteImage?.let { bm: Bitmap ->
+                        noteImage.setImageBitmap(bm)
+                    }
+                }
+            )
         }
     }
 
@@ -179,12 +157,12 @@ class GridNoteCardHolder(
             relationViewBtn.setVisibility(View.GONE)
         } else {
             relationViewBtn.setVisibility(View.VISIBLE)
-            relationViewBtn.setOnClickListener(View.OnClickListener { v: View? ->
+            relationViewBtn.setOnClickListener {
                 openRelatedNotesIntent(
                     parentActivity,
-                    smartNotebook.getSmartBook().getBookId()
+                    smartNotebook!!.smartBook.bookId
                 )
-            })
+            }
         }
         return getAdapterPosition()
     }
@@ -195,40 +173,36 @@ class GridNoteCardHolder(
             .setTitle("Delete Notebook")
             .setMessage("Are you sure you want to delete this notebook? This action cannot be undone.")
             .setPositiveButton(
-                "Delete",
-                DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int -> deleteNotebook() })
-            .setNegativeButton("Cancel", DialogInterface.OnClickListener { dialog: DialogInterface?, which: Int ->
+                "Delete"
+            ) { _: DialogInterface?, _: Int -> deleteNotebook() }
+            .setNegativeButton("Cancel") { dialog: DialogInterface?, _: Int ->
                 // User cancelled, do nothing
                 dialog!!.dismiss()
-            })
+            }
             .setIcon(android.R.drawable.ic_dialog_alert)
             .show()
     }
 
     private fun deleteNotebook() {
-        execute(Runnable {
-            smartNotebook!!.atomicNotes.forEach(Consumer { note: AtomicNoteEntity? ->
-                handwrittenNoteRepository.deleteHandwrittenNote(note!!)
-                noteRelationRepository.deleteNoteRelationData(note)
-            })
-            smartNotebookRepository.deleteSmartNotebook(smartNotebook!!)
-        })
-
-        smartNoteGridAdapter.removeSmartNotebook(getAdapterPosition())
+        val pos = adapterPosition
+        BackgroundOps.execute(
+            {
+                smartNotebook!!.atomicNotes.forEach(Consumer { note: AtomicNoteEntity? ->
+                    handwrittenNoteRepository.deleteHandwrittenNote(note!!)
+                    noteRelationRepository.deleteNoteRelationData(note)
+                })
+                smartNotebookRepository.deleteSmartNotebook(smartNotebook!!)
+            },
+            { smartNoteGridAdapter.removeSmartNotebook(pos) }
+        )
     }
 
     override fun onClick(v: View?) {
-//        if (smartNotebook.getAtomicNotes().get(0).getNoteType().equals(NoteType.TEXT_NOTE.toString())) {
-//            Routing.TextNoteActivity.openNotebookIntent(parentActivity,
-//                    parentActivity.getFilesDir().getPath(),
-//                    smartNotebook.getSmartBook().getBookId());
-//        } else {
         openNotebookIntent(
             parentActivity,
-            parentActivity.getFilesDir().getPath(),
-            smartNotebook.getSmartBook().getBookId()
+            parentActivity.filesDir.path,
+            smartNotebook!!.smartBook.bookId
         )
-        //        }
     }
 
     private fun initializeAnimation() {
@@ -239,7 +213,7 @@ class GridNoteCardHolder(
                 return
             }
             rotateAnimation!!.setRepeatCount(Animation.INFINITE)
-            rotateAnimation!!.setInterpolator(LinearInterpolator())
+            rotateAnimation!!.interpolator = LinearInterpolator()
             Log.d("GridNoteCardHolder", "Animation initialized successfully")
         } catch (e: Exception) {
             Log.e("GridNoteCardHolder", "Error initializing animation", e)

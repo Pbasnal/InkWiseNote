@@ -16,7 +16,7 @@ class FileGroupAdapter(
     private val context: Context?,
     private val fileGroupClickListener: OnFileGroupClickListener?,
     private val fileGroupDeleteListener: OnFileGroupDeleteListener?
-) : RecyclerView.Adapter<FileGroupViewHolder?>() {
+) : RecyclerView.Adapter<FileGroupViewHolder>() {
     private val fileGroups: MutableList<FileGroup> = ArrayList<FileGroup>() // Initialize here
 
     interface OnFileGroupClickListener {
@@ -33,29 +33,29 @@ class FileGroupAdapter(
     }
 
     override fun onBindViewHolder(holder: FileGroupViewHolder, position: Int) {
-        val fileGroup = fileGroups.get(position)
+        val fileGroup = fileGroups[position]
 
-        holder.groupName.setText(fileGroup.getGroupName())
+        holder.groupName.text = fileGroup.groupName ?: ""
 
-        if (fileGroup.isGroup()) {
-            holder.timestamp.setText(fileGroup.getTimestamp())
-            holder.timestamp.setVisibility(View.VISIBLE)
-            holder.fileCount.setText(fileGroup.getFileCount().toString())
-            holder.fileCount.setVisibility(View.VISIBLE)
+        if (fileGroup.isGroup) {
+            holder.timestamp.text = fileGroup.timestamp ?: ""
+            holder.timestamp.visibility = View.VISIBLE
+            holder.fileCount.text = fileGroup.fileCount.toString()
+            holder.fileCount.visibility = View.VISIBLE
         } else {
-            holder.timestamp.setVisibility(View.GONE)
-            holder.fileCount.setVisibility(View.GONE)
+            holder.timestamp.visibility = View.GONE
+            holder.fileCount.visibility = View.GONE
         }
 
-        holder.groupIcon.setImageResource(if (fileGroup.isDirectory()) R.drawable.ic_directory else R.drawable.ic_file)
+        holder.groupIcon.setImageResource(if (fileGroup.isDirectory) R.drawable.ic_directory else R.drawable.ic_file)
 
-        holder.itemView.setOnClickListener(View.OnClickListener { v: View? ->
-            if (fileGroupClickListener != null) fileGroupClickListener.onFileGroupClick(fileGroup)
-        })
+        holder.itemView.setOnClickListener {
+            fileGroupClickListener?.onFileGroupClick(fileGroup)
+        }
 
-        holder.deleteButton.setOnClickListener(View.OnClickListener { v: View? ->
-            if (fileGroupDeleteListener != null) fileGroupDeleteListener.onFileGroupDelete(fileGroup)
-        })
+        holder.deleteButton.setOnClickListener {
+            fileGroupDeleteListener?.onFileGroupDelete(fileGroup)
+        }
     }
 
     override fun getItemCount(): Int {
@@ -72,7 +72,7 @@ class FileGroupAdapter(
         diffResult.dispatchUpdatesTo(this)
     }
 
-    internal class FileGroupViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class FileGroupViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var groupIcon: ImageView
         var groupName: TextView
         var timestamp: TextView
@@ -104,16 +104,14 @@ class FileGroupAdapter(
         }
 
         override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean {
-            // Check if they are the same physical file/group (usually check ID or Path)
-            return oldList.get(oldPos).getGroupName() == newList.get(newPos).getGroupName()
+            return (oldList[oldPos].groupName ?: "") == (newList[newPos].groupName ?: "")
         }
 
         override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean {
-            // Check if the contents (like file count or timestamp) changed
-            val oldItem = oldList.get(oldPos)
-            val newItem = newList.get(newPos)
-            return oldItem.getFileCount() == newItem.getFileCount() &&
-                    oldItem.getTimestamp() == newItem.getTimestamp()
+            val oldItem = oldList[oldPos]
+            val newItem = newList[newPos]
+            return oldItem.fileCount == newItem.fileCount &&
+                    oldItem.timestamp == newItem.timestamp
         }
     }
 }

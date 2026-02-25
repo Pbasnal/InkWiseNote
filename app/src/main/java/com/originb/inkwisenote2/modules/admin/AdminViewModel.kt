@@ -39,14 +39,14 @@ class AdminViewModel(// DAOs
 
         BackgroundOps.execute<AdminUiState?>(Callable {
             when (tabName) {
-                "Term Frequencies" -> return@execute DataList(termFreqDao.allTermFrequencies, tabName)
-                "Note Text" -> return@execute DataList(ocrDao.allNoteText, tabName)
-                "Atomic Notes" -> return@execute DataList(atomicDao.allAtomicNotes, tabName)
-                "Smart Books" -> return@execute DataList(booksDao.allSmartBooks, tabName)
-                "Smart Book Pages" -> return@execute DataList(pagesDao.allSmartBookPages, tabName)
-                "Handwritten Notes" -> return@execute DataList(handNotesDao.allHandwrittenNotes, tabName)
-                "Files" -> return@execute getFilesState(currentDirectory!!)
-                else -> return@execute null
+                "Term Frequencies" -> DataList(termFreqDao.allTermFrequencies, tabName)
+                "Note Text" -> DataList(ocrDao.allNoteText, tabName)
+                "Atomic Notes" -> DataList(atomicDao.allAtomicNotes, tabName)
+                "Smart Books" -> DataList(booksDao.allSmartBooks, tabName)
+                "Smart Book Pages" -> DataList(pagesDao.allSmartBookPages, tabName)
+                "Handwritten Notes" -> DataList(handNotesDao.allHandwrittenNotes, tabName)
+                "Files" -> getFilesState(currentDirectory!!)
+                else -> null
             }
         }, Consumer { result: AdminUiState? ->
             if (result != null) _uiState.setValue(result)
@@ -58,9 +58,11 @@ class AdminViewModel(// DAOs
         val files = directory.listFiles()
         if (files != null) {
             Arrays.sort<File?>(files, Comparator { f1: File?, f2: File? ->
-                if (f1!!.isDirectory() && !f2!!.isDirectory()) return@sort -1
-                if (!f1.isDirectory() && f2!!.isDirectory()) return@sort 1
-                f1.getName().compareTo(f2!!.getName(), ignoreCase = true)
+                when {
+                    f1!!.isDirectory() && !f2!!.isDirectory() -> -1
+                    !f1.isDirectory() && f2!!.isDirectory() -> 1
+                    else -> f1.getName().compareTo(f2!!.getName(), ignoreCase = true)
+                }
             })
         }
         return FilesState(directory, if (files != null) Arrays.asList<File?>(*files) else null)

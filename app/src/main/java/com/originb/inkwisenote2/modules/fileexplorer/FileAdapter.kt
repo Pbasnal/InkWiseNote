@@ -15,7 +15,7 @@ class FileAdapter(
     private val context: Context?, private val fileItems: MutableList<FileItem>,
     private val fileClickListener: OnFileClickListener?,
     private val fileDeleteListener: OnFileDeleteListener?
-) : RecyclerView.Adapter<FileViewHolder?>() {
+) : RecyclerView.Adapter<FileViewHolder>() {
     interface OnFileClickListener {
         fun onFileClick(fileItem: FileItem?)
     }
@@ -30,12 +30,11 @@ class FileAdapter(
     }
 
     override fun onBindViewHolder(holder: FileViewHolder, position: Int) {
-        val fileItem = fileItems.get(position)
-        holder.fileName.setText(fileItem.getName())
-
+        val fileItem = fileItems[position]
+        holder.fileName.text = fileItem.name
 
         // Set appropriate icon based on whether it's a file or directory
-        if (fileItem.isDirectory()) {
+        if (fileItem.isDirectory) {
             holder.fileIcon.setImageResource(R.drawable.ic_directory)
         } else {
             holder.fileIcon.setImageResource(R.drawable.ic_file)
@@ -62,11 +61,11 @@ class FileAdapter(
 
     fun updateFiles(newFiles: MutableList<FileItem?>) {
         fileItems.clear()
-        fileItems.addAll(newFiles)
+        fileItems.addAll(newFiles.filterNotNull())
         notifyDataSetChanged()
     }
 
-    internal class FileViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class FileViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var fileIcon: ImageView
         var fileName: TextView
         var deleteButton: ImageButton

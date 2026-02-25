@@ -16,7 +16,6 @@ import com.originb.inkwisenote2.config.AppSecrets
 import com.originb.inkwisenote2.config.ConfigReader.Companion.getInstance
 import com.originb.inkwisenote2.config.ConfigReader.Companion.isAzureOcrEnabled
 import com.originb.inkwisenote2.functionalUtils.Try
-import com.originb.inkwisenote2.functionalUtils.Try.logIfError
 import com.originb.inkwisenote2.modules.backgroundjobs.WorkManagerBus.scheduleWorkForFindingRelatedNotesForBook
 import com.originb.inkwisenote2.modules.backgroundjobs.WorkManagerBus.scheduleWorkForTextProcessingForBook
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteEntity
@@ -29,16 +28,14 @@ import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao
 import com.originb.inkwisenote2.modules.ocr.data.OcrService.AnalyzeImageTask
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity
-import lombok.AllArgsConstructor
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import java.util.function.Consumer
-import java.util.function.Predicate
 
 class TextParsingWorker(
     context: Context,
@@ -52,15 +49,11 @@ class TextParsingWorker(
     private val logger = Logger("TextParsingWorker")
     private var recognizer: DigitalInkRecognizer? = null
 
-    @AllArgsConstructor
-    private inner class ParsingInput {
-        var bookId: Long = 0
-        var noteId: Long = 0
-    }
+    data class ParsingInput(var bookId: Long = 0, var noteId: Long = 0)
 
     init {
         appConfig = getInstance().getAppConfig()
-        appSecrets = appConfig.getAppSecrets()
+        appSecrets = appConfig.appSecrets
 
         initializeRecognizer()
     }
@@ -85,12 +78,12 @@ class TextParsingWorker(
 
 
             // Use CompletableFuture to wait for model download/check to complete
-            val modelReadyFuture = CompletableFuture<Boolean?>()
+            val modelReadyFuture = CompletableFuture<Boolean>()
 
 
             // Check if model is already downloaded
             modelManager.isModelDownloaded(model)
-                .addOnSuccessListener(OnSuccessListener { isDownloaded: Boolean? ->
+                .addOnSuccessListener(OnSuccessListener { isDownloaded: Boolean ->
                     if (isDownloaded) {
                         logger.debug("Model marked as downloaded, verifying...")
                         // Verify the model actually works by creating a test recognizer
@@ -140,7 +133,7 @@ class TextParsingWorker(
     private fun verifyModelActuallyWorks(
         model: DigitalInkRecognitionModel,
         modelManager: RemoteModelManager,
-        resultFuture: CompletableFuture<Boolean?>
+        resultFuture: CompletableFuture<Boolean>
     ) {
         try {
             // Create a test recognizer
@@ -185,7 +178,7 @@ class TextParsingWorker(
     private fun forceRedownloadModel(
         model: DigitalInkRecognitionModel,
         modelManager: RemoteModelManager,
-        resultFuture: CompletableFuture<Boolean?>
+        resultFuture: CompletableFuture<Boolean>
     ) {
         logger.debug("Attempting to force re-download the model")
 
@@ -216,15 +209,17 @@ class TextParsingWorker(
     }
 
     override fun doWork(): Result {
-        Try.to<T?>(Runnable {
-            val bookId = getInputData().getLong("book_id", -1)
-            val noteId = getInputData().getLong("note_id", -1)
-            ParsingInput(bookId, noteId)
-        }, logger)
-            .get()
-            .filter(Predicate { parsingInput: Predicate<in T?>? -> this.isNoteIdGreaterThan0(parsingInput) })
-            .ifPresent(Consumer { input: T? -> this.parseTextForNotebook(input) })
-
+        val result = Try.to(
+            Callable {
+                val bookId = getInputData().getLong("book_id", -1)
+                val noteId = getInputData().getLong("note_id", -1)
+                ParsingInput(bookId, noteId)
+            },
+            logger
+        ).get()
+        Optional.ofNullable(result)
+            .filter { input -> isNoteIdGreaterThan0(input) }
+            .ifPresent { input -> parseTextForNotebook(input) }
         return Result.success()
     }
 
@@ -234,10 +229,6 @@ class TextParsingWorker(
         logger.debug("Parsing text from a notebook for bookId: " + bookId + ", noteId: " + noteId)
 
         val atomicNote = atomicNotesDomain.getAtomicNote(noteId)
-        if (atomicNote == null) {
-            logger.error("Note not found for noteId: " + noteId)
-            return
-        }
 
         val handwrittenNoteWithImage = handwrittenNoteRepository.getNoteImage(atomicNote, BitmapScale.FULL_SIZE)
         val handwrittenNoteEntity = handwrittenNoteWithImage.handwrittenNoteEntity
@@ -248,7 +239,7 @@ class TextParsingWorker(
         }
 
         val noteOcrTextDb = noteOcrTextDao.readTextFromDb(atomicNote.noteId)
-        if (noteOcrTextDb != null && noteOcrTextDb.getNoteHash() == handwrittenNoteEntity.bitmapHash) {
+        if (noteOcrTextDb.noteHash == handwrittenNoteEntity.bitmapHash) {
             logger.debug("Note already has the latest OCR text, skipping")
             return
         }
@@ -275,13 +266,8 @@ class TextParsingWorker(
 
         // Save the recognized text
         try {
-            if (noteOcrTextDb == null) {
-                logger.debug("Inserting new OCR text for noteId: " + noteId)
-                noteOcrTextDao.insertTextToDb(noteOcrText)
-            } else {
-                logger.debug("Updating OCR text for noteId: " + noteId)
-                noteOcrTextDao.updateTextToDb(noteOcrText)
-            }
+            logger.debug("Updating OCR text for noteId: " + noteId)
+            noteOcrTextDao.updateTextToDb(noteOcrText)
 
             logger.debug("Successfully saved OCR text for noteId: " + noteId)
             scheduleWorkForTextProcessingForBook(getApplicationContext(), bookId, noteId)
@@ -298,15 +284,15 @@ class TextParsingWorker(
     ): NoteOcrText? {
         // Check if note has changed since last OCR
 
-        if (noteOcrTextDb != null && noteOcrTextDb.getNoteHash() == handwrittenNoteEntity.bitmapHash) {
+        if (noteOcrTextDb != null && noteOcrTextDb.noteHash == handwrittenNoteEntity.bitmapHash) {
             logger.debug("Note ocr has the latest text, skipping", handwrittenNoteEntity)
             return noteOcrTextDb
         }
 
         // Get strokes from the note
-        val strokes: MutableList<Stroke>? = handwrittenNoteRepository.getStrokes(atomicNote.noteId)
+        val strokes: MutableList<Stroke> = handwrittenNoteRepository.getStrokes(atomicNote.noteId)
 
-        if (strokes == null || strokes.isEmpty()) {
+        if (strokes.isEmpty()) {
             logger.error("No strokes found for note", handwrittenNoteEntity)
             return null
         }
@@ -314,7 +300,7 @@ class TextParsingWorker(
         // Use ML Kit to recognize text from strokes
         val recognizedText = recognizeInkText(strokes)
 
-        if (!recognizedText.isPresent()) {
+        if (recognizedText == null || handwrittenNoteEntity.bitmapHash == null) {
             logger.error("Failed to recognize text using ML Kit", handwrittenNoteEntity)
             return null
         }
@@ -322,13 +308,13 @@ class TextParsingWorker(
         // Save recognized text
         val noteOcrText = NoteOcrText(
             atomicNote.noteId,
-            handwrittenNoteEntity.bitmapHash,
-            recognizedText.get()
+            handwrittenNoteEntity.bitmapHash ?: "",
+            recognizedText
         )
         return noteOcrText
     }
 
-    private fun recognizeInkText(appStrokes: MutableList<Stroke>): Optional<String?> {
+    private fun recognizeInkText(appStrokes: MutableList<Stroke>): String? {
         // First check if recognizer is available
         if (recognizer == null) {
             logger.error("Recognizer not initialized, attempting to initialize it now")
@@ -338,7 +324,7 @@ class TextParsingWorker(
             // Check again after initialization attempt
             if (recognizer == null) {
                 logger.error("Failed to initialize recognizer, falling back to Azure OCR if available")
-                return Optional.empty<String?>()
+                return null
             }
         }
 
@@ -349,10 +335,10 @@ class TextParsingWorker(
             for (appStroke in appStrokes) {
                 val strokeBuilder = Ink.Stroke.builder()
 
-                for (appPoint in appStroke.points!!) {
+                for (appPoint in appStroke.points) {
                     strokeBuilder.addPoint(
                         Ink.Point.create(
-                            appPoint!!.x,
+                            appPoint.x,
                             appPoint.y,
                             appPoint.timestamp
                         )
@@ -371,9 +357,9 @@ class TextParsingWorker(
             recognizer!!.recognize(ink)
                 .addOnSuccessListener(OnSuccessListener { result: RecognitionResult? ->
                     var text = ""
-                    if (!result!!.getCandidates().isEmpty()) {
-                        text = result.getCandidates().get(0).getText()
-                        logger.debug("Recognition successful: " + text)
+                    if (!result!!.candidates.isEmpty()) {
+                        text = result.candidates[0].text
+                        logger.debug("Recognition successful: $text")
                     } else {
                         logger.debug("Recognition returned no candidates")
                     }
@@ -386,19 +372,19 @@ class TextParsingWorker(
 
             // Wait for result with timeout
             try {
-                return Optional.of<String?>(future.get(15, TimeUnit.SECONDS)!!)
+                return future.get(15, TimeUnit.SECONDS)
             } catch (e: TimeoutException) {
                 logger.error("Recognition timed out after 15 seconds")
-                return Optional.empty<String?>()
+                return null
             }
         } catch (e: Exception) {
             logger.error("Error during ink recognition: " + e.message)
-            return Optional.empty<String?>()
+            return null
         }
     }
 
     private fun onFailure(bookId: Long, noteId: Long): Result {
-        scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId, noteId)
+        scheduleWorkForFindingRelatedNotesForBook(applicationContext, bookId, noteId)
         return Result.failure()
     }
 
@@ -418,49 +404,46 @@ class TextParsingWorker(
         handwrittenNoteWithImage: HandwrittenNoteWithImage,
         noteOcrTextDb: NoteOcrText?
     ): NoteOcrText? {
-        val handwrittenNoteEntity = handwrittenNoteWithImage.handwrittenNoteEntity
-        val bitmapOpt: Optional<Bitmap>? = handwrittenNoteWithImage.noteImage
-        if (!bitmapOpt!!.isPresent()) {
+        val handwrittenNoteEntity = handwrittenNoteWithImage.handwrittenNoteEntity ?: return null
+        val bitmapOpt: Bitmap? = handwrittenNoteWithImage.noteImage
+        if (bitmapOpt == null) {
             logger.error("Handwritten note doesn't have image", handwrittenNoteEntity)
             return null
         }
-        val noteBitmap = bitmapOpt.get()
-        if (noteOcrTextDb != null && noteOcrTextDb.getNoteHash() == handwrittenNoteEntity!!.bitmapHash) {
+
+        if (noteOcrTextDb != null && noteOcrTextDb.noteHash == handwrittenNoteEntity.bitmapHash) {
             logger.debug("Note ocr has the latest text, skipping", handwrittenNoteEntity)
             return noteOcrTextDb
         }
 
-        val azureResultOpt = applyAzureOcr(noteBitmap)
-        if (!azureResultOpt.isPresent()) {
+        val azureResultOpt = applyAzureOcr(bitmapOpt)
+        if (azureResultOpt == null) {
             logger.error("Failed to get text using OCR", handwrittenNoteEntity)
             return null
         }
         val noteOcrText = NoteOcrText(
             atomicNote.noteId,
-            handwrittenNoteEntity!!.bitmapHash,
-            azureResultOpt.get().readResult.content
+            handwrittenNoteEntity.bitmapHash ?: "",
+            azureResultOpt.readResult?.content ?: ""
         )
         return noteOcrText
     }
 
-    private fun applyAzureOcr(bitmap: Bitmap): Optional<AzureOcrResult?> {
+    private fun applyAzureOcr(bitmap: Bitmap): AzureOcrResult? {
         logger.debug("got bitmap")
-        val ocrResult: Optional<AzureOcrResult?> = Try.to<T?>(Runnable {
-            val byteArrayOutputStream = ByteArrayOutputStream()
-            // Compress the bitmap into the ByteArrayOutputStream
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-
-            // Convert the ByteArrayOutputStream to an InputStream
-            val byteArray = byteArrayOutputStream.toByteArray()
-            val imageStream: InputStream = ByteArrayInputStream(byteArray)
-            val imageTask = AnalyzeImageTask(appSecrets)
-            val azureOcrResult = imageTask.runOcr(imageStream)
-
-            logger.debug("Ocr result: " + azureOcrResult)
-            azureOcrResult
-        }, Logger("TextParsingJob"))
-            .logIfError("Failed to convert handwriting to text")
-            .get()
-        return ocrResult
+        val azureOcrResult = Try.to(
+            Callable {
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
+                val byteArray = byteArrayOutputStream.toByteArray()
+                val imageStream: InputStream = ByteArrayInputStream(byteArray)
+                val imageTask = AnalyzeImageTask(appSecrets)
+                val result = imageTask.runOcr(imageStream)
+                logger.debug("Ocr result: $result")
+                result
+            },
+            Logger("TextParsingJob")
+        ).logIfError("Failed to convert handwriting to text").get()
+        return azureOcrResult
     }
 }

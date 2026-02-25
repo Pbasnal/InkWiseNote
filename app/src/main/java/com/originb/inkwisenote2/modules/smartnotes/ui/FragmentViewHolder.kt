@@ -18,7 +18,7 @@ import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao
 import org.koin.core.parameter.parametersOf
 import org.koin.java.KoinJavaComponent.get
 
-internal class FragmentViewHolder(
+class FragmentViewHolder(
     var adapter: SmartNotebookAdapter?, itemView: View,
     parentActivity: AppCompatActivity,
     var handwrittenNoteRepository: HandwrittenNoteRepository?,
@@ -28,25 +28,20 @@ internal class FragmentViewHolder(
 ) : RecyclerView.ViewHolder(itemView) {
     private val logger = Logger(FragmentViewHolder::class.java.getName())
 
-    var fragmentContainer: FrameLayout
+    var fragmentContainer: FrameLayout = itemView.findViewById<FrameLayout>(R.id.note_fragment_container)
     var noteFragment: NoteFragment? = null
-    var fragmentManager: FragmentManager
-
-    init {
-        fragmentContainer = itemView.findViewById<FrameLayout>(R.id.note_fragment_container)
-        this.fragmentManager = parentActivity.getSupportFragmentManager()
-    }
+    var fragmentManager: FragmentManager = parentActivity.supportFragmentManager
 
     fun setNote(notebook: SmartNotebook?, atomicNote: AtomicNoteEntity, position: Int) {
         if (isCorrectFragmentAttached(atomicNote)
-            && atomicNote.getNoteId() == noteFragment!!.atomicNote.getNoteId()
+            && noteFragment != null && atomicNote.noteId == noteFragment!!.atomicNote?.noteId
         ) return
 
         noteFragment = this.createFragmentByType(notebook, atomicNote, adapter)
 
-        val containerId = fragmentContainer.getId()
-        itemView.post(Runnable {
-            if (!itemView.isAttachedToWindow()) {
+        val containerId = fragmentContainer.id
+        itemView.post {
+            if (!itemView.isAttachedToWindow) {
                 logger.debug("View hasn't attached to window")
                 return@post
             }
@@ -71,18 +66,16 @@ internal class FragmentViewHolder(
             } catch (ex: Exception) {
                 logger.exception("Failed to commit fragment transaction", ex)
             }
-        })
+        }
     }
 
     private fun isCorrectFragmentAttached(atomicNote: AtomicNoteEntity): Boolean {
-        if (noteFragment == null) return false
+        val holderData = noteFragment?.noteHolderData ?: return false
 
-        val noteHolderData = noteFragment!!.getNoteHolderData()
-
-        when (noteHolderData.noteType) {
-            NoteType.TEXT_NOTE -> return NoteType.TEXT_NOTE.equals(atomicNote.getNoteType())
-            NoteType.HANDWRITTEN_PNG -> return NoteType.HANDWRITTEN_PNG.equals(atomicNote.getNoteType())
-            NoteType.NOT_SET -> return NoteType.NOT_SET.equals(atomicNote.getNoteType())
+        when (holderData.noteType) {
+            NoteType.TEXT_NOTE -> return atomicNote.noteType == NoteType.TEXT_NOTE.name
+            NoteType.HANDWRITTEN_PNG -> return atomicNote.noteType == NoteType.HANDWRITTEN_PNG.name
+            NoteType.NOT_SET -> return atomicNote.noteType == NoteType.NOT_SET.name
             else -> return false
         }
     }
@@ -92,7 +85,7 @@ internal class FragmentViewHolder(
         atomicNote: AtomicNoteEntity,
         adapter: SmartNotebookAdapter?
     ): NoteFragment? {
-        val noteType: NoteType = NoteType.Companion.fromString(atomicNote.getNoteType())
+        val noteType: NoteType = NoteType.fromString(atomicNote.noteType ?: "not_set")
         when (noteType) {
             NoteType.TEXT_NOTE -> return get<NoteFragment?>(TextNoteFragment::class.java, null) {
                 parametersOf(
@@ -116,6 +109,6 @@ internal class FragmentViewHolder(
         }
     }
 
-    val noteHolderData: NoteHolderData
-        get() = noteFragment!!.getNoteHolderData()
+    val noteHolderData: NoteHolderData?
+        get() = noteFragment?.noteHolderData
 }

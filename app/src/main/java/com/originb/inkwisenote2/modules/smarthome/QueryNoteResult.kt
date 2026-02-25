@@ -9,12 +9,12 @@ import lombok.Setter
 @Getter
 @Setter
 class QueryNoteResult(atomicNoteEntity: AtomicNoteEntity) {
-    private val noteId: Long
-    private val noteImage: Bitmap? = null
-    private val queryWord: String? = null
-    private val noteText: String? = null
-    private var lastModifiedMillis: Long = 0
-    private val noteType: NoteType? = null
+    val noteId: Long
+    var noteImage: Bitmap? = null
+    var queryWord: String? = null
+    var noteText: String? = null
+    var lastModifiedMillis: Long = 0
+    var noteType: NoteType? = null
 
     init {
         noteId = atomicNoteEntity.noteId

@@ -5,5 +5,5 @@ import java.util.*
 
 class HandwrittenNoteWithImage {
     var handwrittenNoteEntity: HandwrittenNoteEntity? = null
-    var noteImage: Optional<Bitmap?>? = null
+    var noteImage: Bitmap? = null
 }

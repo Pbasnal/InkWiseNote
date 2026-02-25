@@ -6,7 +6,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.google.android.gms.common.util.CollectionUtils
 import com.originb.inkwisenote2.common.Logger
-import com.originb.inkwisenote2.common.Strings.isNumber
+import com.originb.inkwisenote2.common.isNumber
 import com.originb.inkwisenote2.functionalUtils.Either
 import com.originb.inkwisenote2.functionalUtils.Function2
 import com.originb.inkwisenote2.functionalUtils.Try
@@ -16,16 +16,12 @@ import com.originb.inkwisenote2.modules.noterelation.data.TextProcessingStage
 import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
-import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteType
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao
-import lombok.AllArgsConstructor
-import lombok.Getter
 import org.greenrobot.eventbus.EventBus
 import java.util.*
-import java.util.function.Consumer
-import java.util.function.Predicate
+import java.util.concurrent.Callable
 
 class TextProcessingWorker(
     context: Context,
@@ -33,42 +29,34 @@ class TextProcessingWorker(
     private val noteTfIdfLogic: NoteTfIdfLogic,
     private val noteOcrTextDao: NoteOcrTextsDao,
     private val textNotesDao: TextNotesDao,
-    private val atomicNotesDomain: AtomicNotesDomain,
-    private val smartNotebookRepository: SmartNotebookRepository
+    private val atomicNotesDomain: AtomicNotesDomain
 ) : Worker(context, workerParams) {
     private val logger = Logger("TextProcessingWorker")
 
-    @AllArgsConstructor
-    private inner class ProcessingInput {
-        var bookId: Long = 0
-        var noteId: Long = 0
-    }
+    private data class ProcessingInput(var bookId: Long = 0, var noteId: Long = 0)
 
     override fun doWork(): Result {
-        Try.to<T?>(Runnable {
-            val bookId = getInputData().getLong("book_id", -1)
-            val noteId = getInputData().getLong("note_id", -1)
-            ProcessingInput(bookId, noteId)
-        }, logger)
-            .get()
-            .filter(Predicate { processingInput: Predicate<in T?>? -> this.isNoteIdGreaterThan0(processingInput) })
-            .ifPresent(Consumer { processingInput: T? -> this.processTextForNotebook(processingInput) })
-
+        val result = Try.to(
+            Callable {
+                val bookId = getInputData().getLong("book_id", -1)
+                val noteId = getInputData().getLong("note_id", -1)
+                ProcessingInput(bookId, noteId)
+            },
+            logger
+        ).get()
+        Optional.ofNullable(result)
+            .filter { input -> isNoteIdGreaterThan0(input) }
+            .ifPresent { input -> processTextForNotebook(input) }
         return Result.success()
     }
 
     private fun processTextForNotebook(processingInput: ProcessingInput) {
         val bookId = processingInput.bookId
         val noteId = processingInput.noteId
-        logger.debug("Processing text of book (new flow). noteId: " + noteId)
-        val smartBookOpt = smartNotebookRepository.getSmartNotebooks(bookId)
-        if (!smartBookOpt.isPresent()) return
-        val smartNotebook = smartBookOpt.get()
-
+        logger.debug("Processing text of book (new flow). noteId: $noteId")
         val atomicNote = atomicNotesDomain.getAtomicNote(noteId)
 
-        //        logger.debug("Notebook bookId: " + bookId + " contains number of notes: " + smartNotebook.getAtomicNotes().size());
-//        for (AtomicNoteEntity atomicNote : smartNotebook.getAtomicNotes()) {
+
         val text: String?
         if (NoteType.HANDWRITTEN_PNG.toString() == atomicNote.noteType) {
             text = getHandwrittenNoteText(atomicNote)
@@ -77,9 +65,8 @@ class TextProcessingWorker(
         }
         processTextForHandwrittenNote(atomicNote, text)
 
-        //        }
         EventBus.getDefault().post(NoteStatus(bookId, TextProcessingStage.TOKENIZATION))
-        scheduleWorkForFindingRelatedNotesForBook(getApplicationContext(), bookId, noteId)
+        scheduleWorkForFindingRelatedNotesForBook(applicationContext, bookId, noteId)
     }
 
     private fun getTextNoteText(bookId: Long): String? {
@@ -87,7 +74,7 @@ class TextProcessingWorker(
         return textNoteEntity.noteText
     }
 
-    private fun getHandwrittenNoteText(atomicNote: AtomicNoteEntity): String? {
+    private fun getHandwrittenNoteText(atomicNote: AtomicNoteEntity): String {
         val noteOcrTexts = noteOcrTextDao.readTextFromDb(atomicNote.noteId)
         logger.debug("Ocr text of note: " + atomicNote.noteId, noteOcrTexts)
 
@@ -96,10 +83,10 @@ class TextProcessingWorker(
 
     private fun processTextForHandwrittenNote(atomicNote: AtomicNoteEntity, text: String?) {
         val eitherTerms: Either<Exception?, DocumentTerms?> = handleException<Long?, String?, DocumentTerms?>(
-            Function2 { noteId: Long?, text: String? -> this.extractTermsFromNote(noteId!!, text) },
+            { noteId: Long?, text: String? -> this.extractTermsFromNote(noteId!!, text) },
             atomicNote.noteId, text
         )
-        handleException<Long?, DocumentTerms?, Long?>(Function2 { noteId: Long?, documentTerms: DocumentTerms? ->
+        handleException<Long?, DocumentTerms?, Long?>({ noteId: Long?, documentTerms: DocumentTerms? ->
             this.createBiRelationalGraph(
                 noteId!!,
                 documentTerms!!
@@ -118,16 +105,17 @@ class TextProcessingWorker(
         return true
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun <A, B, R> handleException(
         function: Function2<A?, B?, R?>,
         input1: A?,
         input2: B?
     ): Either<Exception?, R?> {
-        try {
-            return Either.result(function.apply(input1, input2))
+        return try {
+            Either.result(function.apply(input1, input2)) as Either<Exception?, R?>
         } catch (ex: Exception) {
             Log.e("TextProcessingJob", "failed to process", ex)
-            return Either.error(ex)
+            Either.error(ex) as Either<Exception?, R?>
         }
     }
 
@@ -149,12 +137,12 @@ class TextProcessingWorker(
 
         // Step 3: Split the text into terms by whitespace
         val terms = text.split("\\s+".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        documentTerms.terms = ArrayList<String?>()
+        documentTerms.terms = ArrayList<String>()
         for (term in terms) {
             if (term.isEmpty()) continue
             if (isNumber(term)) continue
 
-            documentTerms.terms!!.add(term)
+            documentTerms.terms.add(term)
         }
         logger.debug("Extracted document terms", documentTerms)
         return documentTerms
@@ -162,24 +150,21 @@ class TextProcessingWorker(
 
     private fun createBiRelationalGraph(noteId: Long, documentTerms: DocumentTerms): Long? {
         if (Objects.isNull(documentTerms)) {
-            logger.debug("empty document terms, skipping: " + noteId)
+            logger.debug("empty document terms, skipping: $noteId")
             return null
         }
         if (CollectionUtils.isEmpty(documentTerms.terms)) {
-            logger.debug("terms list is empty, skipping: " + noteId)
+            logger.debug("terms list is empty, skipping: $noteId")
             return documentTerms.documentId
         }
-        noteTfIdfLogic.addOrUpdateNote(
-            documentTerms.documentId,
-            documentTerms.terms
-        )
-
-        return documentTerms.documentId
+        val docId = documentTerms.documentId
+        val terms = documentTerms.terms
+        noteTfIdfLogic.addOrUpdateNote(docId, terms)
+        return docId
     }
 
-    @Getter
     private class DocumentTerms {
-        var documentId: Long? = null
-        var terms: MutableList<String?>? = null
+        var documentId: Long = 0
+        var terms: MutableList<String> = mutableListOf()
     }
 }

@@ -2,22 +2,19 @@ package com.originb.inkwisenote2.modules.queries.data
 
 import android.database.sqlite.SQLiteConstraintException
 import com.google.android.gms.common.util.CollectionUtils
-import java.lang.String
-import java.util.*
-import kotlin.Boolean
 
 class QueryRepository(private val queryDao: QueriesDao) {
-    val allQueries: MutableList<QueryEntity?>?
-        get() = queryDao.getAllQueries()
+    val allQueries: MutableList<QueryEntity>
+        get() = queryDao.allQueries
 
-    fun getQueryByName(queryName: String?): QueryEntity? {
+    fun getQueryByName(queryName: String): QueryEntity? {
         return queryDao.getQuery(queryName)
     }
 
-    fun saveQuery(name: String, wordsToFind: MutableList<String?>, wordsToIgnore: MutableList<String?>) {
+    fun saveQuery(name: String, wordsToFind: MutableList<String>, wordsToIgnore: MutableList<String>) {
         val query = QueryEntity()
         fillEntityWithData(query, name, wordsToFind, wordsToIgnore)
-        query.setCreatedTimeMillis(System.currentTimeMillis())
+        query.createdTimeMillis = System.currentTimeMillis()
 
         try {
             queryDao.insertQuery(query)
@@ -35,48 +32,38 @@ class QueryRepository(private val queryDao: QueriesDao) {
     fun fillEntityWithData(
         query: QueryEntity,
         name: String,
-        wordsToFind: MutableList<String?>,
-        wordsToIgnore: MutableList<String?>
+        wordsToFind: MutableList<String>,
+        wordsToIgnore: MutableList<String>
     ): QueryEntity {
-        query.setName(name)
-        query.setWordsToFind(String.join(",", wordsToFind))
-        query.setWordsToIgnore(String.join(",", wordsToIgnore))
+        query.name = name
+        query.wordsToFind = wordsToFind.joinToString(",")
+        query.wordsToIgnore = wordsToIgnore.joinToString(",")
         return query
     }
 
     fun updateQuery(
         query: QueryEntity,
-        wordsToFind: MutableList<kotlin.String?>,
-        wordsToIgnore: MutableList<kotlin.String?>
+        wordsToFind: MutableList<String>,
+        wordsToIgnore: MutableList<String>
     ) {
-        query.setWordsToFind(String.join(",", wordsToFind))
-        query.setWordsToIgnore(String.join(",", wordsToIgnore))
+        query.wordsToFind = wordsToFind.joinToString(",")
+        query.wordsToIgnore = wordsToIgnore.joinToString(",")
         queryDao.updateQuery(query)
     }
 
     fun deleteQuery(query: QueryEntity?) {
-        queryDao.deleteQuery(query)
+        query?.let { queryDao.deleteQuery(it) }
     }
 
-    fun getWordsToFind(query: QueryEntity): MutableList<kotlin.String?> {
-        if (query.getWordsToFind() == null || query.getWordsToFind().isEmpty()) {
-            return ArrayList<kotlin.String?>()
-        }
-        return ArrayList<kotlin.String?>(
-            Arrays.asList<kotlin.String?>(
-                *query.getWordsToFind().split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            )
-        )
+    fun getWordsToFind(query: QueryEntity): MutableList<String> {
+        val words = query.wordsToFind
+        if (words.isNullOrEmpty()) return mutableListOf()
+        return words.split(",").dropLastWhile { it.isEmpty() }.toMutableList()
     }
 
-    fun getWordsToIgnore(query: QueryEntity): MutableList<kotlin.String?> {
-        if (query.getWordsToIgnore() == null || query.getWordsToIgnore().isEmpty()) {
-            return ArrayList<kotlin.String?>()
-        }
-        return ArrayList<kotlin.String?>(
-            Arrays.asList<kotlin.String?>(
-                *query.getWordsToIgnore().split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-            )
-        )
+    fun getWordsToIgnore(query: QueryEntity): MutableList<String> {
+        val words = query.wordsToIgnore
+        if (words.isNullOrEmpty()) return mutableListOf()
+        return words.split(",").dropLastWhile { it.isEmpty() }.toMutableList()
     }
 }

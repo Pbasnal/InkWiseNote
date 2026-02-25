@@ -56,13 +56,12 @@ object OcrService {
                 return null
             }
 
-            return to<Any?>(
-                Runnable { runOcr(params[0]!!) },
+            return to<AzureOcrResult?>(
+                { runOcr(params[0]!!) },
                 Logger("Azure Ocr Service")
             )
                 .logIfError("Error running OCR")
                 .get()
-                .orElseGet(null)
         }
 
         @Throws(IOException::class)
@@ -71,7 +70,7 @@ object OcrService {
             imageStream.read(imageBytes)
 
             val url =
-                URL(VISION_ENDPOINT + "/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=read&language=en")
+                URL("$VISION_ENDPOINT/computervision/imageanalysis:analyze?api-version=2023-02-01-preview&features=read&language=en")
             val connection: HttpURLConnection = url.openConnection() as HttpsURLConnection
             connection.setRequestMethod("POST")
             connection.setRequestProperty("Ocp-Apim-Subscription-Key", VISION_KEY)
@@ -92,14 +91,13 @@ object OcrService {
                     return om.readValue<AzureOcrResult?>(response.toString(), AzureOcrResult::class.java)
                 }
             } else {
-                throw RuntimeException("Error response code: " + responseCode)
+                throw RuntimeException("Error response code: $responseCode")
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun onPostExecute(result: AzureOcrResult?) {
-            if (callback != null) {
-                callback.onResult(result)
-            }
+            callback?.onResult(result)
         }
     }
 

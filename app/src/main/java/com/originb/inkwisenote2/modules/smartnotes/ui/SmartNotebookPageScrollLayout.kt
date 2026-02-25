@@ -2,11 +2,12 @@ package com.originb.inkwisenote2.modules.smartnotes.ui
 
 import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
-import lombok.Setter
-
 class SmartNotebookPageScrollLayout(context: Context?) : LinearLayoutManager(context, HORIZONTAL, false) {
-    @Setter
-    private val scrollRequested = false
+    private var scrollRequested = false
+
+    fun setScrollRequested(requested: Boolean) {
+        scrollRequested = requested
+    }
 
     override fun canScrollVertically(): Boolean {
         return false

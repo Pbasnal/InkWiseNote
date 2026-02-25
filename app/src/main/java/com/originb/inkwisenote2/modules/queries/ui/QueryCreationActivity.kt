@@ -74,9 +74,9 @@ class QueryCreationActivity : AppCompatActivity() {
     }
 
     private fun setupObservers() {
-        viewModel!!.onWordsToFindChange(this, Observer { words: MutableList<String?>? ->
+        viewModel!!.onWordsToFindChange(this) { words: MutableList<String> ->
             wordsToFindContainer!!.removeAllViews()
-            for (word in words!!) {
+            for (word in words) {
                 val chip = createWordChip(word)
                 chip.setOnCloseIconClickListener(View.OnClickListener { v: View? ->
                     viewModel!!.removeWordToFind(word)
@@ -84,11 +84,11 @@ class QueryCreationActivity : AppCompatActivity() {
                 })
                 wordsToFindContainer!!.addView(chip)
             }
-        })
+        }
 
-        viewModel!!.onWordsToIgnoreChange(this, Observer { words: MutableList<String?>? ->
+        viewModel!!.onWordsToIgnoreChange(this, { words: MutableList<String> ->
             wordsToIgnoreContainer!!.removeAllViews()
-            for (word in words!!) {
+            for (word in words) {
                 val chip = createWordChip(word)
                 chip.setOnCloseIconClickListener(View.OnClickListener { v: View? ->
                     viewModel!!.removeWordToIgnore(word)
@@ -98,15 +98,15 @@ class QueryCreationActivity : AppCompatActivity() {
             }
         })
 
-        viewModel!!.onQueryNameChange(this, Observer { name: String? ->
-            currentQueryNameTextView!!.setText(if (name != null) name else "")
-        })
+        viewModel!!.onQueryNameChange(this) { name: String? ->
+            currentQueryNameTextView!!.setText(name ?: "")
+        }
     }
 
     private fun createWordChip(word: String?): Chip {
         val chip = Chip(this)
-        chip.setText(word)
-        chip.setCloseIconVisible(true)
+        chip.text = word
+        chip.isCloseIconVisible = true
 
         return chip
     }
@@ -116,21 +116,21 @@ class QueryCreationActivity : AppCompatActivity() {
         if (queryName.isEmpty()) queryName = "untitled query"
 
         val newQueryName = queryName // needed because lambda needs final
-        viewModel!!.findQueryWithQueryName(queryName, Observer { query: QueryEntity? ->
+        viewModel!!.findQueryWithQueryName(queryName) { query: QueryEntity? ->
             if (query == null) {
                 viewModel!!.saveQuery(newQueryName)
             } else {
                 showErrorDialogMsg(
                     "Error",
-                    "Query name " + newQueryName + " already exists\nChoose a different name"
+                    "Query name $newQueryName already exists\nChoose a different name"
                 )
             }
-        })
+        }
     }
 
-    private fun showErrorDialogMsg(title: String?, message: String?) {
+    private fun showErrorDialogMsg(title: String, message: String) {
         val textView = TextView(this)
-        textView.setText(message)
+        textView.text = message
 
         MaterialAlertDialogBuilder(this)
             .setTitle(title)
@@ -148,21 +148,19 @@ class QueryCreationActivity : AppCompatActivity() {
                 // Handle regular click if needed
             }
 
-            override fun onEditClick(query: QueryEntity) {
-                viewModel!!.loadQuery(query)
+            override fun onEditClick(query: QueryEntity?) {
+                query?.let { viewModel!!.loadQuery(it) }
             }
 
             override fun onDeleteClick(query: QueryEntity?) {
-                viewModel!!.deleteQuery(query)
+                query?.let { viewModel!!.deleteQuery(it) }
             }
         })
 
-        recyclerView.setAdapter(queryListAdapter)
+        recyclerView.adapter = queryListAdapter
 
-        viewModel!!.getAllQueries().observe(this, Observer { queries: MutableMap<String?, QueryEntity?>? ->
-            queryListAdapter!!.submitList(
-                ArrayList<Any?>(queries!!.values)
-            )
+        viewModel!!.getAllQueries().observe(this, Observer { queries ->
+            queryListAdapter!!.submitList(queries?.values?.toList() ?: emptyList())
         })
     }
 }

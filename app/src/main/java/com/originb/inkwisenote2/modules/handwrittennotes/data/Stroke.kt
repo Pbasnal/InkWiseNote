@@ -8,21 +8,21 @@ import java.io.Serializable
 class Stroke : Serializable {
     var color: Int = 0
     var width: Float = 0f
-    var points: MutableList<StrokePoint?>?
+    var points: MutableList<StrokePoint>
 
     constructor() {
-        this.points = ArrayList<StrokePoint?>()
+        this.points = ArrayList<StrokePoint>()
     }
 
     constructor(color: Int, width: Float) {
         this.color = color
         this.width = width
-        this.points = ArrayList<StrokePoint?>()
+        this.points = ArrayList<StrokePoint>()
     }
 
-    fun addPoint(point: StrokePoint?) {
+    fun addPoint(point: StrokePoint) {
         if (points == null) {
-            points = ArrayList<StrokePoint?>()
+            points = ArrayList<StrokePoint>()
         }
         points!!.add(point)
     }

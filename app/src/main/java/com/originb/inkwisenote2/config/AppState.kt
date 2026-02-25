@@ -9,7 +9,6 @@ import com.originb.inkwisenote2.common.Logger
 import com.originb.inkwisenote2.functionalUtils.Try
 import com.originb.inkwisenote2.modules.noterelation.data.NoteRelation
 import java.util.concurrent.Callable
-import java.util.function.Consumer
 
 class AppState private constructor() {
     private val logger = Logger("AppState")
@@ -40,17 +39,13 @@ class AppState private constructor() {
 
         fun updateState() {
             val instance: AppState = instance!!
-            val configReaderOptional =
+            val configReader =
                 Try.to<ConfigReader?>(Callable { ConfigReader.Companion.getInstance() }, instance.logger)
                     .get()
 
-            configReaderOptional.ifPresent(Consumer { configReader: ConfigReader? ->
-                instance.loadConfiguredState(
-                    configReader
-                )
-            })
+            configReader?.let { instance.loadConfiguredState(it) }
 
-            if (!configReaderOptional.isPresent()) {
+            if (configReader == null) {
                 instance.logger.error("Failed to get configs")
             }
         }
@@ -59,15 +54,17 @@ class AppState private constructor() {
             instance!!.isAzureOcrRunning.observe(owner, observer)
         }
 
-        fun observeNoteRelationships(owner: LifecycleOwner, observer: Observer<MutableSet<NoteRelation?>?>) {
-            instance!!.liveNoteRelationshipMap.observe(owner, observer)
+        fun observeNoteRelationships(owner: LifecycleOwner, observer: Observer<MutableSet<NoteRelation>>) {
+            instance!!.liveNoteRelationshipMap.observe(owner, { res ->
+                observer.onChanged(res!!.filterNotNull().toMutableSet())
+            })
         }
+//
+//        fun updatedRelatedNotes(relatedNotes: MutableList<NoteRelation>) {
+//            updatedRelatedNotes(HashSet<NoteRelation?>(relatedNotes))
+//        }
 
-        fun updatedRelatedNotes(relatedNotes: MutableList<NoteRelation?>) {
-            updatedRelatedNotes(HashSet<NoteRelation?>(relatedNotes))
-        }
-
-        fun updatedRelatedNotes(relatedNotes: MutableSet<NoteRelation?>) {
+        fun updatedRelatedNotes(relatedNotes: MutableSet<NoteRelation>) {
             val instance: AppState = instance!!
             var noteRelationshipMap = instance.liveNoteRelationshipMap.getValue()
             if (CollectionUtils.isEmpty(noteRelationshipMap)) {

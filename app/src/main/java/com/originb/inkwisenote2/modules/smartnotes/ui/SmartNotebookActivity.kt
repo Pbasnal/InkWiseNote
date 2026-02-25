@@ -22,9 +22,9 @@ import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.DateTimeUtils.msToDateTime
 import com.originb.inkwisenote2.common.Logger
 import com.originb.inkwisenote2.common.Routing.HomePageActivity.openSmartHomePageAndStartFresh
-import com.originb.inkwisenote2.common.Strings.isNotEmpty
-import com.originb.inkwisenote2.common.Strings.isNullOrWhitespace
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps.Companion.execute
+import com.originb.inkwisenote2.common.isNotEmpty
+import com.originb.inkwisenote2.common.isNullOrWhitespace
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook
@@ -74,7 +74,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         setContentView(R.layout.activity_smart_note)
 
         // Initialize ViewModel with Koin DI
-        viewModel = getViewModel<SmartNotebookViewModel?>(this, SmartNotebookViewModel::class.java)
+        viewModel = getViewModel<SmartNotebookViewModel>(this, SmartNotebookViewModel::class.java)
 
         // Get dependencies from Koin
         handwrittenNoteRepository = get<HandwrittenNoteRepository?>(HandwrittenNoteRepository::class.java)
@@ -116,7 +116,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         recyclerView = findViewById<RecyclerView?>(R.id.smart_note_page_view)
         recyclerView!!.setOverScrollMode(View.OVER_SCROLL_NEVER)
         scrollLayout = SmartNotebookPageScrollLayout(this)
-        recyclerView!!.addOnScrollListener(SmartNotebookScrollListener(scrollLayout))
+        recyclerView!!.addOnScrollListener(SmartNotebookScrollListener(scrollLayout!!))
         recyclerView!!.setLayoutManager(scrollLayout)
 
         recyclerView!!.setOnFlingListener(null)
@@ -133,47 +133,50 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         prevButton!!.setVisibility(View.INVISIBLE)
 
         // Button click listeners
-        nextButton!!.setOnClickListener(View.OnClickListener { view: View? ->
-            val atomicNote = viewModel!!.getCurrentNote()
+        nextButton!!.setOnClickListener {
+            val atomicNote = viewModel!!.currentNote
             if (atomicNote == null) return@setOnClickListener
 
-            val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.getNoteId())
+            val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.noteId)
             if (noteData == null) return@setOnClickListener
-            execute(
-                Runnable { viewModel!!.saveCurrentNote(viewModel!!.getCurrentNote(), noteData) },
-                Runnable { viewModel!!.navigateToNextPage() })
-        })
+            BackgroundOps.execute(
+                Runnable { viewModel!!.saveCurrentNote(viewModel!!.currentNote, noteData) },
+                Runnable { viewModel!!.navigateToNextPage() }
+            )
+        }
 
-        prevButton!!.setOnClickListener(View.OnClickListener { view: View? ->
-            val atomicNote = viewModel!!.getCurrentNote()
+        prevButton!!.setOnClickListener {
+            val atomicNote = viewModel!!.currentNote
             if (atomicNote == null) return@setOnClickListener
 
-            val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.getNoteId())
+            val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.noteId)
             if (noteData == null) return@setOnClickListener
-            execute(
-                Runnable { viewModel!!.saveCurrentNote(viewModel!!.getCurrentNote(), noteData) },
-                Runnable { viewModel!!.navigateToPreviousPage() })
-        })
+            BackgroundOps.execute(
+                Runnable { viewModel!!.saveCurrentNote(viewModel!!.currentNote, noteData) },
+                Runnable { viewModel!!.navigateToPreviousPage() }
+            )
+        }
     }
 
     fun initializeNewNoteButton() {
         newNotePageBtn = findViewById<FloatingActionButton>(R.id.fab_add_note)
         newNotePageBtn!!.setImageResource(R.drawable.ic_add)
         newNotePageBtn!!.setVisibility(View.VISIBLE)
-        newNotePageBtn!!.setOnClickListener(View.OnClickListener { view: View? ->
-            val atomicNote = viewModel!!.getCurrentNote()
-            val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.getNoteId())
-            execute(
-                Runnable { viewModel!!.saveCurrentNote(viewModel!!.getCurrentNote(), noteData) },
-                Runnable { viewModel!!.addNewPage() })
-        })
+        newNotePageBtn!!.setOnClickListener {
+            val atomicNote = viewModel!!.currentNote
+            val noteData = smartNotebookAdapter!!.getNoteData(atomicNote!!.noteId)
+            BackgroundOps.execute(
+                Runnable { viewModel!!.saveCurrentNote(viewModel!!.currentNote, noteData) },
+                Runnable { viewModel!!.addNewPage() }
+            )
+        }
     }
 
     fun initializeNoteTitle() {
         noteTitleText = findViewById<EditText?>(R.id.smart_note_title)
-        noteTitleText!!.setOnClickListener(View.OnClickListener { view: View? -> noteTitleText!!.selectAll() })
+        noteTitleText!!.setOnClickListener { noteTitleText!!.selectAll() }
 
-        noteTitleText!!.setOnFocusChangeListener(OnFocusChangeListener { view: View?, hasFocus: Boolean ->
+        noteTitleText!!.setOnFocusChangeListener(OnFocusChangeListener { _: View?, hasFocus: Boolean ->
             if (hasFocus) noteTitleText!!.selectAll()
         })
 
@@ -208,13 +211,14 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         }
         backButton!!.setOnClickListener(View.OnClickListener { view: View? ->
             // Save current state before going back
-            val atomicNote = viewModel!!.getCurrentNote()
+            val atomicNote = viewModel!!.currentNote
             if (atomicNote != null) {
-                val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.getNoteId())
+                val noteData = smartNotebookAdapter!!.getNoteData(atomicNote.noteId)
                 if (noteData != null) {
-                    execute(
+                    BackgroundOps.execute(
                         Runnable { viewModel!!.saveCurrentNote(atomicNote, noteData) },
-                        Runnable { finish() })
+                        Runnable { finish() }
+                    )
                 } else {
                     finish()
                 }
@@ -249,8 +253,8 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         if (hasFocus) {
             // Check if current fragment is HandwrittenNoteFragment and hide navigation bar if needed
             if (smartNotebookAdapter != null) {
-                val currentNote = viewModel!!.getCurrentNote()
-                if (currentNote != null && "handwritten_png" == currentNote.getNoteType()) {
+                val currentNote = viewModel!!.currentNote
+                if (currentNote != null && "handwritten_png" == currentNote.noteType) {
                     hideNavigationBar()
                 }
             }
@@ -258,7 +262,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
     }
 
     fun onSmartNotebookUpdate(notebookUpdate: SmartNotebookUpdate) {
-        if (isFinishing() || isDestroyed()) {
+        if (isFinishing || isDestroyed) {
             return  // Don't proceed if activity is finishing/destroyed
         }
 
@@ -271,7 +275,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         if (smartNotebookAdapter == null) {
             smartNotebookAdapter = SmartNotebookAdapter(
                 this, notebookUpdate.smartNotebook,
-                smartNotebookRepository, handwrittenNoteRepository, textNotesDao, noteOcrTextDao
+                smartNotebookRepository!!, handwrittenNoteRepository, textNotesDao, noteOcrTextDao
             )
             if (recyclerView != null) {
                 recyclerView!!.setAdapter(smartNotebookAdapter)
@@ -280,7 +284,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
 
         if (notebookUpdate.notbookUpdateType == SmartNotebookUpdateType.NOTE_DELETED) {
             if (smartNotebookAdapter != null) {
-                smartNotebookAdapter!!.removeNoteCard(notebookUpdate.atomicNote.getNoteId())
+                smartNotebookAdapter!!.removeNoteCard(notebookUpdate.atomicNote?.noteId!!)
             }
         } else if (notebookUpdate.indexOfUpdatedNote == -1) {
             if (smartNotebookAdapter != null) {
@@ -293,7 +297,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         }
 
         // Update UI elements if available
-        val createdTime = msToDateTime(notebookUpdate.smartNotebook.smartBook!!.getLastModifiedTimeMillis())
+        val createdTime = msToDateTime(notebookUpdate.smartNotebook.smartBook.lastModifiedTimeMillis)
         if (noteCreatedTime != null) {
             noteCreatedTime!!.setText(createdTime)
         }
@@ -301,9 +305,9 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         if (noteTitleText != null) {
             val noteTitle = noteTitleText!!.getText().toString().trim { it <= ' ' }
             if (isNullOrWhitespace(noteTitle)) {
-                val smartBookName = notebookUpdate.smartNotebook.smartBook!!.getTitle()
+                val smartBookName = notebookUpdate.smartNotebook.smartBook.title
                 if (isNotEmpty(smartBookName)) {
-                    noteTitleText!!.setText(notebookUpdate.smartNotebook.smartBook!!.getTitle())
+                    noteTitleText!!.setText(notebookUpdate.smartNotebook.smartBook.title)
                     noteTitleText!!.setAlpha(1.0f)
                 }
             }
@@ -313,7 +317,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
             val allNotes = notebookUpdate.smartNotebook.atomicNotes
             var i = 0
             while (i < allNotes.size) {
-                if (noteIdToLoadOnOpen == allNotes.get(i)!!.getNoteId()) {
+                if (noteIdToLoadOnOpen == allNotes[i].noteId) {
                     break
                 }
                 i++
@@ -346,17 +350,16 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
             return  // Guard against null references
         }
 
-        recyclerView!!.postDelayed(Runnable {
-            if (isDestroyed() || isFinishing()) {
-                return@postDelayed  // Don't proceed if activity is finishing/destroyed
-            }
-            scrollLayout!!.setScrollRequested(true)
-            recyclerView!!.smoothScrollToPosition(index)
+        recyclerView!!.postDelayed({
+            if (!isDestroyed && !isFinishing) {
+                scrollLayout!!.setScrollRequested(true)
+                recyclerView!!.smoothScrollToPosition(index)
 
-            // Get current note and ensure it's not null before trying to set data
-            val currentNote = viewModel!!.getCurrentNote()
-            if (currentNote != null) {
-                smartNotebookAdapter!!.setNoteData(index, currentNote)
+                // Get current note and ensure it's not null before trying to set data
+                val currentNote = viewModel!!.currentNote
+                if (currentNote != null) {
+                    smartNotebookAdapter!!.setNoteData(index, currentNote)
+                }
             }
         }, 100)
     }
@@ -389,16 +392,15 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
 
     private fun recreateVisuals() {
         // Get current content view to be replaced
-        val rootView = findViewById<ViewGroup?>(android.R.id.content)
-        if (rootView == null) return
+        val rootView = findViewById<ViewGroup?>(android.R.id.content) ?: return
 
         // Save state of important elements
         var currentNote: AtomicNoteEntity? = null
         if (viewModel != null) {
-            currentNote = viewModel!!.getCurrentNote()
+            currentNote = viewModel!!.currentNote
         }
         var currentIndex: Int? = null
-        if (viewModel != null && viewModel!!.getCurrentPageIndexLive() != null) {
+        if (viewModel != null) {
             currentIndex = viewModel!!.getCurrentPageIndexLive().getValue()
         }
         var currentNotebook: SmartNotebook? = null
@@ -416,7 +418,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         if (currentNotebook != null) {
             smartNotebookAdapter = SmartNotebookAdapter(
                 this, currentNotebook,
-                smartNotebookRepository, handwrittenNoteRepository, textNotesDao, noteOcrTextDao
+                smartNotebookRepository!!, handwrittenNoteRepository, textNotesDao, noteOcrTextDao
             )
             recyclerView!!.setAdapter(smartNotebookAdapter)
         }
@@ -446,7 +448,7 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         val update = viewModel!!.getSmartNotebookUpdate().getValue()
         if (update != null) {
             // Set notebook to null and back to force a full refresh of all fragments
-            smartNotebookAdapter!!.setSmartNotebook(null)
+            smartNotebookAdapter!!.refreshFragments()
             smartNotebookAdapter!!.setSmartNotebook(update.smartNotebook)
 
             // Ensure we're showing the current page
@@ -517,9 +519,9 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
             val titleUpdated = !notebookNameNotChanged && viewModel!!.updateTitle(updatedTitle)
 
             if (!titleUpdated) {
-                val noteHolderData = smartNotebookAdapter!!.getNoteData(viewModel!!.getCurrentNote().getNoteId())
-                execute(Runnable {
-                    viewModel!!.saveCurrentNote(viewModel!!.getCurrentNote(), noteHolderData)
+                val noteHolderData = smartNotebookAdapter!!.getNoteData(viewModel!!.currentNote?.noteId ?: -1L)
+                BackgroundOps.execute(Runnable {
+                    viewModel!!.saveCurrentNote(viewModel!!.currentNote, noteHolderData)
                     viewModel!!.saveCurrentSmartNotebook()
                 })
             } else {
@@ -532,14 +534,14 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
                 var notesHaveNewPath = true
 
                 for (atomicNote in notebook.atomicNotes) {
-                    val noteFilePath = atomicNote!!.getFilepath()
+                    val noteFilePath = atomicNote!!.filepath
                     notesHaveNewPath = notesHaveNewPath and (newNotebookPath == noteFilePath)
                 }
 
                 if (isRenamed || !notesHaveNewPath) {
                     logger.debug("Folder renamed successfully.")
                     for (atomicNote in notebook.atomicNotes) {
-                        val noteHolderData = smartNotebookAdapter!!.getNoteData(atomicNote!!.getNoteId())
+                        val noteHolderData = smartNotebookAdapter!!.getNoteData(atomicNote.noteId)
                         viewModel!!.saveNoteInCorrectFolder(atomicNote, newNotebookPath, noteHolderData)
                     }
                 } else {
@@ -617,18 +619,16 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
 
         private fun onSmartNotebookUpdate_VirtualNotebook(smartNotebookUpdate: SmartNotebookUpdate) {
             val notebook = smartNotebookUpdate.smartNotebook
-            if (notebook != null) {
-                val bookId: Long = notebook.getSmartBook().getBookId()
-                if (bookId != -1L) {
-                    stateManager.changeState()
-                }
+            val bookId: Long = notebook.smartBook.bookId
+            if (bookId != -1L) {
+                stateManager.changeState()
             }
         }
 
         override fun saveNotebook() {
-            val atomicNote = viewModel!!.getCurrentNote()
-            val noteHolderData = smartNotebookAdapter!!.getNoteData(atomicNote.getNoteId())
-            execute(Runnable { viewModel!!.saveCurrentNote(atomicNote, noteHolderData) })
+            val atomicNote = viewModel!!.currentNote ?: return
+            val noteHolderData = smartNotebookAdapter!!.getNoteData(atomicNote.noteId)
+            BackgroundOps.execute(Runnable { viewModel!!.saveCurrentNote(atomicNote, noteHolderData) })
             // SmartNotebook is not saved
         }
 

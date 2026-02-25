@@ -9,10 +9,11 @@ import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.Logger
 import com.originb.inkwisenote2.config.ConfigReader
 import com.originb.inkwisenote2.config.ConfigReader.Companion.getInstance
-import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps.Companion.execute
+import com.originb.inkwisenote2.modules.backgroundjobs.BackgroundOps
 import com.originb.inkwisenote2.modules.handwrittennotes.PageBackgroundType
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository
 import com.originb.inkwisenote2.modules.handwrittennotes.data.PageTemplate
+import com.originb.inkwisenote2.modules.handwrittennotes.data.Stroke
 import com.originb.inkwisenote2.modules.handwrittennotes.ui.DrawingView
 import com.originb.inkwisenote2.modules.ocr.data.NoteOcrTextsDao
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook
@@ -20,6 +21,8 @@ import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
 import com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity
 import com.originb.inkwisenote2.modules.smartnotes.data.NoteHolderData
 import com.originb.inkwisenote2.modules.textnote.data.TextNotesDao
+import java.util.concurrent.Callable
+import java.util.function.Consumer
 
 class HandwrittenNoteFragment(
     smartNotebook: SmartNotebook?,
@@ -147,58 +150,53 @@ class HandwrittenNoteFragment(
     }
 
     protected fun loadNote() {
-        if (atomicNote == null) return
+        val note = atomicNote ?: return
 
         // Load strokes from markdown file
-        execute(
-            Runnable { handwrittenNoteRepository.readHandwrittenNoteMarkdown(atomicNote) },
-            Runnable { strokes ->
-                if (drawingView != null && strokes != null && !strokes.isEmpty()) {
+        BackgroundOps.execute(
+            { handwrittenNoteRepository.readHandwrittenNoteMarkdown(note) },
+            Consumer { strokes ->
+                if (drawingView != null && strokes != null && strokes.isNotEmpty()) {
                     drawingView!!.setStrokes(strokes)
                 }
             }
         )
 
         // Load the page template
-        execute(
-            Runnable { handwrittenNoteRepository.getPageTemplate(atomicNote) },
-            Runnable { pageTemplateOpt ->
-                if (pageTemplateOpt.isPresent() && drawingView != null) {
+        BackgroundOps.execute(
+            Callable { handwrittenNoteRepository.getPageTemplate(note) },
+            Consumer { pageTemplateOpt ->
+                if (pageTemplateOpt?.isPresent == true && drawingView != null) {
                     drawingView!!.pageTemplate = pageTemplateOpt.get()
-                    return@execute
+                    return@Consumer
                 }
                 // Create a new page template if none exists
-                val pageTemplate: PageTemplate? = configReader.getAppConfig().getPageTemplates()
-                    .get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name)
+                val pageTemplate: PageTemplate? = configReader.getAppConfig()
+                    ?.getPageTemplates()
+                    ?.get(PageBackgroundType.BASIC_RULED_PAGE_TEMPLATE.name)
 
-                if (drawingView != null) {
+                if (drawingView != null && pageTemplate != null) {
                     drawingView!!.pageTemplate = pageTemplate
                 }
-                execute(Runnable { handwrittenNoteRepository.saveHandwrittenNotePageTemplate(atomicNote, pageTemplate) }
-                )
+                BackgroundOps.execute {
+                    handwrittenNoteRepository.saveHandwrittenNotePageTemplate(note, pageTemplate)
+                }
             }
         )
     }
 
     private fun showDebugDialog() {
-        if (getContext() != null) {
-            val dialog = NoteDebugDialog(
-                getContext()!!, atomicNote, smartNotebook,
-                smartNotebookRepository, textNotesDao, noteOcrTextDao, handwrittenNoteRepository
-            )
-            dialog.show()
-        }
-    }
-
-    override fun getNoteHolderData(): NoteHolderData {
-        if (drawingView == null) {
-            return NoteHolderData.Companion.handWrittenNoteData(null, null)
-        }
-
-        return NoteHolderData.Companion.handWrittenNoteData(
-            drawingView!!.bitmap,
-            drawingView!!.pageTemplate,
-            drawingView!!.strokes
+        com.originb.inkwisenote2.common.showDebugDialog(
+            context, atomicNote, smartNotebook,
+            smartNotebookRepository, textNotesDao, noteOcrTextDao, handwrittenNoteRepository
         )
     }
+
+    override val noteHolderData: NoteHolderData
+        get() {
+            val view = drawingView ?: return NoteHolderData.handWrittenNoteData(null, null)
+            val strokesNullable: MutableList<Stroke?>? =
+                view.strokes.map { it as Stroke? }.toMutableList()
+            return NoteHolderData.handWrittenNoteData(view.bitmap, view.pageTemplate, strokesNullable)
+        }
 }

@@ -9,24 +9,24 @@ import java.util.*
     tableName = "note_relation",
     foreignKeys = [ForeignKey(
         entity = AtomicNoteEntity::class,
-        parentColumns = "note_id",
-        childColumns = "note_id",
-        onDelete = ForeignKey.Companion.CASCADE
+        parentColumns = ["note_id"],
+        childColumns = ["note_id"],
+        onDelete = ForeignKey.CASCADE
     ), ForeignKey(
         entity = SmartBookEntity::class,
-        parentColumns = "book_id",
-        childColumns = "book_id",
-        onDelete = ForeignKey.Companion.CASCADE
+        parentColumns = ["book_id"],
+        childColumns = ["book_id"],
+        onDelete = ForeignKey.CASCADE
     ), ForeignKey(
         entity = AtomicNoteEntity::class,
-        parentColumns = "note_id",
-        childColumns = "related_note_id",
-        onDelete = ForeignKey.Companion.CASCADE
+        parentColumns = ["note_id"],
+        childColumns = ["related_note_id"],
+        onDelete = ForeignKey.CASCADE
     ), ForeignKey(
         entity = SmartBookEntity::class,
-        parentColumns = "book_id",
-        childColumns = "related_book_id",
-        onDelete = ForeignKey.Companion.CASCADE
+        parentColumns = ["book_id"],
+        childColumns = ["related_book_id"],
+        onDelete = ForeignKey.CASCADE
     )],
     indices = [Index("note_id"), Index("book_id"), Index("related_note_id"), Index("related_book_id")]
 )

@@ -274,11 +274,11 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context, attrs)
         val strokeIterator = strokes.iterator()
         while (strokeIterator.hasNext()) {
             val stroke = strokeIterator.next()
-            val points = stroke.getPoints()
+            val points = stroke.points
 
             // Check if any point in the stroke is within eraser area
             for (point in points) {
-                if (eraserRect.contains(point.getX(), point.getY())) {
+                if (eraserRect.contains(point.x, point.y)) {
                     strokeIterator.remove()
                     strokesErased = true
                     break
@@ -321,7 +321,7 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context, attrs)
      */
     fun setEraserSize(size: Float) {
         this.eraserSize = size
-        eraserPaint.setStrokeWidth(size)
+        eraserPaint.strokeWidth = size
     }
 
     /**
@@ -337,12 +337,10 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context, attrs)
      *
      * @param loadedStrokes List of strokes to set
      */
-    fun setStrokes(loadedStrokes: MutableList<Stroke?>?) {
-        if (loadedStrokes != null) {
-            strokes = ArrayList<Stroke>(loadedStrokes)
-            redrawStrokesOnBitmap()
-            invalidate()
-        }
+    fun setStrokes(loadedStrokes: MutableList<Stroke>) {
+        strokes = ArrayList<Stroke>(loadedStrokes)
+        redrawStrokesOnBitmap()
+        invalidate()
     }
 
     /**
@@ -356,19 +354,19 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context, attrs)
         // Redraw each stroke
         for (stroke in strokes) {
             val strokePaint = Paint(paint)
-            strokePaint.setColor(stroke.getColor())
-            strokePaint.setStrokeWidth(stroke.getWidth())
+            strokePaint.setColor(stroke.color)
+            strokePaint.setStrokeWidth(stroke.width)
 
             val strokePath = Path()
-            val points = stroke.getPoints()
+            val points = stroke.points
 
-            if (points.size > 0) {
-                val firstPoint = points.get(0)
-                strokePath.moveTo(firstPoint.getX(), firstPoint.getY())
+            if (points.isNotEmpty()) {
+                val firstPoint = points[0]
+                strokePath.moveTo(firstPoint.x, firstPoint.y)
 
                 for (i in 1..<points.size) {
-                    val point = points.get(i)
-                    strokePath.lineTo(point.getX(), point.getY())
+                    val point = points[i]
+                    strokePath.lineTo(point.x, point.y)
                 }
 
                 userDrwaingCanvas.drawPath(strokePath, strokePaint)
@@ -376,16 +374,16 @@ class DrawingView(context: Context, attrs: AttributeSet?) : View(context, attrs)
         }
     }
 
-    val newPageTemplate: PageTemplate?
-        get() = ruledPageBackground.getPageTemplate()
+    val newPageTemplate: PageTemplate
+        get() = ruledPageBackground.pageTemplate
 
-    var pageTemplate: PageTemplate?
-        get() = ruledPageBackground.getPageTemplate()
+    var pageTemplate: PageTemplate
+        get() = ruledPageBackground.pageTemplate
         set(data) {
             if (Objects.isNull(data)) {
                 return
             }
-            ruledPageBackground.setPageTemplate(data)
+            ruledPageBackground.pageTemplate = data
         }
 
     companion object {

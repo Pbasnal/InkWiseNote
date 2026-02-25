@@ -97,28 +97,26 @@ class SmartHomeActivity : AppCompatActivity() {
         })
 
         val navigationView = findViewById<NavigationView>(R.id.nav_view)
-        navigationView.setNavigationItemSelectedListener(NavigationView.OnNavigationItemSelectedListener { item: MenuItem? ->
-            val itemId = item!!.getItemId()
+        navigationView.setNavigationItemSelectedListener navListener@ { item: MenuItem ->
+            val itemId = item.itemId
             if (itemId == R.id.nav_queries) {
                 drawerLayout!!.closeDrawer(GravityCompat.START)
-                // Open QueryCreationActivity
                 openQueryActivity(this)
-                return@setNavigationItemSelectedListener true
+                return@navListener true
             }
             if (itemId == R.id.admin_button) {
                 drawerLayout!!.closeDrawer(GravityCompat.START)
                 openAdminActivity(this)
-                return@setNavigationItemSelectedListener true
+                return@navListener true
             }
             if (itemId == R.id.nav_file_explorer) {
                 drawerLayout!!.closeDrawer(GravityCompat.START)
-                // Open DirectoryExplorerActivity
                 val intent = Intent(this, DirectoryExplorerActivity::class.java)
                 startActivity(intent)
-                return@setNavigationItemSelectedListener true
+                return@navListener true
             }
-            false
-        })
+            return@navListener false
+        }
     }
 
     override fun onBackPressed() {
@@ -159,27 +157,27 @@ class SmartHomeActivity : AppCompatActivity() {
                 LinearLayoutManager(activity, LinearLayoutManager.HORIZONTAL, false)
             )
 
-            smartNoteGridAdapter = SmartNoteGridAdapter(activity, ArrayList<SmartNotebook?>(), true)
+            smartNoteGridAdapter = SmartNoteGridAdapter(activity, mutableListOf<SmartNotebook>(), true)
 
             userNotebooksRecyclerView!!.setAdapter(smartNoteGridAdapter)
 
             // Observe notebooks LiveData
             smartHomePageViewModel!!.getUserNotebooks().observe(
                 activity,
-                Observer { notebooks: MutableList<SmartNotebook?>? -> this.showNotebooks(notebooks) })
+                Observer { notebooks: MutableList<SmartNotebook> -> this.showNotebooks(notebooks) })
         }
 
-        fun showNotebooks(notebooks: MutableList<SmartNotebook?>?) {
+        fun showNotebooks(notebooks: MutableList<SmartNotebook>) {
             if (CollectionUtils.isEmpty(notebooks)) {
-                createdByUserText!!.setVisibility(View.GONE)
-                createNotesPrompt!!.setVisibility(View.VISIBLE)
-                openAllNotebooksButton!!.setVisibility(View.GONE)
+                createdByUserText!!.visibility = View.GONE
+                createNotesPrompt!!.visibility = View.VISIBLE
+                openAllNotebooksButton!!.visibility = View.GONE
                 return
             }
             smartNoteGridAdapter!!.setSmartNotebooks(notebooks)
-            createdByUserText!!.setVisibility(View.VISIBLE)
-            createNotesPrompt!!.setVisibility(View.GONE)
-            openAllNotebooksButton!!.setVisibility(View.VISIBLE)
+            createdByUserText!!.visibility = View.VISIBLE
+            createNotesPrompt!!.visibility = View.GONE
+            openAllNotebooksButton!!.visibility = View.VISIBLE
         }
     }
 
@@ -214,20 +212,20 @@ class SmartHomeActivity : AppCompatActivity() {
             queriedNotebooksRecyclerView!!.setAdapter(queryResultsAdapter)
 
             smartHomePageViewModel!!.getLiveQueryResults()
-                .observe(activity, Observer { results: MutableMap<String?, MutableSet<QueryNoteResult?>?>? ->
+                .observe(activity, Observer { results: MutableMap<String, MutableSet<QueryNoteResult>> ->
                     queryResultsAdapter!!.setData(results)
                     if (isEmpty(results)) {
-                        queriedNotesText!!.setVisibility(View.GONE)
+                        queriedNotesText!!.visibility = View.GONE
                         updateCreateStandingQueryVisibility()
                     } else {
-                        queriedNotesText!!.setVisibility(View.VISIBLE)
-                        createNewStandingQueriesMsg!!.setVisibility(View.GONE)
+                        queriedNotesText!!.visibility = View.VISIBLE
+                        createNewStandingQueriesMsg!!.visibility = View.GONE
                     }
                     updateCreateStandingQueryBtnVisibility()
                 })
 
-            smartHomePageViewModel!!.getShowStandingQueryPrompt().observe(activity, Observer { show: Boolean? ->
-                this.createNewStandingQueriesMsg!!.setVisibility(if (show) View.VISIBLE else View.GONE)
+            smartHomePageViewModel!!.showStandingQueryPrompt.observe(activity, Observer { show: Boolean? ->
+                createNewStandingQueriesMsg!!.visibility = if (show == true) View.VISIBLE else View.GONE
             })
         }
 
@@ -243,18 +241,6 @@ class SmartHomeActivity : AppCompatActivity() {
 
         private fun updateCreateStandingQueryVisibility() {
             activity.smartHomePageViewModel!!.refreshDashboardState()
-            //            BackgroundOps.execute(() -> activity.smartHomePageViewModel.userHasAnyQuery(),
-//                    hasAtLeastOneQuery -> {
-//                        List<SmartNotebook> userNotebooks = activity.smartHomePageViewModel
-//                                .getUserNotebooks().getValue();
-//                        boolean hasSomeNotebooks = !CollectionUtils.isEmpty(userNotebooks);
-//                        if (!hasAtLeastOneQuery && hasSomeNotebooks) {
-//                            createNewStandingQueriesMsg.setVisibility(View.VISIBLE);
-//                        } else {
-//                            createNewStandingQueriesMsg.setVisibility(View.GONE);
-//                        }
-//                    }
-//            );
         }
     }
 }

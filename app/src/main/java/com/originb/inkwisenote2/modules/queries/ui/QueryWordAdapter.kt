@@ -23,7 +23,7 @@ class QueryWordAdapter(private val listener: OnWordClickListener) :
         holder.bind(word, listener)
     }
 
-    internal class WordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class WordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val wordText: TextView
 
         init {
@@ -36,7 +36,7 @@ class QueryWordAdapter(private val listener: OnWordClickListener) :
         }
     }
 
-    internal interface OnWordClickListener {
+    interface OnWordClickListener {
         fun onWordClick(word: String?)
     }
 

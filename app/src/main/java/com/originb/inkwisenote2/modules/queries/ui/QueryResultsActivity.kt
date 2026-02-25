@@ -33,16 +33,17 @@ class QueryResultsActivity : AppCompatActivity() {
 
         // Check if a specific query was requested
         if (getIntent().hasExtra("query_name")) {
-            initialQueryName = getIntent().getStringExtra("query_name")
+            initialQueryName = intent.getStringExtra("query_name")
         }
 
 
         // Setup toolbar
         val toolbar = findViewById<Toolbar?>(R.id.toolbar)
         setSupportActionBar(toolbar)
-        if (getSupportActionBar() != null) {
-            getSupportActionBar()!!.setDisplayHomeAsUpEnabled(true)
-            getSupportActionBar()!!.setTitle(if (initialQueryName != null) initialQueryName else getString(R.string.query_results_title))
+        if (supportActionBar != null) {
+            supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+            supportActionBar!!.title =
+                if (initialQueryName != null) initialQueryName else getString(R.string.query_results_title)
         }
 
 
@@ -64,18 +65,18 @@ class QueryResultsActivity : AppCompatActivity() {
 
         // If we have an initial query, load its results directly
         if (initialQueryName != null) {
-            viewModel!!.loadQueryResults(initialQueryName)
+            initialQueryName?.let { viewModel!!.loadQueryResults(it) }
         }
 
 
         // Observe queries for dropdown
         viewModel!!.getQueries()
-            .observe(this, Observer { queries: MutableList<QueryEntity?>? -> this.setupQuerySpinner(queries) })
+            .observe(this, Observer { queries -> this.setupQuerySpinner(queries) })
 
 
         // Observe current query results
         viewModel!!.getCurrentQueryResults()
-            .observe(this, Observer { results: MutableSet<QueryNoteResult?>? -> this.displayResults(results!!) })
+            .observe(this, { results -> this.displayResults(results) })
     }
 
     private fun setupQuerySpinner(queries: MutableList<QueryEntity>) {
@@ -88,7 +89,7 @@ class QueryResultsActivity : AppCompatActivity() {
 
         val queryNames: MutableList<String?> = ArrayList<String?>()
         for (query in queries) {
-            queryNames.add(query.getName())
+            queryNames.add(query.name)
         }
 
         val adapter = ArrayAdapter<String?>(
@@ -97,7 +98,7 @@ class QueryResultsActivity : AppCompatActivity() {
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
 
         querySpinner!!.setAdapter(adapter)
-        querySpinner!!.setVisibility(View.VISIBLE)
+        querySpinner!!.visibility = View.VISIBLE
 
 
         // Set initial selection based on passed query name
@@ -108,40 +109,40 @@ class QueryResultsActivity : AppCompatActivity() {
             } else if (!queryNames.isEmpty()) {
                 // If the requested query doesn't exist, select the first one
                 querySpinner!!.setSelection(0)
-                initialQueryName = queryNames.get(0)
-                viewModel!!.loadQueryResults(initialQueryName)
+                initialQueryName = queryNames[0]
+                initialQueryName?.let { viewModel!!.loadQueryResults(it) }
             }
         } else if (!queryNames.isEmpty()) {
             // No initial query, select first one
             querySpinner!!.setSelection(0)
-            initialQueryName = queryNames.get(0)
-            viewModel!!.loadQueryResults(initialQueryName)
+            initialQueryName = queryNames[0]
+            initialQueryName?.let { viewModel!!.loadQueryResults(it) }
         }
 
-        querySpinner!!.setOnItemSelectedListener(object : AdapterView.OnItemSelectedListener {
+        querySpinner!!.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 selectedQuery = queryNames.get(position)
-                if (getSupportActionBar() != null) {
-                    getSupportActionBar()!!.setTitle(selectedQuery)
+                if (supportActionBar != null) {
+                    supportActionBar!!.title = selectedQuery
                 }
-                viewModel!!.loadQueryResults(selectedQuery)
+                selectedQuery?.let { viewModel!!.loadQueryResults(it) }
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 // Do nothing
             }
-        })
+        }
     }
 
-    private fun displayResults(results: MutableSet<QueryNoteResult?>) {
+    private fun displayResults(results: MutableSet<QueryNoteResult>) {
         if (results.isEmpty()) {
-            resultsRecyclerView!!.setVisibility(View.GONE)
-            emptyStateText!!.setVisibility(View.VISIBLE)
+            resultsRecyclerView!!.visibility = View.GONE
+            emptyStateText!!.visibility = View.VISIBLE
             emptyStateText!!.setText(R.string.no_results_found)
         } else {
-            resultsRecyclerView!!.setVisibility(View.VISIBLE)
-            emptyStateText!!.setVisibility(View.GONE)
-            notesAdapter!!.setNotes(selectedQuery, results)
+            resultsRecyclerView!!.visibility = View.VISIBLE
+            emptyStateText!!.visibility = View.GONE
+            selectedQuery?.let { notesAdapter!!.setNotes(it, results) }
         }
     }
 

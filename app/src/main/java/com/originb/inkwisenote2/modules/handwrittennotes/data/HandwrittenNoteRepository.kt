@@ -13,6 +13,7 @@ import com.originb.inkwisenote2.common.BytesFileIoUtils.writeDataToDisk
 import com.originb.inkwisenote2.common.HashUtils.calculateSha256
 import com.originb.inkwisenote2.common.HashUtils.getBitmapHash
 import com.originb.inkwisenote2.common.HashUtils.getPageTemplateHash
+import com.originb.inkwisenote2.modules.handwrittennotes.ui.ThumbnailGenerator
 import com.originb.inkwisenote2.common.Logger
 import com.originb.inkwisenote2.modules.backgroundjobs.Events.HandwrittenNoteSaved
 import com.originb.inkwisenote2.modules.repositories.AtomicNotesDomain
@@ -40,21 +41,23 @@ class HandwrittenNoteRepository(
         if (bitmap == null || Strings.isEmptyOrWhitespace(note.filepath)) return
 
         try {
-            val thumbnail: Bitmap = generateThumbnail(bitmap, strokes)
+            val thumbnail = ThumbnailGenerator.generateThumbnail(bitmap, strokes)
             BitmapFileIoUtils.writeDataToDisk(NoteFileStorage.getImagePath(note), bitmap)
-            BitmapFileIoUtils.writeDataToDisk(NoteFileStorage.getThumbnailPath(note), thumbnail)
+            if (thumbnail != null) {
+                BitmapFileIoUtils.writeDataToDisk(NoteFileStorage.getThumbnailPath(note), thumbnail)
+            }
         } catch (ex: Exception) {
             logger.exception("Error saving bitmap for note: " + note.noteId, ex)
         }
     }
 
     fun saveHandwrittenNotePageTemplate(atomicNote: AtomicNoteEntity, pageTemplate: PageTemplate?) {
-        val path = atomicNote.filepath
+        val path = atomicNote.filepath ?: ""
         if (Objects.isNull(pageTemplate) || Strings.isEmptyOrWhitespace(path)) {
             return
         }
 
-        val fullPath = path + "/" + atomicNote.filename + ".pt"
+        val fullPath = path + "/" + (atomicNote.filename ?: "") + ".pt"
         writeDataToDisk<PageTemplate?>(fullPath, pageTemplate)
     }
 
@@ -62,7 +65,7 @@ class HandwrittenNoteRepository(
         bookId: Long, atomicNote: AtomicNoteEntity, bitmap: Bitmap,
         pageTemplate: PageTemplate?, strokes: MutableList<Stroke>?, context: Context?
     ): Boolean {
-        val note = atomicNote.clone()
+        val note = atomicNote.copy()
         // Use synchronized on the note ID string intern to be thread-safe across instances
         synchronized(getLockForNote(note.noteId)) {
             val bitmapHash = getBitmapHash(bitmap) // Move hashing to a Utility
@@ -74,7 +77,7 @@ class HandwrittenNoteRepository(
             }
 
             var updated = false
-            if (isNew || bitmapHash != entity!!.getBitmapHash()) {
+            if (isNew || bitmapHash != entity!!.bitmapHash) {
                 updateVisualData(entity!!, note, bitmap, strokes, bitmapHash)
                 updated = true
             }
@@ -96,12 +99,12 @@ class HandwrittenNoteRepository(
 
     private fun createNewEntity(bookId: Long, note: AtomicNoteEntity, hash: String?): HandwrittenNoteEntity {
         val entity = HandwrittenNoteEntity()
-        entity.setNoteId(note.noteId)
-        entity.setBookId(bookId)
-        entity.setBitmapFilePath(NoteFileStorage.getImagePath(note))
-        entity.setBitmapHash(hash)
-        entity.setCreatedTimeMillis(System.currentTimeMillis())
-        entity.setLastModifiedTimeMillis(System.currentTimeMillis())
+        entity.noteId = note.noteId
+        entity.bookId = bookId
+        entity.bitmapFilePath = NoteFileStorage.getImagePath(note)
+        entity.bitmapHash = hash
+        entity.createdTimeMillis = System.currentTimeMillis()
+        entity.lastModifiedTimeMillis = System.currentTimeMillis()
         return entity
     }
 
@@ -109,8 +112,8 @@ class HandwrittenNoteRepository(
         entity: HandwrittenNoteEntity, note: AtomicNoteEntity,
         bitmap: Bitmap?, strokes: MutableList<Stroke>?, hash: String?
     ) {
-        entity.setBitmapHash(hash)
-        entity.setLastModifiedTimeMillis(System.currentTimeMillis())
+        entity.bitmapHash = hash
+        entity.lastModifiedTimeMillis = System.currentTimeMillis()
         saveHandwrittenNoteImage(note, bitmap, strokes)
         saveHandwrittenNoteMarkdown(note, strokes)
     }
@@ -126,17 +129,17 @@ class HandwrittenNoteRepository(
             return
         }
 
-        val pageTemplateIsSame = hash == entity.getPageTemplateHash()
+        val pageTemplateIsSame = hash == entity.pageTemplateHash
         if (pageTemplateIsSame) return
 
-        val isNew = entity.getPageTemplateHash() == null
+        val isNew = entity.pageTemplateHash == null
 
         if (isNew) {
-            entity.setPageTemplateFilePath(NoteFileStorage.getTemplatePath(note))
+            entity.pageTemplateFilePath = NoteFileStorage.getTemplatePath(note)
         }
 
-        entity.setPageTemplateHash(hash)
-        entity.setLastModifiedTimeMillis(System.currentTimeMillis())
+        entity.pageTemplateHash = hash
+        entity.lastModifiedTimeMillis = System.currentTimeMillis()
         saveHandwrittenNotePageTemplate(note, pageTemplate)
         handwrittenNotesDao.updateHandwrittenNote(entity)
     }
@@ -147,37 +150,35 @@ class HandwrittenNoteRepository(
 
         handwrittenNoteWithImage.handwrittenNoteEntity = handwrittenNoteEntity
 
-        val fullPath: String?
-        if (BitmapScale.FULL_SIZE == imageScale) {
-            fullPath = atomicNote.filepath + "/" + atomicNote.filename + ".png"
-        } else {
-            fullPath = atomicNote.filepath + "/" + atomicNote.filename + "-t.png"
-        }
-        handwrittenNoteWithImage.noteImage = readBitmapFromFile(fullPath, BitmapScale.FULL_SIZE)
+        val basePath = (atomicNote.filepath ?: "") + "/" + (atomicNote.filename ?: "")
+        val fullPath = if (BitmapScale.FULL_SIZE == imageScale) "$basePath.png" else "$basePath-t.png"
+        handwrittenNoteWithImage.noteImage = readBitmapFromFile(fullPath, BitmapScale.FULL_SIZE).orElse(null)
         return handwrittenNoteWithImage
     }
 
-    fun getPageTemplate(atomicNote: AtomicNoteEntity): Optional<PageTemplate?> {
-        val fullPath = atomicNote.filepath + "/" + atomicNote.filename + ".pt"
-        return readDataFromDisk<PageTemplate>(fullPath, PageTemplate::class.java)
+    fun getPageTemplate(atomicNote: AtomicNoteEntity): Optional<PageTemplate> {
+        val fullPath = (atomicNote.filepath ?: "") + "/" + (atomicNote.filename ?: "") + ".pt"
+        val opt = readDataFromDisk<PageTemplate>(fullPath, PageTemplate::class.java)
+        return Optional.ofNullable(opt.orElse(null))
     }
 
     fun deleteHandwrittenNote(atomicNote: AtomicNoteEntity) {
-        val bitmapPath = atomicNote.filepath + "/" + atomicNote.filename + ".png"
+        val base = (atomicNote.filepath ?: "") + "/" + (atomicNote.filename ?: "")
+        val bitmapPath = base + ".png"
         deleteBitmap(bitmapPath)
-        val thumbnailPath = atomicNote.filepath + "/" + atomicNote.filename + "-t.png"
+        val thumbnailPath = base + "-t.png"
         deleteBitmap(thumbnailPath)
 
-        val templPath = atomicNote.filepath + "/" + atomicNote.filename + ".pt"
+        val templPath = base + ".pt"
         val noteFile = File(templPath)
         noteFile.delete()
 
         // Delete markdown file
-        val markdownPath = atomicNote.filepath + "/" + atomicNote.filename + ".md"
+        val markdownPath = base + ".md"
         val markdownFile = File(markdownPath)
         markdownFile.delete()
 
-        val notebookDir = File(atomicNote.filepath)
+        val notebookDir = File(atomicNote.filepath ?: "")
         if (notebookDir.exists() && notebookDir.isDirectory()) {
             // Delete all files in the directory
             val files = notebookDir.listFiles()
@@ -192,7 +193,7 @@ class HandwrittenNoteRepository(
             return false
         }
 
-        val markdownPath = atomicNote.filepath + "/" + atomicNote.filename + ".md"
+        val markdownPath = (atomicNote.filepath ?: "") + "/" + (atomicNote.filename ?: "") + ".md"
         try {
             FileWriter(markdownPath).use { writer ->
                 val markdown = StringBuilder()
@@ -237,51 +238,53 @@ class HandwrittenNoteRepository(
         }
     }
 
-    fun readHandwrittenNoteMarkdown(atomicNote: AtomicNoteEntity): MutableList<Stroke?> {
+    fun readHandwrittenNoteMarkdown(atomicNote: AtomicNoteEntity): MutableList<Stroke> {
         if (Strings.isEmptyOrWhitespace(atomicNote.filepath)) {
-            return ArrayList<Stroke?>()
+            return ArrayList<Stroke>()
         }
 
-        val markdownPath = atomicNote.filepath + "/" + atomicNote.filename + ".md"
+        val markdownPath = (atomicNote.filepath ?: "") + "/" + (atomicNote.filename ?: "") + ".md"
         val file = File(markdownPath)
         if (!file.exists() || !file.isFile()) {
-            return ArrayList<Stroke?>()
+            return ArrayList<Stroke>()
         }
 
         return readStrokesFromMarkdown(markdownPath)
     }
 
-    private fun readStrokesFromMarkdown(filePath: String?): MutableList<Stroke?> {
-        val strokes: MutableList<Stroke?> = ArrayList<Stroke?>()
+    private fun readStrokesFromMarkdown(filePath: String): MutableList<Stroke> {
+        val strokes: MutableList<Stroke> = ArrayList<Stroke>()
         var inCodeBlock = false
 
         try {
             BufferedReader(FileReader(filePath)).use { reader ->
-                var line: String?
-                while ((reader.readLine().also { line = it }) != null) {
+                var line = reader.readLine()
+                while (line != null) {
+                    val trimmed = line.trim()
                     // Check for beginning of inkwise code block
-                    if (line!!.trim { it <= ' ' } == "```inkwise") {
+                    if (trimmed == "```inkwise") {
                         inCodeBlock = true
+                        line = reader.readLine()
                         continue
                     }
 
                     // Check for end of code block
-                    if (line.trim { it <= ' ' } == "```") {
+                    if (trimmed == "```") {
                         inCodeBlock = false
+                        line = reader.readLine()
                         continue
                     }
 
                     // Parse stroke data if within code block
-                    if (inCodeBlock && !line.trim { it <= ' ' }.isEmpty()) {
+                    if (inCodeBlock && trimmed.isNotEmpty()) {
                         try {
                             val stroke = NoteFileStorage.deserializeStroke(line)
-                            if (stroke != null) {
-                                strokes.add(stroke)
-                            }
+                            strokes.add(stroke)
                         } catch (e: JSONException) {
                             e.printStackTrace()
                         }
                     }
+                    line = reader.readLine()
                 }
             }
         } catch (e: IOException) {
@@ -291,13 +294,8 @@ class HandwrittenNoteRepository(
         return strokes
     }
 
-    fun getStrokes(noteId: Long): MutableList<Stroke?>? {
+    fun getStrokes(noteId: Long): MutableList<Stroke> {
         val note = atomicNotesDomain.getAtomicNote(noteId)
-        if (note == null) {
-            logger.error("Could not find note with ID: " + noteId)
-            return ArrayList<Stroke?>()
-        }
-
         return readHandwrittenNoteMarkdown(note)
     }
 
@@ -308,7 +306,7 @@ class HandwrittenNoteRepository(
 
         val lastSlashIndex = filepath.lastIndexOf('/')
         if (lastSlashIndex > 0) {
-            return filepath.substring(0, lastSlashIndex)
+            return filepath.take(lastSlashIndex)
         }
         return filepath
     }

@@ -22,7 +22,7 @@ class FileGroup {
         // Set a meaningful group name
         if (!files.isEmpty()) {
             // Use the first file's name but remove the timestamp to make it cleaner
-            val firstFileName = files.get(0).getName()
+            val firstFileName = files.get(0).name
             if (firstFileName.contains("-")) {
                 this.groupName = firstFileName.substring(firstFileName.indexOf("-") + 1)
             } else {
@@ -38,7 +38,7 @@ class FileGroup {
         this.files = ArrayList<FileItem>()
         this.files.add(singleFile)
         this.isGroup = false
-        this.groupName = singleFile.getName()
+        this.groupName = singleFile.name
         this.timestamp = ""
     }
 
@@ -51,14 +51,14 @@ class FileGroup {
     val isDirectory: Boolean
         get() {
             val primaryFile = this.primaryFile
-            return primaryFile != null && primaryFile.isDirectory()
+            return primaryFile != null && primaryFile.isDirectory
         }
 
     val allRawFiles: MutableList<File?>
         get() {
             val rawFiles: MutableList<File?> = ArrayList<File?>()
             for (item in files) {
-                rawFiles.add(item.getFile())
+                rawFiles.add(item.file)
             }
             return rawFiles
         }
