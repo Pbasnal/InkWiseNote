@@ -1,9 +1,11 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.*
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     kotlin("kapt")
 }
 
@@ -25,10 +27,6 @@ android {
         resolutionStrategy {
             force("org.projectlombok:lombok:1.18.30")
         }
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
     }
 
     defaultConfig {
@@ -69,8 +67,11 @@ android {
         animationsDisabled = false
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
-    kotlinOptions {
-        jvmTarget = "17"
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -86,8 +87,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     implementation("androidx.work:work-runtime:2.9.0")
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
+    implementation("androidx.room:room-runtime:2.8.4")
+    implementation("androidx.room:room-ktx:2.8.4")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("org.greenrobot:eventbus:3.3.1")
 
@@ -123,7 +124,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.30")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    kapt("androidx.room:room-compiler:2.8.4")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")

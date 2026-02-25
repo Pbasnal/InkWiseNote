@@ -14,5 +14,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "inkwisenote2"
-include(":app")
+include(":androidApp")
  
