@@ -84,9 +84,7 @@ kotlin {
 
         androidMain {
             dependencies {
-                // Add Android-specific dependencies here. Note that this source set depends on
-                // commonMain by default and will correctly pull the Android artifacts of any KMP
-                // dependencies declared in commonMain.
+                implementation("app.cash.sqldelight:android-driver:2.0.2")
             }
         }
 
@@ -100,6 +98,7 @@ kotlin {
 
         iosMain {
             dependencies {
+                implementation("app.cash.sqldelight:native-driver:2.0.2")
                 // Add iOS-specific dependencies here. This a source set created by Kotlin Gradle
                 // Plugin (KGP) that each specific iOS target (e.g., iosX64) depends on as
                 // part of KMP’s default source set hierarchy. Note that this source set depends
@@ -110,7 +109,7 @@ kotlin {
 
         jvmMain {
             dependencies {
-                // Add JVM/Desktop-specific dependencies here (Windows, Linux).
+                implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
             }
         }
     }
