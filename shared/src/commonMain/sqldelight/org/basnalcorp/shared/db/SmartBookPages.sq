@@ -1,0 +1,32 @@
+CREATE TABLE smart_book_pages (
+    id INTEGER PRIMARY KEY NOT NULL,
+    book_id INTEGER NOT NULL REFERENCES smart_books(book_id) ON DELETE CASCADE,
+    note_id INTEGER NOT NULL REFERENCES atomic_note_entities(note_id) ON DELETE CASCADE,
+    page_order INTEGER NOT NULL
+);
+
+CREATE INDEX idx_smart_book_pages_book_id ON smart_book_pages(book_id);
+CREATE INDEX idx_smart_book_pages_note_id ON smart_book_pages(note_id);
+
+insertSmartBookPage:
+INSERT INTO smart_book_pages(book_id, note_id, page_order)
+VALUES (?, ?, ?);
+
+updateSmartBookPage:
+UPDATE smart_book_pages SET book_id = ?, note_id = ?, page_order = ?
+WHERE id = ?;
+
+deleteSmartBookPagesByBookId:
+DELETE FROM smart_book_pages WHERE book_id = ?;
+
+deleteNotePages:
+DELETE FROM smart_book_pages WHERE note_id = ?;
+
+getSmartBookPages:
+SELECT * FROM smart_book_pages WHERE book_id = ? ORDER BY page_order;
+
+getSmartBookPagesOfNote:
+SELECT * FROM smart_book_pages WHERE note_id IN :noteIds;
+
+allSmartBookPages:
+SELECT * FROM smart_book_pages;

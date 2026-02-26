@@ -1,0 +1,29 @@
+CREATE TABLE smart_books (
+    book_id INTEGER PRIMARY KEY NOT NULL,
+    title TEXT,
+    created_time_ms INTEGER NOT NULL,
+    last_modified_time_ms INTEGER NOT NULL
+);
+
+insertSmartBook:
+INSERT INTO smart_books(title, created_time_ms, last_modified_time_ms)
+VALUES (?, ?, ?);
+
+updateSmartBook:
+UPDATE smart_books SET title = ?, created_time_ms = ?, last_modified_time_ms = ?
+WHERE book_id = ?;
+
+deleteSmartBook:
+DELETE FROM smart_books WHERE book_id = ?;
+
+getSmartBook:
+SELECT * FROM smart_books WHERE book_id = ?;
+
+getSmartBooksByIds:
+SELECT * FROM smart_books WHERE book_id IN :bookIds;
+
+allSmartBooks:
+SELECT * FROM smart_books;
+
+getSmartBooksByTitle:
+SELECT * FROM smart_books WHERE title LIKE ?;

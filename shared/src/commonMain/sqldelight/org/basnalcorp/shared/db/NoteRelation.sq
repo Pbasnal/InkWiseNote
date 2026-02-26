@@ -1,0 +1,23 @@
+CREATE TABLE note_relation (
+    id INTEGER PRIMARY KEY NOT NULL,
+    note_id INTEGER NOT NULL REFERENCES atomic_note_entities(note_id) ON DELETE CASCADE,
+    related_note_id INTEGER NOT NULL REFERENCES atomic_note_entities(note_id) ON DELETE CASCADE,
+    book_id INTEGER NOT NULL REFERENCES smart_books(book_id) ON DELETE CASCADE,
+    related_book_id INTEGER NOT NULL REFERENCES smart_books(book_id) ON DELETE CASCADE,
+    relation_type INTEGER NOT NULL
+);
+
+CREATE INDEX idx_note_relation_note_id ON note_relation(note_id);
+CREATE INDEX idx_note_relation_book_id ON note_relation(book_id);
+CREATE INDEX idx_note_relation_related_note_id ON note_relation(related_note_id);
+CREATE INDEX idx_note_relation_related_book_id ON note_relation(related_book_id);
+
+insertNoteRelation:
+INSERT INTO note_relation(note_id, related_note_id, book_id, related_book_id, relation_type)
+VALUES (?, ?, ?, ?, ?);
+
+deleteNoteRelationsByNoteId:
+DELETE FROM note_relation WHERE note_id = ?;
+
+getNoteRelationsForNote:
+SELECT * FROM note_relation WHERE note_id = ?;

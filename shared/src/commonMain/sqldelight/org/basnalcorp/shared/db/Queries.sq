@@ -1,0 +1,19 @@
+CREATE TABLE queries (
+    name TEXT PRIMARY KEY NOT NULL,
+    words_to_find TEXT,
+    words_to_ignore TEXT,
+    created_time_ms INTEGER NOT NULL
+);
+
+insertOrReplaceQuery:
+INSERT OR REPLACE INTO queries(name, words_to_find, words_to_ignore, created_time_ms)
+VALUES (?, ?, ?, ?);
+
+deleteQuery:
+DELETE FROM queries WHERE name = ?;
+
+getQuery:
+SELECT * FROM queries WHERE name = ?;
+
+allQueries:
+SELECT * FROM queries ORDER BY created_time_ms DESC;

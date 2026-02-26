@@ -1,0 +1,24 @@
+CREATE TABLE note_term_frequency (
+    id INTEGER PRIMARY KEY NOT NULL,
+    note_id INTEGER NOT NULL,
+    term TEXT NOT NULL,
+    fq_in_doc INTEGER NOT NULL
+);
+
+CREATE INDEX idx_note_term_frequency_note_id ON note_term_frequency(note_id);
+
+insertTermFrequencies:
+INSERT INTO note_term_frequency(note_id, term, fq_in_doc)
+VALUES (?, ?, ?);
+
+deleteTermFrequenciesForNote:
+DELETE FROM note_term_frequency WHERE note_id = ?;
+
+readTermFrequenciesOfNote:
+SELECT * FROM note_term_frequency WHERE note_id = ? ORDER BY term;
+
+distinctNoteIdCount:
+SELECT COUNT(DISTINCT note_id) AS count FROM note_term_frequency;
+
+getNoteIdsForTerms:
+SELECT DISTINCT note_id, term FROM note_term_frequency WHERE term IN :terms;

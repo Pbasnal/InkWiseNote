@@ -1,0 +1,19 @@
+CREATE TABLE note_text (
+    note_id INTEGER PRIMARY KEY NOT NULL,
+    extracted_text TEXT NOT NULL,
+    note_hash TEXT NOT NULL,
+    created_time_ms INTEGER NOT NULL,
+    last_modified_time_ms INTEGER NOT NULL
+);
+
+CREATE INDEX idx_note_text_note_id ON note_text(note_id);
+
+insertOrReplaceNoteText:
+INSERT OR REPLACE INTO note_text(note_id, extracted_text, note_hash, created_time_ms, last_modified_time_ms)
+VALUES (?, ?, ?, ?, ?);
+
+getNoteTextForNote:
+SELECT * FROM note_text WHERE note_id = ?;
+
+updateNoteText:
+UPDATE note_text SET extracted_text = ?, note_hash = ?, last_modified_time_ms = ? WHERE note_id = ?;

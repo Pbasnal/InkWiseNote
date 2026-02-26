@@ -1,0 +1,4 @@
+-- Helper to get the last inserted row id (SQLite last_insert_rowid()).
+-- Call after an INSERT on the same connection to get the generated id.
+lastInsertRowId:
+SELECT last_insert_rowid() AS lastInsertRowId;

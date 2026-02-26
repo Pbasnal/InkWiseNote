@@ -1,0 +1,29 @@
+CREATE TABLE text_notes (
+    note_id INTEGER PRIMARY KEY NOT NULL REFERENCES atomic_note_entities(note_id) ON DELETE CASCADE,
+    book_id INTEGER NOT NULL REFERENCES smart_books(book_id) ON DELETE CASCADE,
+    note_text TEXT,
+    created_time_ms INTEGER NOT NULL,
+    last_modified_time_ms INTEGER NOT NULL
+);
+
+CREATE INDEX idx_text_notes_book_id ON text_notes(book_id);
+CREATE INDEX idx_text_notes_note_id ON text_notes(note_id);
+
+insertOrReplaceTextNote:
+INSERT OR REPLACE INTO text_notes(note_id, book_id, note_text, created_time_ms, last_modified_time_ms)
+VALUES (?, ?, ?, ?, ?);
+
+updateTextNote:
+UPDATE text_notes SET note_text = ?, last_modified_time_ms = ? WHERE note_id = ?;
+
+getTextNoteForNote:
+SELECT * FROM text_notes WHERE note_id = ?;
+
+getTextNotesForBook:
+SELECT * FROM text_notes WHERE book_id = ?;
+
+deleteTextNotesByBookId:
+DELETE FROM text_notes WHERE book_id = ?;
+
+deleteTextNote:
+DELETE FROM text_notes WHERE note_id = ?;

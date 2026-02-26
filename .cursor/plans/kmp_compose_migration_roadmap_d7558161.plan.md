@@ -34,22 +34,22 @@ todos:
     status: completed
   - id: p3-1
     content: "Phase 3.1: Move pure Kotlin utils to commonMain (functionalUtils, common)"
-    status: pending
+    status: completed
   - id: p3-2
     content: "Phase 3.2: Define domain models in commonMain (plain data classes)"
-    status: pending
+    status: completed
   - id: p3-3
     content: "Phase 3.3: Add SQLDelight schema and migrations for all 9 tables"
-    status: pending
+    status: completed
   - id: p3-4
     content: "Phase 3.4: Repository interfaces and implementations in commonMain"
-    status: pending
+    status: completed
   - id: p3-5
     content: "Phase 3.5: Extract TF-IDF/OCR pipeline to commonMain"
-    status: pending
+    status: completed
   - id: p3-6
     content: "Phase 3.6: Shared state holders (Flow) for Compose screens"
-    status: pending
+    status: completed
   - id: p4-1
     content: "Phase 4.1: Define LayoutContext, Platform, WindowSizeClass in shared"
     status: pending

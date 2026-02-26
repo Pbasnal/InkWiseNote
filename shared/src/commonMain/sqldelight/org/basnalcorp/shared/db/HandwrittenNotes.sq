@@ -1,0 +1,20 @@
+CREATE TABLE handwritten_notes (
+    note_id INTEGER PRIMARY KEY NOT NULL REFERENCES atomic_note_entities(note_id) ON DELETE CASCADE,
+    book_id INTEGER NOT NULL REFERENCES smart_books(book_id) ON DELETE CASCADE,
+    bitmap_file_path TEXT,
+    bitmap_hash TEXT,
+    page_template_file_path TEXT,
+    page_template_hash TEXT,
+    created_time_ms INTEGER NOT NULL,
+    last_modified_time_ms INTEGER NOT NULL
+);
+
+CREATE INDEX idx_handwritten_notes_book_id ON handwritten_notes(book_id);
+CREATE INDEX idx_handwritten_notes_note_id ON handwritten_notes(note_id);
+
+insertOrReplaceHandwrittenNote:
+INSERT OR REPLACE INTO handwritten_notes(note_id, book_id, bitmap_file_path, bitmap_hash, page_template_file_path, page_template_hash, created_time_ms, last_modified_time_ms)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getHandwrittenNoteForNote:
+SELECT * FROM handwritten_notes WHERE note_id = ?;

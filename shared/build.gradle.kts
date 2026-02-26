@@ -71,6 +71,7 @@ kotlin {
                 implementation(compose.material3)
                 implementation(compose.ui)
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
                 implementation("io.insert-koin:koin-core:3.5.6")
                 implementation("app.cash.sqldelight:runtime:2.0.2")
             }

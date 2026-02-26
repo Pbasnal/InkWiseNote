@@ -1,0 +1,30 @@
+CREATE TABLE atomic_note_entities (
+    note_id INTEGER PRIMARY KEY NOT NULL,
+    filename TEXT,
+    filepath TEXT,
+    note_type TEXT,
+    page_template_id INTEGER NOT NULL DEFAULT 0,
+    created_time_ms INTEGER NOT NULL,
+    last_modified_time_ms INTEGER NOT NULL
+);
+
+insertAtomicNote:
+INSERT INTO atomic_note_entities(filename, filepath, note_type, page_template_id, created_time_ms, last_modified_time_ms)
+VALUES (?, ?, ?, ?, ?, ?);
+
+updateAtomicNote:
+UPDATE atomic_note_entities
+SET filename = ?, filepath = ?, note_type = ?, page_template_id = ?, created_time_ms = ?, last_modified_time_ms = ?
+WHERE note_id = ?;
+
+deleteAtomicNote:
+DELETE FROM atomic_note_entities WHERE note_id = ?;
+
+getAtomicNote:
+SELECT * FROM atomic_note_entities WHERE note_id = ?;
+
+getAtomicNotesByIds:
+SELECT * FROM atomic_note_entities WHERE note_id IN :noteIds;
+
+allAtomicNotes:
+SELECT * FROM atomic_note_entities;
