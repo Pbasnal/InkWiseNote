@@ -6,15 +6,21 @@ import org.basnalcorp.shared.data.repository.QueryRepository
 import org.basnalcorp.shared.data.repository.SmartBookPagesRepository
 import org.basnalcorp.shared.data.repository.SmartBooksRepository
 import org.basnalcorp.shared.data.repository.SmartNotebookRepository
+import org.basnalcorp.shared.data.repository.TextNotesRepository
 import org.basnalcorp.shared.data.repository.impl.AtomicNotesRepositoryImpl
+import org.basnalcorp.shared.data.repository.impl.TextNotesRepositoryImpl
 import org.basnalcorp.shared.data.repository.impl.NoteTermFrequencyRepositoryImpl
 import org.basnalcorp.shared.data.repository.impl.QueryRepositoryImpl
 import org.basnalcorp.shared.data.repository.impl.SmartBookPagesRepositoryImpl
 import org.basnalcorp.shared.data.repository.impl.SmartBooksRepositoryImpl
 import org.basnalcorp.shared.data.repository.impl.SmartNotebookRepositoryImpl
 import org.basnalcorp.shared.db.NotesDatabase
+import org.basnalcorp.shared.state.FileExplorerStateHolder
 import org.basnalcorp.shared.state.NotebookListStateHolder
+import org.basnalcorp.shared.state.RelatedNotesStateHolder
 import org.basnalcorp.shared.state.QueryListStateHolder
+import org.basnalcorp.shared.state.NoteDetailStateHolder
+import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.tfidf.NoteTfIdfLogic
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
@@ -28,6 +34,7 @@ import org.koin.dsl.module
  */
 fun sharedModule(): Module = module {
     single { AtomicNotesRepositoryImpl(get()) }.bind<AtomicNotesRepository>()
+    single { TextNotesRepositoryImpl(get()) }.bind<TextNotesRepository>()
     single { SmartBooksRepositoryImpl(get()) }.bind<SmartBooksRepository>()
     single { SmartBookPagesRepositoryImpl(get()) }.bind<SmartBookPagesRepository>()
     single { NoteTermFrequencyRepositoryImpl(get()) }.bind<NoteTermFrequencyRepository>()
@@ -36,10 +43,15 @@ fun sharedModule(): Module = module {
         SmartNotebookRepositoryImpl(
             get<AtomicNotesRepository>(),
             get<SmartBooksRepository>(),
-            get<SmartBookPagesRepository>()
+            get<SmartBookPagesRepository>(),
+            get<TextNotesRepository>()
         )
     }.bind<SmartNotebookRepository>()
     singleOf(::NoteTfIdfLogic)
     singleOf(::NotebookListStateHolder)
     singleOf(::QueryListStateHolder)
+    singleOf(::SmartNotebookStateHolder)
+    singleOf(::NoteDetailStateHolder)
+    singleOf(::FileExplorerStateHolder)
+    singleOf(::RelatedNotesStateHolder)
 }

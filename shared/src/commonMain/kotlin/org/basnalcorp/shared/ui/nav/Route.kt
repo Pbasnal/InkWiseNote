@@ -20,6 +20,9 @@ sealed class Route {
     /** Create/edit query. */
     data object QueryCreation : Route()
 
+    /** Init new note: notebook name + note type (text/handwritten) before creating. */
+    data class InitNote(val workingPath: String) : Route()
+
     /** Smart notebook detail (book with pages). */
     data class SmartNotebook(
         val bookId: Long? = null,

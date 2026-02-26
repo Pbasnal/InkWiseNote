@@ -80,6 +80,7 @@ kotlin {
         commonTest {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-test:2.3.10")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
             }
         }
 

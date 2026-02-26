@@ -1,0 +1,246 @@
+{
+    "meta": {
+      "name": "Inkwise Design System",
+      "style_archetype": "Soft Editorial Productivity",
+      "design_keywords": [
+        "minimal",
+        "calm",
+        "rounded",
+        "editorial",
+        "soft contrast",
+        "modern mobile-first",
+        "illustration-friendly"
+      ],
+      "platform_focus": "mobile",
+      "density": "comfortable",
+      "visual_tone": "warm, grounded, human-centered"
+    },
+  
+    "color_system": {
+      "palette_type": "earthy-neutral with green primary",
+      "background": {
+        "primary": "#F5EFE6",
+        "secondary": "#FFFFFF",
+        "dark_mode_base": "#0F2B2C"
+      },
+      "primary": {
+        "base": "#2E7D4F",
+        "hover": "#276B43",
+        "light": "#4FA36E",
+        "contrast_text": "#FFFFFF"
+      },
+      "accent": {
+        "warm": "#E6A85C",
+        "soft_orange": "#E9B46A"
+      },
+      "surface": {
+        "card_light": "#FFFFFF",
+        "card_tinted": "#EDF3EE",
+        "card_dark": "#1E3A3B"
+      },
+      "text": {
+        "primary": "#1E1E1E",
+        "secondary": "#5F6368",
+        "inverse": "#FFFFFF",
+        "muted": "#9AA0A6"
+      },
+      "border": {
+        "light": "#E6E6E6",
+        "subtle": "#F0F0F0"
+      },
+      "feedback": {
+        "success": "#4CAF50",
+        "warning": "#F4A261",
+        "error": "#E76F51"
+      }
+    },
+  
+    "typography": {
+      "font_style": "modern geometric sans-serif",
+      "font_fallback": "Inter, SF Pro, Poppins, system-ui",
+      "scale": {
+        "display": {
+          "size": 28,
+          "weight": 700,
+          "line_height": 1.2
+        },
+        "heading_l": {
+          "size": 22,
+          "weight": 600,
+          "line_height": 1.3
+        },
+        "heading_m": {
+          "size": 18,
+          "weight": 600,
+          "line_height": 1.3
+        },
+        "body_l": {
+          "size": 16,
+          "weight": 400,
+          "line_height": 1.5
+        },
+        "body_m": {
+          "size": 14,
+          "weight": 400,
+          "line_height": 1.5
+        },
+        "caption": {
+          "size": 12,
+          "weight": 400,
+          "line_height": 1.4
+        }
+      },
+      "letter_spacing": {
+        "heading": "-0.3px",
+        "body": "0px"
+      }
+    },
+  
+    "spacing_system": {
+      "base_unit": 4,
+      "scale": [4, 8, 12, 16, 20, 24, 32, 40, 48, 64],
+      "layout_padding_mobile": 20,
+      "card_padding": 16,
+      "section_spacing": 24
+    },
+  
+    "radius_system": {
+      "button": 24,
+      "card": 20,
+      "input": 16,
+      "pill": 999,
+      "modal": 28
+    },
+  
+    "shadow_system": {
+      "soft": {
+        "color": "rgba(0,0,0,0.05)",
+        "offset_y": 4,
+        "blur": 16
+      },
+      "medium": {
+        "color": "rgba(0,0,0,0.08)",
+        "offset_y": 8,
+        "blur": 24
+      },
+      "none_on_dark": true
+    },
+  
+    "layout_principles": {
+      "grid": "single column mobile grid",
+      "max_content_width": 480,
+      "card_based_layout": true,
+      "vertical_scroll": true,
+      "section_grouping": "stacked blocks with generous spacing",
+      "hierarchy_style": "headline > visual card > supportive text"
+    },
+  
+    "component_system": {
+      "buttons": {
+        "primary": {
+          "height": 52,
+          "radius": 24,
+          "fill": "primary.base",
+          "text_color": "text.inverse",
+          "font_weight": 600
+        },
+        "secondary": {
+          "height": 48,
+          "radius": 24,
+          "fill": "surface.card_tinted",
+          "text_color": "primary.base"
+        },
+        "ghost": {
+          "height": 44,
+          "background": "transparent",
+          "text_color": "primary.base"
+        }
+      },
+  
+      "cards": {
+        "style": "soft elevated",
+        "radius": 20,
+        "padding": 16,
+        "background": "surface.card_light",
+        "shadow": "soft",
+        "content_structure": [
+          "optional_header",
+          "title",
+          "supporting_text",
+          "optional_media",
+          "optional_action"
+        ]
+      },
+  
+      "chips": {
+        "height": 36,
+        "radius": 999,
+        "padding_horizontal": 16,
+        "selected_style": {
+          "background": "primary.base",
+          "text_color": "text.inverse"
+        },
+        "unselected_style": {
+          "background": "surface.card_tinted",
+          "text_color": "text.primary"
+        }
+      },
+  
+      "inputs": {
+        "height": 52,
+        "radius": 16,
+        "background": "#F7F7F7",
+        "border": "1px solid border.light",
+        "focus_border": "1px solid primary.base"
+      },
+  
+      "top_bar": {
+        "height": 56,
+        "background": "transparent",
+        "title_alignment": "left",
+        "icon_size": 24
+      },
+  
+      "list_item": {
+        "height": 56,
+        "divider": "optional subtle bottom line",
+        "content_alignment": "left text, optional right icon"
+      }
+    },
+  
+    "illustration_style": {
+      "type": "flat vector",
+      "color_treatment": "muted earthy tones",
+      "stroke": "minimal or none",
+      "depth": "soft shadow only",
+      "integration": "embedded inside cards or hero sections"
+    },
+  
+    "iconography": {
+      "style": "rounded line icons",
+      "stroke_width": 1.5,
+      "corner_roundness": "medium",
+      "default_size": 20
+    },
+  
+    "interaction_model": {
+      "animation_style": "subtle, eased, 200-300ms",
+      "easing_curve": "ease-in-out",
+      "press_feedback": "slight scale down (0.97)",
+      "transition_type": "fade + slide up",
+      "micro_interactions": true
+    },
+  
+    "accessibility": {
+      "contrast_ratio_minimum": 4.5,
+      "touch_target_min": 44,
+      "dynamic_text_support": true
+    },
+  
+    "content_philosophy": {
+      "tone": "calm and supportive",
+      "sentence_length": "short to medium",
+      "cta_style": "encouraging but simple",
+      "avoid_visual_noise": true
+    }
+  }

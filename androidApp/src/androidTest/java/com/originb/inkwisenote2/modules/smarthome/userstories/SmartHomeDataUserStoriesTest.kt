@@ -17,8 +17,8 @@ import org.junit.runner.RunWith
 
 /**
  * User story tests: Data and state (optional).
- * Validates that after creating a note or adding a standing query, the home screen reflects the change.
- * These tests depend on navigation back to Smart Home and optional test data / EventBus refresh.
+ * Phase 10.2: Targets legacy [SmartHomeActivity]. Default launcher is [ComposeHostActivity];
+ * use [ComposeHostActivityTest] for Compose flow. This test remains for legacy UI until removed.
  */
 @RunWith(AndroidJUnit4::class)
 @LargeTest

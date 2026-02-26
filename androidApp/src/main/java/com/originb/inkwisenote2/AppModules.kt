@@ -7,7 +7,6 @@ import com.originb.inkwisenote2.modules.handwrittennotes.HandwrittenNoteEventLis
 import com.originb.inkwisenote2.modules.handwrittennotes.data.HandwrittenNoteRepository
 import com.originb.inkwisenote2.modules.noterelation.NoteRelationEventListener
 import com.originb.inkwisenote2.modules.noterelation.service.NoteTfIdfLogic
-import com.originb.inkwisenote2.modules.noterelation.ui.RelatedNotesViewModel
 import com.originb.inkwisenote2.modules.noterelation.worker.NoteRelationWorker
 import com.originb.inkwisenote2.modules.noterelation.worker.TextProcessingWorker
 import com.originb.inkwisenote2.modules.notesearch.NoteSearchViewModel
@@ -20,12 +19,7 @@ import com.originb.inkwisenote2.modules.repositories.NoteRelationRepository
 import com.originb.inkwisenote2.modules.repositories.SmartNotebookRepository
 import com.originb.inkwisenote2.modules.smarthome.SmartHomePageViewModel
 import com.originb.inkwisenote2.modules.smartnotes.SmartNotebookEventListener
-import com.originb.inkwisenote2.modules.smartnotes.ui.HandwrittenNoteFragment
-import com.originb.inkwisenote2.modules.smartnotes.ui.InitNoteFragment
-import com.originb.inkwisenote2.modules.smartnotes.ui.TextNoteFragment
-import com.originb.inkwisenote2.modules.smartnotes.viewmodels.SmartNotebookViewModel
 import com.originb.inkwisenote2.modules.textnote.TextNoteListener
-import org.koin.androidx.fragment.dsl.fragment
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.androidx.workmanager.dsl.worker
 import org.koin.dsl.module
@@ -73,15 +67,6 @@ val appModule = module {
         )
     }
     viewModel {
-        SmartNotebookViewModel(
-            get(),
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
-    viewModel {
         AdminViewModel(
             get(),
             get(),
@@ -91,32 +76,9 @@ val appModule = module {
             get()
         )
     }
-    viewModel {
-        RelatedNotesViewModel(
-            get(),
-            get(),
-            get(),
-            get()
-        )
-    }
     viewModel { QueryViewModel(get(), get()) }  // Application, QueryRepository
     viewModel { SmartHomePageViewModel(get(), get(), get(), get(), get(), get(), get()) }
     viewModel { QueryResultsViewModel(get(), get()) }  // QueryRepository, SmartHomePageViewModel
-
-    // 4.5. Fragment factories
-    fragment { (smartNotebook: com.originb.inkwisenote2.modules.repositories.SmartNotebook,
-                atomicNote: com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity) ->
-        TextNoteFragment(smartNotebook, atomicNote, get(), get(), get(), get())
-    }
-    fragment { (smartNotebook: com.originb.inkwisenote2.modules.repositories.SmartNotebook,
-                atomicNote: com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity) ->
-        HandwrittenNoteFragment(smartNotebook, atomicNote, get(), get(), get(), get())
-    }
-    fragment { (smartNotebook: com.originb.inkwisenote2.modules.repositories.SmartNotebook,
-                atomicNote: com.originb.inkwisenote2.modules.smartnotes.data.AtomicNoteEntity,
-                adapter: com.originb.inkwisenote2.modules.smartnotes.ui.SmartNotebookAdapter) ->
-        InitNoteFragment(smartNotebook, atomicNote, adapter)
-    }
 
     // 5. Workers
     worker {

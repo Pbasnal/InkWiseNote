@@ -124,16 +124,16 @@ todos:
     status: completed
   - id: p10-1
     content: "Phase 10.1: Shared unit tests (commonTest for repos, TF-IDF, utils)"
-    status: pending
+    status: completed
   - id: p10-2
     content: "Phase 10.2: Update Android instrumented tests for shared DB and Compose"
-    status: pending
+    status: completed
   - id: p10-3
     content: "Phase 10.3: Desktop run config and minimal tests"
-    status: pending
+    status: completed
   - id: p10-4
     content: "Phase 10.4: Cleanup - remove deprecated Room/utils and unused resources"
-    status: pending
+    status: completed
 isProject: false
 ---
 

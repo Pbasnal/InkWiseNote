@@ -1,0 +1,204 @@
+{
+    "meta": {
+      "screen_name": "NotebookDetailScreen",
+      "device_type": "mobile_portrait",
+      "scrollable": false,
+      "design_style": "soft_elevated_card_minimal"
+    },
+  
+    "design_tokens": {
+      "colors": {
+        "background": "#EDE6D6",
+        "surface": "#F4EFE4",
+        "primary": "#4E8F5B",
+        "primary_dark": "#3E7A4C",
+        "text_primary": "#1E1B1B",
+        "text_secondary": "#6F6A63",
+        "white": "#FFFFFF"
+      },
+      "typography": {
+        "font_family": "Inter | Poppins | geometric sans-serif",
+        "title_large": { "size": 22, "weight": 600 },
+        "title_medium": { "size": 18, "weight": 600 },
+        "body": { "size": 14, "weight": 400 },
+        "caption": { "size": 12, "weight": 400 }
+      },
+      "radius": {
+        "pill": 999,
+        "card": 24,
+        "button": 20
+      },
+      "elevation": {
+        "soft": { "blur": 20, "y": 8, "opacity": 0.08 }
+      },
+      "spacing_scale": [4, 8, 12, 16, 20, 24, 32]
+    },
+  
+    "root": {
+      "type": "Scaffold",
+      "properties": {
+        "background_color": "background"
+      },
+      "children": [
+        {
+          "type": "Column",
+          "properties": {
+            "padding_horizontal": 20,
+            "padding_top": 16,
+            "spacing": 24
+          },
+          "children": [
+            {
+              "type": "TopControlBar",
+              "properties": {
+                "background": "surface",
+                "corner_radius": 32,
+                "padding": 8,
+                "layout": "Row",
+                "vertical_alignment": "center",
+                "horizontal_spacing": 8
+              },
+              "children": [
+                {
+                  "type": "IconButton",
+                  "shape": "circle",
+                  "background": "white",
+                  "icon": "arrow_back"
+                },
+                {
+                  "type": "EditablePill",
+                  "text_style": "body",
+                  "background": "white",
+                  "corner_radius": 999,
+                  "padding_horizontal": 16,
+                  "height": 36
+                },
+                {
+                  "type": "IconButton",
+                  "shape": "circle",
+                  "background": "primary",
+                  "icon": "arrow_left",
+                  "icon_color": "white"
+                },
+                {
+                  "type": "IconButton",
+                  "shape": "circle",
+                  "background": "primary",
+                  "icon": "add",
+                  "icon_color": "white"
+                },
+                {
+                  "type": "IconButton",
+                  "shape": "circle",
+                  "background": "primary",
+                  "icon": "arrow_right",
+                  "icon_color": "white"
+                }
+              ]
+            },
+  
+            {
+              "type": "MetadataSection",
+              "layout": "Column",
+              "spacing": 8,
+              "children": [
+                { "type": "Text", "style": "title_medium" },
+                { "type": "Text", "style": "body" },
+                { "type": "Text", "style": "caption", "color": "text_secondary" }
+              ]
+            },
+  
+            {
+              "type": "PrimaryNoteCard",
+              "properties": {
+                "background": "primary",
+                "corner_radius": 24,
+                "height": 120,
+                "padding": 20,
+                "layout": "Row",
+                "vertical_alignment": "center",
+                "horizontal_arrangement": "space_between",
+                "elevation": "soft"
+              },
+              "children": [
+                {
+                  "type": "Text",
+                  "style": "title_large",
+                  "color": "white"
+                },
+                {
+                  "type": "Icon",
+                  "color": "white",
+                  "size": 24
+                }
+              ]
+            },
+  
+            {
+              "type": "SecondaryNoteCard",
+              "properties": {
+                "background": "surface",
+                "corner_radius": 24,
+                "height": 90,
+                "padding": 20,
+                "layout": "Row",
+                "vertical_alignment": "center",
+                "spacing": 12,
+                "elevation": "soft"
+              },
+              "children": [
+                {
+                  "type": "CircularIconContainer",
+                  "background": "primary",
+                  "size": 40,
+                  "icon_color": "white"
+                },
+                {
+                  "type": "Text",
+                  "style": "title_medium"
+                }
+              ]
+            },
+  
+            {
+              "type": "FooterMeta",
+              "properties": {
+                "alignment": "start",
+                "padding_top": 32
+              },
+              "children": [
+                {
+                  "type": "Text",
+                  "style": "caption",
+                  "color": "text_secondary"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+  
+    "interaction_model": {
+      "icon_button_press": {
+        "scale": 0.92,
+        "duration_ms": 120
+      },
+      "card_press": {
+        "scale": 0.97,
+        "duration_ms": 150
+      },
+      "screen_transition": {
+        "enter": "slide_in_right",
+        "exit": "slide_out_left",
+        "duration_ms": 250
+      }
+    },
+  
+    "layout_rules": {
+      "single_column",
+      "centered_content_max_width_480",
+      "generous_vertical_spacing",
+      "soft_shadow_no_hard_borders"
+    }
+  }

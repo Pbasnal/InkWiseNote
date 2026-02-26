@@ -5,6 +5,7 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
@@ -44,7 +45,7 @@ class SmartHomeDrawerUserStoriesTest {
         onView(withId(R.id.current_query_name)).check(matches(isDisplayed()))
     }
 
-    // --- 2.2 File explorer item opens file explorer ---
+    // --- 2.2 File explorer item opens file explorer (Phase 3: Compose FileExplorerScreen) ---
     @Test
     fun drawerFileExplorer_opensFileExplorer() {
         // Given: Smart Home is visible
@@ -54,9 +55,8 @@ class SmartHomeDrawerUserStoriesTest {
         // When: User opens drawer and taps File Explorer
         SmartHomeDrawerHelper.openDrawerAndTapFileExplorer()
 
-        // Then: DirectoryExplorerActivity is shown
-        onView(withId(R.id.files_recycler_view))
-            .check(matches(isDisplayed()))
+        // Then: Compose File explorer screen is shown (title in top bar)
+        onView(withText("File explorer")).check(matches(isDisplayed()))
     }
 
     // --- 2.3 Admin item opens admin ---

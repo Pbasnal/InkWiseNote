@@ -8,8 +8,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import org.basnalcorp.shared.di.sharedModule
+import org.basnalcorp.shared.state.FileExplorerStateHolder
+import org.basnalcorp.shared.state.NoteDetailStateHolder
 import org.basnalcorp.shared.state.NotebookListStateHolder
 import org.basnalcorp.shared.state.QueryListStateHolder
+import org.basnalcorp.shared.state.RelatedNotesStateHolder
+import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.Platform
 import org.basnalcorp.shared.ui.nav.Route
@@ -29,6 +33,10 @@ fun main() {
     application {
         val notebookListStateHolder = get<NotebookListStateHolder>(NotebookListStateHolder::class.java)
         val queryListStateHolder = get<QueryListStateHolder>(QueryListStateHolder::class.java)
+        val smartNotebookStateHolder = get<SmartNotebookStateHolder>(SmartNotebookStateHolder::class.java)
+        val noteDetailStateHolder = get<NoteDetailStateHolder>(NoteDetailStateHolder::class.java)
+        val fileExplorerStateHolder = get<FileExplorerStateHolder>(FileExplorerStateHolder::class.java)
+        val relatedNotesStateHolder = get<RelatedNotesStateHolder>(RelatedNotesStateHolder::class.java)
         Window(
             onCloseRequest = ::exitApplication,
             title = "InkWiseNote"
@@ -49,7 +57,12 @@ fun main() {
                     themeId = themeId,
                     notebookListStateHolder = notebookListStateHolder,
                     queryListStateHolder = queryListStateHolder,
-                    onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light }
+                    smartNotebookStateHolder = smartNotebookStateHolder,
+                    noteDetailStateHolder = noteDetailStateHolder,
+                    fileExplorerStateHolder = fileExplorerStateHolder,
+                    relatedNotesStateHolder = relatedNotesStateHolder,
+                    onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light },
+                    onShowToast = { msg -> println(msg) }
                 )
             }
         }

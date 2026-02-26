@@ -1,6 +1,5 @@
 package org.basnalcorp.shared.ui.screen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,14 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,13 +20,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.flowOf
 import org.basnalcorp.shared.domain.Query
 import org.basnalcorp.shared.state.QueryListStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.WindowSizeClass
+import org.basnalcorp.shared.ui.component.DesignCard
+import org.basnalcorp.shared.ui.component.DesignTopAppBar
 import org.basnalcorp.shared.ui.nav.Route
+import org.basnalcorp.shared.ui.theme.DesignSpacing
 
 @Composable
 fun QueryListScreen(
@@ -50,7 +47,6 @@ fun QueryListScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QueryListCompactLayout(
     queries: List<Query>,
@@ -58,10 +54,12 @@ private fun QueryListCompactLayout(
     onNavigate: (Route) -> Unit
 ) {
     Scaffold(
-        topBar = { TopAppBar(
-                title = { Text("Saved queries") },
+        topBar = {
+            DesignTopAppBar(
+                title = "Saved queries",
                 navigationIcon = { IconButton(onClick = onBack) { Text("←") } }
-            ) }
+            )
+        }
     ) { padding ->
         if (queries.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -70,15 +68,15 @@ private fun QueryListCompactLayout(
         } else {
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(DesignSpacing.layoutPaddingMobile),
+                verticalArrangement = Arrangement.spacedBy(DesignSpacing.sectionSpacing)
             ) {
                 items(queries, key = { it.name }) { query ->
-                    Card(
-                        Modifier.fillMaxWidth().clickable { onNavigate(Route.QueryResults(query.name)) },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    DesignCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onNavigate(Route.QueryResults(query.name)) }
                     ) {
-                        Text(query.name, Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
+                        Text(query.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }
@@ -86,7 +84,6 @@ private fun QueryListCompactLayout(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun QueryListExpandedLayout(
     queries: List<Query>,
@@ -94,10 +91,12 @@ private fun QueryListExpandedLayout(
     onNavigate: (Route) -> Unit
 ) {
     Scaffold(
-        topBar = { TopAppBar(
-                title = { Text("Saved queries") },
+        topBar = {
+            DesignTopAppBar(
+                title = "Saved queries",
                 navigationIcon = { IconButton(onClick = onBack) { Text("←") } }
-            ) }
+            )
+        }
     ) { padding ->
         if (queries.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
@@ -106,15 +105,15 @@ private fun QueryListExpandedLayout(
         } else {
             LazyColumn(
                 Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                contentPadding = PaddingValues(DesignSpacing.layoutPaddingMobile),
+                verticalArrangement = Arrangement.spacedBy(DesignSpacing.sectionSpacing)
             ) {
                 items(queries, key = { it.name }) { query ->
-                    Card(
-                        Modifier.fillMaxWidth().clickable { onNavigate(Route.QueryResults(query.name)) },
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant, contentColor = MaterialTheme.colorScheme.onSurfaceVariant)
+                    DesignCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = { onNavigate(Route.QueryResults(query.name)) }
                     ) {
-                        Text(query.name, Modifier.padding(16.dp), style = MaterialTheme.typography.titleMedium)
+                        Text(query.name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }

@@ -19,6 +19,7 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.ui)
     implementation("io.insert-koin:koin-core:3.5.6")
+    testImplementation("org.jetbrains.kotlin:kotlin-test:2.3.10")
 }
 
 // Phase 8.2: Packaging – run :desktopApp:run to run; :desktopApp:packageDistribution or createDistributable for installers

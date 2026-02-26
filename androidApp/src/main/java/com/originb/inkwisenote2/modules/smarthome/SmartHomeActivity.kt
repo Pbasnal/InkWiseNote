@@ -24,8 +24,8 @@ import com.originb.inkwisenote2.common.Routing.AdminActivity.openAdminActivity
 import com.originb.inkwisenote2.common.Routing.NoteSearchActivity.openAllNotebooksPage
 import com.originb.inkwisenote2.common.Routing.NoteSearchActivity.openSearchPage
 import com.originb.inkwisenote2.common.Routing.QueryActivity.openQueryActivity
+import com.originb.inkwisenote2.common.ComposeRouteExtras
 import com.originb.inkwisenote2.common.Routing.SmartNotebookActivity.newNoteIntent
-import com.originb.inkwisenote2.modules.fileexplorer.DirectoryExplorerActivity
 import com.originb.inkwisenote2.modules.repositories.SmartNotebook
 import com.originb.inkwisenote2.modules.smartnotes.ui.SmartNoteGridAdapter
 import org.koin.android.compat.ViewModelCompat.getViewModel
@@ -109,7 +109,8 @@ class SmartHomeActivity : AppCompatActivity() {
             }
             if (itemId == R.id.nav_file_explorer) {
                 drawerLayout!!.closeDrawer(GravityCompat.START)
-                val intent = Intent(this, DirectoryExplorerActivity::class.java)
+                val intent = Intent(this, com.originb.inkwisenote2.ComposeHostActivity::class.java)
+                intent.putExtra(ComposeRouteExtras.ROUTE, ComposeRouteExtras.ROUTE_FILE_EXPLORER)
                 startActivity(intent)
                 return@navListener true
             }

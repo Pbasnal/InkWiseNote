@@ -2,11 +2,17 @@ package org.basnalcorp.shared.ui.nav
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import org.basnalcorp.shared.state.FileExplorerStateHolder
+import org.basnalcorp.shared.state.NoteDetailStateHolder
 import org.basnalcorp.shared.state.NotebookListStateHolder
 import org.basnalcorp.shared.state.QueryListStateHolder
+import org.basnalcorp.shared.state.RelatedNotesStateHolder
+import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.screen.AdminScreen
 import org.basnalcorp.shared.ui.screen.FileExplorerScreen
+import org.basnalcorp.shared.ui.screen.InitNoteScreen
 import org.basnalcorp.shared.ui.screen.NoteDetailScreen
 import org.basnalcorp.shared.ui.screen.NotebookListScreen
 import org.basnalcorp.shared.ui.screen.QueryCreationScreen
@@ -15,6 +21,7 @@ import org.basnalcorp.shared.ui.screen.QueryResultsScreen
 import org.basnalcorp.shared.ui.screen.RelatedNotesScreen
 import org.basnalcorp.shared.ui.screen.SearchScreen
 import org.basnalcorp.shared.ui.screen.SmartNotebookScreen
+import org.basnalcorp.shared.domain.AtomicNote
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.theme.ThemeRegistry
 
@@ -31,10 +38,16 @@ fun RootNavGraph(
     themeId: ThemeId = ThemeId.Light,
     notebookListStateHolder: NotebookListStateHolder? = null,
     queryListStateHolder: QueryListStateHolder? = null,
-    onThemeToggle: (() -> Unit)? = null
+    smartNotebookStateHolder: SmartNotebookStateHolder? = null,
+    noteDetailStateHolder: NoteDetailStateHolder? = null,
+    fileExplorerStateHolder: FileExplorerStateHolder? = null,
+    relatedNotesStateHolder: RelatedNotesStateHolder? = null,
+    onThemeToggle: (() -> Unit)? = null,
+    onShowToast: ((String) -> Unit)? = null,
+    handwrittenNoteContent: (@Composable (Modifier, AtomicNote, Long) -> Unit)? = null
 ) {
-    val colorScheme = ThemeRegistry.get(themeId)
-    MaterialTheme(colorScheme = colorScheme) {
+    val theme = ThemeRegistry.get(themeId)
+    MaterialTheme(colorScheme = theme.colorScheme, typography = theme.typography) {
         when (val route = currentRoute) {
             is Route.Home -> NotebookListScreen(
                 context = context,
@@ -56,8 +69,18 @@ fun RootNavGraph(
                 onBack = onBack
             )
             is Route.QueryCreation -> QueryCreationScreen(context = context, onNavigate = onNavigate, onBack = onBack)
+            is Route.InitNote -> InitNoteScreen(
+                context = context,
+                workingPath = route.workingPath,
+                stateHolder = smartNotebookStateHolder,
+                noteDetailStateHolder = noteDetailStateHolder,
+                onNavigate = onNavigate,
+                onBack = onBack,
+                onShowToast = onShowToast
+            )
             is Route.SmartNotebook -> SmartNotebookScreen(
                 context = context,
+                stateHolder = smartNotebookStateHolder,
                 bookId = route.bookId,
                 workingPath = route.workingPath,
                 bookTitle = route.bookTitle,
@@ -67,21 +90,26 @@ fun RootNavGraph(
             )
             is Route.NoteDetail -> NoteDetailScreen(
                 context = context,
+                stateHolder = noteDetailStateHolder,
                 bookId = route.bookId,
                 noteId = route.noteId,
                 isHandwritten = route.isHandwritten,
                 onNavigate = onNavigate,
-                onBack = onBack
+                onBack = onBack,
+                onShowToast = onShowToast,
+                handwrittenContent = handwrittenNoteContent
             )
             is Route.Admin -> AdminScreen(context = context, onNavigate = onNavigate, onBack = onBack)
             is Route.FileExplorer -> FileExplorerScreen(
                 context = context,
+                stateHolder = fileExplorerStateHolder,
                 initialPath = route.initialPath,
                 onNavigate = onNavigate,
                 onBack = onBack
             )
             is Route.RelatedNotes -> RelatedNotesScreen(
                 context = context,
+                stateHolder = relatedNotesStateHolder,
                 bookId = route.bookId,
                 onNavigate = onNavigate,
                 onBack = onBack

@@ -16,41 +16,6 @@ import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.WindowSizeClass
 import org.basnalcorp.shared.ui.nav.Route
 
-// --- SmartNotebookScreen (notebook detail with pages) ---
-
-@Composable
-fun SmartNotebookScreen(
-    context: LayoutContext,
-    bookId: Long?,
-    workingPath: String?,
-    bookTitle: String?,
-    selectedNoteId: Long?,
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit
-) {
-    when (context.windowSizeClass) {
-        WindowSizeClass.Compact -> StubLayout("Notebook", "bookId=$bookId", onBack)
-        WindowSizeClass.Medium, WindowSizeClass.Expanded -> StubLayout("Notebook", "bookId=$bookId", onBack)
-    }
-}
-
-// --- NoteDetailScreen (text or handwritten note) ---
-
-@Composable
-fun NoteDetailScreen(
-    context: LayoutContext,
-    bookId: Long,
-    noteId: Long,
-    isHandwritten: Boolean,
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit
-) {
-    when (context.windowSizeClass) {
-        WindowSizeClass.Compact -> StubLayout("Note", "noteId=$noteId", onBack)
-        WindowSizeClass.Medium, WindowSizeClass.Expanded -> StubLayout("Note", "noteId=$noteId", onBack)
-    }
-}
-
 // --- QueryCreationScreen ---
 
 @Composable
@@ -76,36 +41,6 @@ fun AdminScreen(
     when (context.windowSizeClass) {
         WindowSizeClass.Compact -> StubLayout("Admin", "TBD", onBack)
         WindowSizeClass.Medium, WindowSizeClass.Expanded -> StubLayout("Admin", "TBD", onBack)
-    }
-}
-
-// --- FileExplorerScreen ---
-
-@Composable
-fun FileExplorerScreen(
-    context: LayoutContext,
-    initialPath: String?,
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit
-) {
-    when (context.windowSizeClass) {
-        WindowSizeClass.Compact -> StubLayout("File explorer", initialPath ?: "TBD", onBack)
-        WindowSizeClass.Medium, WindowSizeClass.Expanded -> StubLayout("File explorer", initialPath ?: "TBD", onBack)
-    }
-}
-
-// --- RelatedNotesScreen ---
-
-@Composable
-fun RelatedNotesScreen(
-    context: LayoutContext,
-    bookId: Long,
-    onNavigate: (Route) -> Unit,
-    onBack: () -> Unit
-) {
-    when (context.windowSizeClass) {
-        WindowSizeClass.Compact -> StubLayout("Related notes", "bookId=$bookId", onBack)
-        WindowSizeClass.Medium, WindowSizeClass.Expanded -> StubLayout("Related notes", "bookId=$bookId", onBack)
     }
 }
 
