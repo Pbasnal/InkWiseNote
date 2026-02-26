@@ -5,7 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-// Phase 9 will replace with WorkManager; for now use a CoroutineScope.
+// Phase 9.4: In-process background only. App uses WorkManager (TextParsingWorker etc.) separately for persistent work.
 private val schedulerScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
 actual class BackgroundScheduler actual constructor() {

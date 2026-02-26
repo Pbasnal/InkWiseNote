@@ -112,16 +112,16 @@ todos:
     status: completed
   - id: p9-1
     content: "Phase 9.1: ML Kit digital ink - expect interface; desktop no-op"
-    status: pending
+    status: completed
   - id: p9-2
     content: "Phase 9.2: Tess-two/OCR - expect interface; desktop no-op or alternative"
-    status: pending
+    status: completed
   - id: p9-3
     content: "Phase 9.3: GMS only in Android source sets"
-    status: pending
+    status: completed
   - id: p9-4
     content: "Phase 9.4: WorkManager only in Android BackgroundScheduler actual"
-    status: pending
+    status: completed
   - id: p10-1
     content: "Phase 10.1: Shared unit tests (commonTest for repos, TF-IDF, utils)"
     status: pending
