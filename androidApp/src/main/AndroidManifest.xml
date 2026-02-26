@@ -42,7 +42,13 @@
                 android:exported="false"/>
         <activity
                 android:name=".AppMainActivity"
-                android:exported="true">
+                android:exported="true"/>
+
+        <!-- Phase 5.4: Single Compose Activity hosting shared RootNavGraph (default launcher) -->
+        <activity
+                android:name=".ComposeHostActivity"
+                android:exported="true"
+                android:theme="@style/Theme.InkWiseNote">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

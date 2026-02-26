@@ -14,6 +14,8 @@ import com.originb.inkwisenote2.modules.textnote.TextNoteListener
 import org.basnalcorp.shared.setAppSecrets
 import org.basnalcorp.shared.setAppStorageRoot
 import org.basnalcorp.shared.setDriverContext
+import com.originb.inkwisenote2.di.sharedActualsModule
+import org.basnalcorp.shared.di.sharedModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.java.KoinJavaComponent
@@ -47,7 +49,7 @@ class InkWiseApplication : Application() {
 
         startKoin {
             androidContext(applicationContext)
-            modules(appModule)
+            modules(sharedActualsModule, sharedModule(), appModule)
         }
 
         // WorkManager is now initialized in InkWiseApplication.onCreate() to prevent double initialization

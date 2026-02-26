@@ -64,19 +64,19 @@ todos:
     status: completed
   - id: p5-1
     content: "Phase 5.1: Implement androidMain actuals and register in Koin"
-    status: pending
+    status: completed
   - id: p5-2
     content: "Phase 5.2: Replace Room in app with SQLDelight; optional data migration"
-    status: pending
+    status: completed
   - id: p5-3
     content: "Phase 5.3: Koin shared bindings and WorkManager factory in app"
-    status: pending
+    status: completed
   - id: p5-4
     content: "Phase 5.4: Single Compose Activity with shared nav graph and LayoutContext"
-    status: pending
+    status: completed
   - id: p5-5
     content: "Phase 5.5: Refactor ViewModels to delegate to shared state holders"
-    status: pending
+    status: completed
   - id: p6-1
     content: "Phase 6.1: Pilot screen - NotebookListScreen with Compact/Expanded layouts"
     status: pending
