@@ -8,7 +8,7 @@ group = "com.originb.inkwisenote2"
 version = "1.0.0"
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 
 dependencies {

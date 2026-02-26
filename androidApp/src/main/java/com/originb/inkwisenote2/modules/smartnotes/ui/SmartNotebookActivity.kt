@@ -83,11 +83,11 @@ class SmartNotebookActivity : AppCompatActivity(), IStateManager {
         noteOcrTextDao = get<NoteOcrTextsDao?>(NoteOcrTextsDao::class.java)
 
         // Load notebook data
-        val bookIdToOpen = getIntent().getLongExtra("bookId", -1)
-        workingNotePath = getIntent().getStringExtra("workingNotePath")
-        val noteIds = getIntent().getStringExtra("noteIds")
-        val bookTitle = getIntent().getStringExtra("bookTitle")
-        noteIdToLoadOnOpen = getIntent().getLongExtra("selectedNoteId", -1)
+        val bookIdToOpen = intent.getLongExtra("bookId", -1)
+        workingNotePath = intent.getStringExtra("workingNotePath")
+        val noteIds = intent.getStringExtra("noteIds")
+        val bookTitle = intent.getStringExtra("bookTitle")
+        noteIdToLoadOnOpen = intent.getLongExtra("selectedNoteId", -1)
 
         if (noteIds == null || isNullOrWhitespace(noteIds)) {
             currentState = SmartNotebookActivityRWState()

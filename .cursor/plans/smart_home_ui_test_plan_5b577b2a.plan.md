@@ -1,7 +1,40 @@
 ---
 name: Smart Home UI Test Plan
-overview: A structured UI test plan for the Smart Home module that groups tests by feature area (toolbar/navigation, recent notebooks, standing queries, empty states) and defines readable, scenario-based instrumented tests using Espresso and existing app patterns.
-todos: []
+overview: A structured UI test plan for the Smart Home module that groups tests by feature area (toolbar/navigation, recent notebooks, standing queries, empty states) and defines readable, scenario-based instrumented tests using Espresso and existing app patterns. Tests are segregated into User Stories (feature validation) and Edge Cases (unexpected errors).
+todos:
+  - id: plan-todos
+    content: Plan updated with all tests grouped by type and feature (see Implementation todos below)
+    status: pending
+  - id: us-toolbar
+    content: "User Stories – Toolbar & global actions: search opens search (1.1), FAB opens new note (1.2), drawer toggle opens drawer (1.3), back with drawer open closes drawer (1.4)"
+    status: pending
+  - id: us-drawer
+    content: "User Stories – Navigation drawer: Queries opens query screen (2.1), File explorer opens (2.2), Admin opens (2.3), drawer closes after nav item tap (2.4)"
+    status: pending
+  - id: us-recent
+    content: "User Stories – Recent notebooks: empty state when no notebooks (3.1), list visible when data exists (3.2), Open all opens search (3.3), tap card opens notebook (3.4)"
+    status: pending
+  - id: us-standing
+    content: "User Stories – Standing queries: no CTA when no notebooks (4.1), CTA visible when notebooks exist (4.2), Create query button opens query screen (4.3), results section visible (4.4), expand/collapse section (4.5), open full results (4.6), tap note opens notebook (4.7)"
+    status: pending
+  - id: us-data
+    content: "User Stories – Data & state (optional): home shows new note after create (5.1), query section appears after adding query (5.2)"
+    status: pending
+  - id: ec-toolbar-drawer
+    content: "Edge Cases – Toolbar/drawer: rapid back press with drawer open, drawer state after rotation (if applicable)"
+    status: pending
+  - id: ec-recent
+    content: "Edge Cases – Recent notebooks: Open all with zero notebooks (button hidden), tap on empty list, list with many items scrolls"
+    status: pending
+  - id: ec-standing
+    content: "Edge Cases – Standing queries: expand/collapse when no results, multiple sections expand/collapse, tap when adapter empty"
+    status: pending
+  - id: impl-utils
+    content: "Implementation – Test utils: SmartHomeTestLauncher, DrawerHelper, RecyclerViewHelper, view visibility matchers"
+    status: pending
+  - id: impl-structure
+    content: "Implementation – File structure: androidTest/.../modules/smarthome/ with User Stories and Edge Cases classes, shared utils"
+    status: pending
 isProject: false
 ---
 
@@ -88,6 +121,37 @@ Layout: [androidApp/src/main/res/layout/activity_smart_home.xml](androidApp/src/
 
 ---
 
+## Implementation todos (grouped by type and feature)
+
+### User Stories (features directly used by the user)
+
+
+| Feature                      | Test cases                                                                                                                                                                                                                                 | Class / location                          |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| **Toolbar & global actions** | 1.1 Search opens search screen; 1.2 FAB opens new note; 1.3 Drawer opens from toolbar; 1.4 Back with drawer open closes drawer                                                                                                             | `SmartHomeToolbarUserStoriesTest`         |
+| **Navigation drawer**        | 2.1 Queries item opens query screen; 2.2 File explorer opens; 2.3 Admin opens; 2.4 Drawer closes after navigation                                                                                                                          | `SmartHomeDrawerUserStoriesTest`          |
+| **Recent notebooks**         | 3.1 Empty state when no notebooks; 3.2 Notebooks list when data exists; 3.3 Open all notebooks; 3.4 Tap notebook card opens notebook                                                                                                       | `SmartHomeRecentNotebooksUserStoriesTest` |
+| **Standing queries**         | 4.1 No CTA when no notebooks; 4.2 CTA visible when notebooks exist; 4.3 Create standing query opens query screen; 4.4 Query results section visible; 4.5 Expand/collapse section; 4.6 Open full query results; 4.7 Tap note opens notebook | `SmartHomeStandingQueriesUserStoriesTest` |
+| **Data & state (optional)**  | 5.1 Home shows new note after create; 5.2 Query section appears after adding query                                                                                                                                                         | `SmartHomeDataUserStoriesTest` (optional) |
+
+
+### Edge Cases (unexpected errors and boundary conditions)
+
+
+| Feature              | Test cases                                                                                                     | Class / location                        |
+| -------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **Toolbar & drawer** | Rapid back with drawer open does not crash; drawer closes cleanly                                              | `SmartHomeToolbarDrawerEdgeCasesTest`   |
+| **Recent notebooks** | Open all not available when no notebooks (button hidden); no crash on empty list; list scrolls with many items | `SmartHomeRecentNotebooksEdgeCasesTest` |
+| **Standing queries** | Expand/collapse when no results; multiple sections expand/collapse; no crash when tapping with empty adapter   | `SmartHomeStandingQueriesEdgeCasesTest` |
+
+
+### Implementation tasks
+
+- **Test utils**: `SmartHomeTestLauncher` (launch with clear task), `SmartHomeDrawerHelper` (open/close, tap nav item), `SmartHomeRecyclerViewHelper` (tap at position, scroll to position), shared matchers for view visibility.
+- **File structure**: `androidTest/java/.../modules/smarthome/` — `utils/` for shared helpers; `userstories/` for User Story test classes; `edgecases/` for Edge Case test classes (or flat with naming suffix).
+
+---
+
 ## Grouping and test classes
 
 - **Option A (single class)**: One `SmartHomeActivityTest` with inner or annotated groups (e.g. `@Category` or naming prefix) for: Toolbar, Drawer, RecentNotebooks, StandingQueries, OptionalState.
@@ -97,7 +161,7 @@ Layout: [androidApp/src/main/res/layout/activity_smart_home.xml](androidApp/src/
   - `SmartHomeStandingQueriesTest` (4.x)
   - Optionally `SmartHomeNavigationTest` for 1.x + 2.x combined.
 
-Recommendation: Start with **Option A** for fewer rules and shared setup (ActivityScenarioRule, optional test data seeding); split into Option B later if the file becomes large or you want faster, focused runs.
+**Chosen structure**: Split by **User Stories** vs **Edge Cases**, and by feature (Toolbar, Drawer, Recent notebooks, Standing queries). Shared utils in `utils/` package under `modules/smarthome`.
 
 ---
 

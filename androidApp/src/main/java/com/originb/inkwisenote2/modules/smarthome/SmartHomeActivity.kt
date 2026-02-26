@@ -18,8 +18,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.common.util.CollectionUtils
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
-import com.originb.inkwisenote2.AppMainActivity.Companion.registerConfigs
-import com.originb.inkwisenote2.AppMainActivity.Companion.registerRepos
 import com.originb.inkwisenote2.R
 import com.originb.inkwisenote2.common.MapsUtils.isEmpty
 import com.originb.inkwisenote2.common.Routing.AdminActivity.openAdminActivity
@@ -47,8 +45,8 @@ class SmartHomeActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_smart_home)
 
-        registerRepos(this)
-        registerConfigs(this)
+//        registerRepos(this)
+//        registerConfigs(this)
 
         // Initialize ViewModel
         smartHomePageViewModel = getViewModel<SmartHomePageViewModel>(this, SmartHomePageViewModel::class.java)
@@ -68,12 +66,12 @@ class SmartHomeActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         // Remove default title
-        if (getSupportActionBar() != null) {
-            getSupportActionBar()!!.setDisplayShowTitleEnabled(false)
+        if (supportActionBar != null) {
+            supportActionBar!!.setDisplayShowTitleEnabled(false)
         }
 
         // Add custom view to toolbar
-        toolbar.addView(getLayoutInflater().inflate(R.layout.custom_toolbar, null))
+        toolbar.addView(layoutInflater.inflate(R.layout.custom_toolbar, null))
 
         // Setup search button
         val searchButton = findViewById<ImageButton>(R.id.search_button)

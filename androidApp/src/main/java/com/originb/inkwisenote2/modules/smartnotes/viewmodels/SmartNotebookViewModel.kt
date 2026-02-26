@@ -123,14 +123,16 @@ class SmartNotebookViewModel(
         return createdTimeMillis
     }
 
-    fun loadSmartNotebook(bookId: Long?, workingPath: String?, bookTitle: String?, noteIdsString: String?) {
+    fun loadSmartNotebook(bookId: Long, workingPath: String?, bookTitle: String?, noteIdsString: String?) {
         this.workingNotePath = workingPath
         if (!isNullOrWhitespace(bookTitle) && workingPath != null) {
             this.workingNotePath = Paths.get(workingPath, bookTitle).toString()
         }
 
         BackgroundOps.executeOpt(
-            { getSmartNotebook(bookId!!, bookTitle, noteIdsString!!) },
+            {
+                getSmartNotebook(bookId ?: -1L, bookTitle, noteIdsString.orEmpty())
+            },
             { notebook ->
                 smartNotebookUpdate.value = SmartNotebookUpdate.fromNotebook(notebook!!)
                 notebookTitle.value = notebook. smartBook.title

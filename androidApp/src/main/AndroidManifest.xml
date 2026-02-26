@@ -30,7 +30,7 @@
         </provider>
 
         <activity android:name=".modules.notesearch.NoteSearchActivity"/>
-        <activity android:name=".modules.smarthome.SmartHomeActivity"/>
+        <activity android:name=".modules.smarthome.SmartHomeActivity" />
         <activity android:name=".modules.queries.ui.QueryResultsActivity"/>
         <activity
                 android:name=".modules.smartnotes.ui.SmartNotebookActivity"
