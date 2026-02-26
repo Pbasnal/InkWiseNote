@@ -7,40 +7,51 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import org.basnalcorp.shared.di.sharedModule
+import org.basnalcorp.shared.state.NotebookListStateHolder
+import org.basnalcorp.shared.state.QueryListStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.Platform
 import org.basnalcorp.shared.ui.nav.Route
 import org.basnalcorp.shared.ui.nav.RootNavGraph
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.windowSizeClassFromWidth
+import org.koin.core.context.startKoin
+import org.koin.java.KoinJavaComponent.get
 
 /**
- * Phase 6.3: Desktop shows same shared RootNavGraph and pilot NotebookListScreen.
- * LayoutContext uses Platform.Desktop; notebook list state is null until Phase 8 (Koin/actuals).
+ * Phase 6.3 / 8.1: Desktop runs shared RootNavGraph with full data (Koin + jvmMain actuals).
  */
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "InkWiseNote"
-    ) {
-        var backStack by remember { mutableStateOf(listOf<Route>(Route.Home)) }
-        val currentRoute = backStack.last()
-        var themeId by remember { mutableStateOf(ThemeId.Light) }
-        BoxWithConstraints {
-            val context = LayoutContext(
-                platform = Platform.Desktop,
-                windowSizeClass = windowSizeClassFromWidth(maxWidth)
-            )
-            RootNavGraph(
-                context = context,
-                currentRoute = currentRoute,
-                onNavigate = { backStack = backStack + it },
-                onBack = { if (backStack.size > 1) backStack = backStack.dropLast(1) },
-                themeId = themeId,
-                notebookListStateHolder = null,
-                queryListStateHolder = null,
-                onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light }
-            )
+fun main() {
+    startKoin {
+        modules(desktopActualsModule, sharedModule())
+    }
+    application {
+        val notebookListStateHolder = get<NotebookListStateHolder>(NotebookListStateHolder::class.java)
+        val queryListStateHolder = get<QueryListStateHolder>(QueryListStateHolder::class.java)
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "InkWiseNote"
+        ) {
+            var backStack by remember { mutableStateOf(listOf<Route>(Route.Home)) }
+            val currentRoute = backStack.last()
+            var themeId by remember { mutableStateOf(ThemeId.Light) }
+            BoxWithConstraints {
+                val context = LayoutContext(
+                    platform = Platform.Desktop,
+                    windowSizeClass = windowSizeClassFromWidth(maxWidth)
+                )
+                RootNavGraph(
+                    context = context,
+                    currentRoute = currentRoute,
+                    onNavigate = { backStack = backStack + it },
+                    onBack = { if (backStack.size > 1) backStack = backStack.dropLast(1) },
+                    themeId = themeId,
+                    notebookListStateHolder = notebookListStateHolder,
+                    queryListStateHolder = queryListStateHolder,
+                    onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light }
+                )
+            }
         }
     }
 }

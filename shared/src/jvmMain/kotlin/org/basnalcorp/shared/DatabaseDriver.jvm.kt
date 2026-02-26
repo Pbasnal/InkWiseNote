@@ -6,8 +6,12 @@ import org.basnalcorp.shared.db.NotesDatabase
 import java.io.File
 
 actual fun createDriver(): SqlDriver {
-    val path = File(appStorageRoot(), "notes.db").absolutePath
-    val driver = JdbcSqliteDriver("jdbc:sqlite:$path")
-    NotesDatabase.Schema.create(driver)
+    val root = File(appStorageRoot())
+    root.mkdirs()
+    val dbFile = File(root, "notes.db")
+    val driver = JdbcSqliteDriver("jdbc:sqlite:${dbFile.absolutePath}")
+    if (!dbFile.exists() || dbFile.length() == 0L) {
+        NotesDatabase.Schema.create(driver)
+    }
     return driver
 }

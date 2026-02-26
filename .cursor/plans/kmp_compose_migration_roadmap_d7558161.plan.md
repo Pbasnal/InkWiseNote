@@ -103,13 +103,13 @@ todos:
     status: completed
   - id: p8-1
     content: "Phase 8.1: Implement jvmMain actuals and Koin for desktop"
-    status: pending
+    status: completed
   - id: p8-2
     content: "Phase 8.2: Compose Desktop packaging (JAR/installers for Windows and Linux)"
-    status: pending
+    status: completed
   - id: p8-3
     content: "Phase 8.3: Platform quirks (path separators, OS-specific) in jvmMain"
-    status: pending
+    status: completed
   - id: p9-1
     content: "Phase 9.1: ML Kit digital ink - expect interface; desktop no-op"
     status: pending

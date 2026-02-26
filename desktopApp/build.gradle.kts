@@ -18,8 +18,10 @@ dependencies {
     implementation(compose.foundation)
     implementation(compose.material3)
     implementation(compose.ui)
+    implementation("io.insert-koin:koin-core:3.5.6")
 }
 
+// Phase 8.2: Packaging – run :desktopApp:run to run; :desktopApp:packageDistribution or createDistributable for installers
 compose.desktop {
     application {
         mainClass = "com.originb.inkwisenote2.desktop.MainKt"
