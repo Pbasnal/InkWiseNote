@@ -23,6 +23,8 @@ fun main() = application {
         onCloseRequest = ::exitApplication,
         title = "InkWiseNote"
     ) {
+        var backStack by remember { mutableStateOf(listOf<Route>(Route.Home)) }
+        val currentRoute = backStack.last()
         var themeId by remember { mutableStateOf(ThemeId.Light) }
         BoxWithConstraints {
             val context = LayoutContext(
@@ -31,10 +33,12 @@ fun main() = application {
             )
             RootNavGraph(
                 context = context,
-                currentRoute = Route.Home,
-                onNavigate = { },
+                currentRoute = currentRoute,
+                onNavigate = { backStack = backStack + it },
+                onBack = { if (backStack.size > 1) backStack = backStack.dropLast(1) },
                 themeId = themeId,
                 notebookListStateHolder = null,
+                queryListStateHolder = null,
                 onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light }
             )
         }

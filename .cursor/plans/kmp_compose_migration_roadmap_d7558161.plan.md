@@ -91,16 +91,16 @@ todos:
     status: completed
   - id: p7-1
     content: "Phase 7.1: Migrate remaining screens to Compose with layout selection"
-    status: pending
+    status: completed
   - id: p7-2
     content: "Phase 7.2: Compose navigation (sealed Route, back stack)"
-    status: pending
+    status: completed
   - id: p7-3
     content: "Phase 7.3: expect/actual for back, file picker, toast; DrawingView"
-    status: pending
+    status: completed
   - id: p7-4
     content: "Phase 7.4: Remove legacy Activities, Fragments, RecyclerView"
-    status: pending
+    status: completed
   - id: p8-1
     content: "Phase 8.1: Implement jvmMain actuals and Koin for desktop"
     status: pending

@@ -80,10 +80,11 @@ private fun NotebookListCompactLayout(
             TopAppBar(
                 title = { Text("Notebooks") },
                 actions = {
+                    IconButton(onClick = { onNavigate(Route.Search) }) { Text("🔍", style = MaterialTheme.typography.bodyLarge) }
+                    IconButton(onClick = { onNavigate(Route.QueryList) }) { Text("Q", style = MaterialTheme.typography.titleMedium) }
+                    IconButton(onClick = { onNavigate(Route.Admin) }) { Text("⚙", style = MaterialTheme.typography.bodyLarge) }
                     if (onThemeToggle != null) {
-                        IconButton(onClick = onThemeToggle) {
-                            Text("🌓", style = MaterialTheme.typography.bodyLarge) // Theme toggle (Phase 6.4)
-                        }
+                        IconButton(onClick = onThemeToggle) { Text("🌓", style = MaterialTheme.typography.bodyLarge) }
                     }
                 }
             )
@@ -114,7 +115,7 @@ private fun NotebookListCompactLayout(
                     NotebookCard(
                         notebook = notebook,
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { /* Phase 7: navigate to notebook detail */ }
+                        onClick = { onNavigate(Route.SmartNotebook(bookId = notebook.smartBook.bookId)) }
                     )
                 }
             }
@@ -134,6 +135,15 @@ private fun NotebookListExpandedLayout(
             TopAppBar(
                 title = { Text("Notebooks") },
                 actions = {
+                    IconButton(onClick = { onNavigate(Route.Search) }) {
+                        Text("🔍", style = MaterialTheme.typography.bodyLarge)
+                    }
+                    IconButton(onClick = { onNavigate(Route.QueryList) }) {
+                        Text("Q", style = MaterialTheme.typography.titleMedium)
+                    }
+                    IconButton(onClick = { onNavigate(Route.Admin) }) {
+                        Text("⚙", style = MaterialTheme.typography.bodyLarge)
+                    }
                     if (onThemeToggle != null) {
                         IconButton(onClick = onThemeToggle) {
                             Text("🌓", style = MaterialTheme.typography.bodyLarge) // Theme toggle (Phase 6.4)
@@ -170,7 +180,7 @@ private fun NotebookListExpandedLayout(
                     NotebookCard(
                         notebook = notebook,
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = { /* Phase 7: navigate to notebook detail */ }
+                        onClick = { onNavigate(Route.SmartNotebook(bookId = notebook.smartBook.bookId)) }
                     )
                 }
             }
