@@ -79,16 +79,16 @@ todos:
     status: completed
   - id: p6-1
     content: "Phase 6.1: Pilot screen - NotebookListScreen with Compact/Expanded layouts"
-    status: pending
+    status: completed
   - id: p6-2
     content: "Phase 6.2: Connect pilot screen to nav graph; bypass old Activity/Fragment"
-    status: pending
+    status: completed
   - id: p6-3
     content: "Phase 6.3: Desktop app Compose content and LayoutContext; verify both platforms"
-    status: pending
+    status: completed
   - id: p6-4
     content: "Phase 6.4: Verify theming (dark/light) in shared root"
-    status: pending
+    status: completed
   - id: p7-1
     content: "Phase 7.1: Migrate remaining screens to Compose with layout selection"
     status: pending
