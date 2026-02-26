@@ -52,16 +52,16 @@ todos:
     status: completed
   - id: p4-1
     content: "Phase 4.1: Define LayoutContext, Platform, WindowSizeClass in shared"
-    status: pending
+    status: completed
   - id: p4-2
     content: "Phase 4.2: Root nav graph composable with placeholder screen"
-    status: pending
+    status: completed
   - id: p4-3
     content: "Phase 4.3: Theme registry and MaterialTheme at root"
-    status: pending
+    status: completed
   - id: p4-4
     content: "Phase 4.4: Document screen contract (LayoutContext, state, onNavigate)"
-    status: pending
+    status: completed
   - id: p5-1
     content: "Phase 5.1: Implement androidMain actuals and register in Koin"
     status: pending
