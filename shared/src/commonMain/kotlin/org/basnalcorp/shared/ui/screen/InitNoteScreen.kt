@@ -42,14 +42,19 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.focus.onFocusChanged
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.flowOf
 import org.basnalcorp.shared.state.NoteDetailStateHolder
 import org.basnalcorp.shared.state.SmartNotebookStateHolder
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.component.DesignCard
 import org.basnalcorp.shared.ui.nav.Route
 import org.basnalcorp.shared.ui.theme.DesignSpacing
+import androidx.compose.runtime.rememberCoroutineScope
 
 // Design tokens from pagespec/new_note_page_spec.json (NotebookDetailScreen)
 private object NewNotePageTokens {
@@ -94,30 +99,57 @@ private object NewNotePageTokens {
 
 /**
  * Init note screen per pagespec/new_note_page_spec.json (NotebookDetailScreen).
- * TopControlBar (surface pill) with back, EditablePill, prev, add, next — stays fixed.
- * Lower section: either type choice (cards) or text editor (when "New Text Note" tapped).
+ * When [chronicleNotebookId] is set, screen is Chronicle-backed: pill is notebook id, rename on blur; note type buttons disabled.
+ * Otherwise legacy SmartNotebook flow (create with first note).
  */
 @Composable
 fun InitNoteScreen(
     context: LayoutContext,
     workingPath: String,
-    stateHolder: SmartNotebookStateHolder?,
+    chronicleNotebookId: String? = null,
+    stateHolder: SmartNotebookStateHolder? = null,
     noteDetailStateHolder: NoteDetailStateHolder? = null,
+    chronicleCore: ChronicleCore? = null,
     onNavigate: (Route) -> Unit,
     onBack: () -> Unit,
     onShowToast: ((String) -> Unit)? = null
 ) {
     val t = NewNotePageTokens
-    var notebookTitle by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val isChronicleMode = chronicleNotebookId != null && chronicleCore != null
+
+    var notebookTitle by remember(chronicleNotebookId) {
+        mutableStateOf(chronicleNotebookId?.takeIf { it.isNotBlank() } ?: "")
+    }
+    var lastCommittedChronicleId by remember(chronicleNotebookId) { mutableStateOf(chronicleNotebookId ?: "") }
     var selectedNoteType by remember { mutableStateOf<String?>(null) }
     /** When non-null, lower section shows text editor for this (bookId, noteId) instead of cards. */
     var textEditorNote by remember { mutableStateOf<Pair<Long, Long>?>(null) }
 
-    val notebookFlow = stateHolder?.notebook ?: flowOf(null)
+    val notebookFlow = if (isChronicleMode) flowOf(null) else (stateHolder?.notebook ?: flowOf(null))
     val notebook by notebookFlow.collectAsState(initial = null)
     var createRequested by remember { mutableStateOf(false) }
 
+    fun commitChronicleRename() {
+        if (!isChronicleMode || chronicleCore == null) return
+        val newId = notebookTitle.trim()
+        if (newId.isBlank() || newId == lastCommittedChronicleId) return
+        scope.launch {
+            when (val r = chronicleCore.renameNotebook(lastCommittedChronicleId, newId)) {
+                is ChronicleCommandResult.Success -> {
+                    lastCommittedChronicleId = newId
+                    onShowToast?.invoke("Renamed to $newId")
+                }
+                is ChronicleCommandResult.Failure ->
+                    onShowToast?.invoke("Rename failed: ${r.message}")
+                is ChronicleCommandResult.FailButRetry ->
+                    onShowToast?.invoke("Rename retry: ${r.message}")
+            }
+        }
+    }
+
     LaunchedEffect(notebook, createRequested) {
+        if (isChronicleMode) return@LaunchedEffect
         if (!createRequested) return@LaunchedEffect
         val nb = notebook ?: return@LaunchedEffect
         val first = nb.atomicNotes.firstOrNull() ?: return@LaunchedEffect
@@ -157,6 +189,7 @@ fun InitNoteScreen(
                 selectedNoteType = selectedNoteType,
                 onBack = onBack,
                 onAddClick = {
+                    if (isChronicleMode) return@TopControlBar
                     val type = selectedNoteType ?: return@TopControlBar
                     createRequested = true
                     stateHolder?.createNotebookWithFirstNote(
@@ -164,10 +197,12 @@ fun InitNoteScreen(
                         workingPath,
                         type
                     )
-                }
+                },
+                isChronicleMode = isChronicleMode,
+                onPillCommit = ::commitChronicleRename
             )
 
-            if (textEditorNote != null) {
+            if (textEditorNote != null && !isChronicleMode) {
                 val (bookId, noteId) = textEditorNote!!
                 InitNoteTextEditorSection(
                     bookId = bookId,
@@ -178,7 +213,7 @@ fun InitNoteScreen(
                         .fillMaxWidth()
                         .weight(1f)
                 )
-            } else {
+            } else if (!isChronicleMode) {
                 MetadataSection()
 
                 PrimaryNoteCard(
@@ -210,6 +245,15 @@ fun InitNoteScreen(
                 )
 
                 FooterMeta()
+            } else if (isChronicleMode) {
+                MetadataSection()
+                Text(
+                    text = "Note types coming soon. You can rename the notebook above.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = t.textSecondary,
+                    fontSize = t.captionSize,
+                    modifier = Modifier.padding(vertical = t.footerPaddingTop)
+                )
             }
         }
     }
@@ -276,7 +320,9 @@ private fun TopControlBar(
     onNotebookTitleChange: (String) -> Unit,
     selectedNoteType: String?,
     onBack: () -> Unit,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    isChronicleMode: Boolean = false,
+    onPillCommit: (() -> Unit)? = null
 ) {
     val t = NewNotePageTokens
     Row(
@@ -294,7 +340,8 @@ private fun TopControlBar(
             value = notebookTitle,
             onValueChange = onNotebookTitleChange,
             placeholder = "Notebook name",
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f),
+            onCommit = onPillCommit
         )
         NewNoteIconButton(icon = "‹", backgroundColor = t.primaryDark, iconColor = t.white, onClick = { }, enabled = false)
         NewNoteIconButton(
@@ -302,7 +349,7 @@ private fun TopControlBar(
             backgroundColor = t.primaryDark,
             iconColor = t.white,
             onClick = onAddClick,
-            enabled = selectedNoteType != null,
+            enabled = !isChronicleMode && selectedNoteType != null,
             alwaysPrimary = true
         )
         NewNoteIconButton(icon = "›", backgroundColor = t.primaryDark, iconColor = t.white, onClick = { }, enabled = false)
@@ -357,7 +404,8 @@ private fun EditablePill(
     value: String,
     onValueChange: (String) -> Unit,
     placeholder: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCommit: (() -> Unit)? = null
 ) {
     val t = NewNotePageTokens
     BasicTextField(
@@ -365,6 +413,7 @@ private fun EditablePill(
         onValueChange = onValueChange,
         modifier = modifier
             .height(t.editablePillHeight)
+            .onFocusChanged { if (!it.isFocused) onCommit?.invoke() }
             .clip(RoundedCornerShape(t.radiusPill))
             .background(t.white)
             .padding(horizontal = t.editablePillPaddingH),

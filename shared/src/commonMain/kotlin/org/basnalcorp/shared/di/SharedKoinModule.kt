@@ -22,6 +22,7 @@ import org.basnalcorp.shared.state.QueryListStateHolder
 import org.basnalcorp.shared.state.NoteDetailStateHolder
 import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.tfidf.NoteTfIdfLogic
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
@@ -48,7 +49,7 @@ fun sharedModule(): Module = module {
         )
     }.bind<SmartNotebookRepository>()
     singleOf(::NoteTfIdfLogic)
-    singleOf(::NotebookListStateHolder)
+    single { NotebookListStateHolder(get(), try { get<ChronicleCore>() } catch (_: Exception) { null }) }
     singleOf(::QueryListStateHolder)
     singleOf(::SmartNotebookStateHolder)
     singleOf(::NoteDetailStateHolder)

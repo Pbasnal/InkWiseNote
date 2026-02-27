@@ -55,8 +55,10 @@ fun RootNavGraph(
             is Route.Home -> NotebookListScreen(
                 context = context,
                 stateHolder = notebookListStateHolder,
+                chronicleCore = chronicleCore,
                 onNavigate = onNavigate,
-                onThemeToggle = onThemeToggle
+                onThemeToggle = onThemeToggle,
+                onShowToast = onShowToast
             )
             is Route.Search -> SearchScreen(context = context, onNavigate = onNavigate, onBack = onBack)
             is Route.QueryList -> QueryListScreen(
@@ -75,8 +77,10 @@ fun RootNavGraph(
             is Route.InitNote -> InitNoteScreen(
                 context = context,
                 workingPath = route.workingPath,
+                chronicleNotebookId = route.chronicleNotebookId,
                 stateHolder = smartNotebookStateHolder,
                 noteDetailStateHolder = noteDetailStateHolder,
+                chronicleCore = chronicleCore,
                 onNavigate = onNavigate,
                 onBack = onBack,
                 onShowToast = onShowToast

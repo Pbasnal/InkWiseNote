@@ -20,8 +20,13 @@ sealed class Route {
     /** Create/edit query. */
     data object QueryCreation : Route()
 
-    /** Init new note: notebook name + note type (text/handwritten) before creating. */
-    data class InitNote(val workingPath: String) : Route()
+    /** Init new note: notebook name + note type (text/handwritten) before creating.
+     * When [chronicleNotebookId] is set, screen is backed by ChronicleCore (pill = notebook id, rename on commit).
+     * When null, legacy SmartNotebook flow can be used. */
+    data class InitNote(
+        val workingPath: String,
+        val chronicleNotebookId: String? = null
+    ) : Route()
 
     /** Smart notebook detail (book with pages). */
     data class SmartNotebook(

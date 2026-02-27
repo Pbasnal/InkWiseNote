@@ -19,18 +19,25 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import org.basnalcorp.shared.appStorageRoot
 import org.basnalcorp.shared.domain.SmartNotebook
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleNotebook
 import org.basnalcorp.shared.state.NotebookListStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.WindowSizeClass
@@ -43,41 +50,81 @@ import org.basnalcorp.shared.ui.theme.DesignSpacing
 
 /**
  * Pilot screen (Phase 6.1): notebook list with Compact and Expanded layouts.
- * Selects layout via [context.windowSizeClass].
+ * When [chronicleCore] is available, list shows first 10 Chronicle notebooks and FAB creates a new Chronicle notebook.
  */
 @Composable
 fun NotebookListScreen(
     context: LayoutContext,
     stateHolder: NotebookListStateHolder?,
+    chronicleCore: ChronicleCore? = null,
     onNavigate: (Route) -> Unit,
-    onThemeToggle: (() -> Unit)?
+    onThemeToggle: (() -> Unit)? = null,
+    onShowToast: ((String) -> Unit)? = null
 ) {
+    val scope = rememberCoroutineScope()
     var notebookList by remember { mutableStateOf<List<SmartNotebook>>(emptyList()) }
+    val chronicleList by (stateHolder?.chronicleNotebooks ?: flowOf(emptyList())).collectAsState(initial = emptyList())
+
     LaunchedEffect(stateHolder) {
         (stateHolder?.notebooks ?: flowOf(emptyList())).collect { notebookList = it }
+    }
+    LaunchedEffect(Unit) {
+        stateHolder?.refreshChronicleNotebooks()
+    }
+
+    val useChronicle = chronicleCore != null
+    val notebooks = if (useChronicle) chronicleList else emptyList()
+    val smartNotebooks = if (useChronicle) emptyList() else notebookList
+
+    fun onFabClick() {
+        if (useChronicle && chronicleCore != null) {
+            scope.launch {
+                val name = "notebook-${Clock.System.now().toEpochMilliseconds()}"
+                when (val r = chronicleCore.createNotebook(name)) {
+                    is ChronicleCommandResult.Success ->
+                        onNavigate(Route.InitNote(workingPath = appStorageRoot(), chronicleNotebookId = r.value.notebookId))
+                    is ChronicleCommandResult.Failure ->
+                        onShowToast?.invoke("Error: ${r.message}")
+                    is ChronicleCommandResult.FailButRetry ->
+                        onShowToast?.invoke("Retry: ${r.message}")
+                }
+            }
+        } else {
+            onNavigate(Route.InitNote(workingPath = appStorageRoot()))
+        }
     }
 
     when (context.windowSizeClass) {
         WindowSizeClass.Compact -> NotebookListCompactLayout(
-            notebooks = notebookList,
+            notebooks = notebooks,
+            smartNotebooks = smartNotebooks,
+            useChronicle = useChronicle,
             onThemeToggle = onThemeToggle,
-            onNavigate = onNavigate
+            onNavigate = onNavigate,
+            onFabClick = ::onFabClick
         )
         WindowSizeClass.Medium,
         WindowSizeClass.Expanded -> NotebookListExpandedLayout(
-            notebooks = notebookList,
+            notebooks = notebooks,
+            smartNotebooks = smartNotebooks,
+            useChronicle = useChronicle,
             onThemeToggle = onThemeToggle,
-            onNavigate = onNavigate
+            onNavigate = onNavigate,
+            onFabClick = ::onFabClick
         )
     }
 }
 
 @Composable
 private fun NotebookListCompactLayout(
-    notebooks: List<SmartNotebook>,
+    notebooks: List<ChronicleNotebook>,
+    smartNotebooks: List<SmartNotebook>,
+    useChronicle: Boolean,
     onThemeToggle: (() -> Unit)?,
-    onNavigate: (Route) -> Unit
+    onNavigate: (Route) -> Unit,
+    onFabClick: () -> Unit
 ) {
+    val listEmpty = if (useChronicle) notebooks.isEmpty() else smartNotebooks.isEmpty()
     Scaffold(
         topBar = {
             DesignTopAppBar(
@@ -120,7 +167,7 @@ private fun NotebookListCompactLayout(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onNavigate(Route.InitNote(workingPath = appStorageRoot())) },
+                onClick = onFabClick,
                 containerColor = DesignColors.primaryBase,
                 contentColor = DesignColors.textInverse,
                 modifier = Modifier.sizeIn(minWidth = DesignComponents.touchTargetMin, minHeight = DesignComponents.touchTargetMin)
@@ -129,7 +176,7 @@ private fun NotebookListCompactLayout(
             }
         }
     ) { padding ->
-        if (notebooks.isEmpty()) {
+        if (listEmpty) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -150,12 +197,29 @@ private fun NotebookListCompactLayout(
                 contentPadding = PaddingValues(DesignSpacing.layoutPaddingMobile),
                 verticalArrangement = Arrangement.spacedBy(DesignSpacing.sectionSpacing)
             ) {
-                items(notebooks, key = { it.smartBook.bookId }) { notebook ->
-                    NotebookCard(
-                        notebook = notebook,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onNavigate(Route.SmartNotebook(bookId = notebook.smartBook.bookId)) }
-                    )
+                if (useChronicle) {
+                    items(notebooks, key = { it.notebookId }) { notebook ->
+                        ChronicleNotebookCard(
+                            notebook = notebook,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onNavigate(
+                                    Route.InitNote(
+                                        workingPath = appStorageRoot(),
+                                        chronicleNotebookId = notebook.notebookId
+                                    )
+                                )
+                            }
+                        )
+                    }
+                } else {
+                    items(smartNotebooks, key = { it.smartBook.bookId }) { notebook ->
+                        NotebookCard(
+                            notebook = notebook,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onNavigate(Route.SmartNotebook(bookId = notebook.smartBook.bookId)) }
+                        )
+                    }
                 }
             }
         }
@@ -164,10 +228,14 @@ private fun NotebookListCompactLayout(
 
 @Composable
 private fun NotebookListExpandedLayout(
-    notebooks: List<SmartNotebook>,
+    notebooks: List<ChronicleNotebook>,
+    smartNotebooks: List<SmartNotebook>,
+    useChronicle: Boolean,
     onThemeToggle: (() -> Unit)?,
-    onNavigate: (Route) -> Unit
+    onNavigate: (Route) -> Unit,
+    onFabClick: () -> Unit
 ) {
+    val listEmpty = if (useChronicle) notebooks.isEmpty() else smartNotebooks.isEmpty()
     Scaffold(
         topBar = {
             DesignTopAppBar(
@@ -210,7 +278,7 @@ private fun NotebookListExpandedLayout(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { onNavigate(Route.InitNote(workingPath = appStorageRoot())) },
+                onClick = onFabClick,
                 containerColor = DesignColors.primaryBase,
                 contentColor = DesignColors.textInverse,
                 modifier = Modifier.sizeIn(minWidth = DesignComponents.touchTargetMin, minHeight = DesignComponents.touchTargetMin)
@@ -219,7 +287,7 @@ private fun NotebookListExpandedLayout(
             }
         }
     ) { padding ->
-        if (notebooks.isEmpty()) {
+        if (listEmpty) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -234,7 +302,7 @@ private fun NotebookListExpandedLayout(
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 280.dp), // design.json max_content_width 480; min column ~280
+                columns = GridCells.Adaptive(minSize = 280.dp),
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
@@ -242,14 +310,56 @@ private fun NotebookListExpandedLayout(
                 horizontalArrangement = Arrangement.spacedBy(DesignSpacing.sectionSpacing),
                 verticalArrangement = Arrangement.spacedBy(DesignSpacing.sectionSpacing)
             ) {
-                items(notebooks, key = { it.smartBook.bookId }) { notebook ->
-                    NotebookCard(
-                        notebook = notebook,
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { onNavigate(Route.SmartNotebook(bookId = notebook.smartBook.bookId)) }
-                    )
+                if (useChronicle) {
+                    items(notebooks, key = { it.notebookId }) { notebook ->
+                        ChronicleNotebookCard(
+                            notebook = notebook,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                onNavigate(
+                                    Route.InitNote(
+                                        workingPath = appStorageRoot(),
+                                        chronicleNotebookId = notebook.notebookId
+                                    )
+                                )
+                            }
+                        )
+                    }
+                } else {
+                    items(smartNotebooks, key = { it.smartBook.bookId }) { notebook ->
+                        NotebookCard(
+                            notebook = notebook,
+                            modifier = Modifier.fillMaxWidth(),
+                            onClick = { onNavigate(Route.SmartNotebook(bookId = notebook.smartBook.bookId)) }
+                        )
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun ChronicleNotebookCard(
+    notebook: ChronicleNotebook,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val title = notebook.notebookId.takeIf { it.isNotBlank() } ?: "Untitled"
+    val noteCount = notebook.noteIds.size
+
+    DesignCard(modifier = modifier, onClick = onClick) {
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "$noteCount note(s)",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
