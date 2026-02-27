@@ -1,7 +1,7 @@
 package com.originb.inkwisenote2.desktop
 
 import androidx.compose.ui.unit.dp
-import org.basnalcorp.shared.ui.Route
+import org.basnalcorp.shared.ui.nav.Route
 import org.basnalcorp.shared.ui.WindowSizeClass
 import org.basnalcorp.shared.ui.windowSizeClassFromWidth
 import kotlin.test.Test

@@ -38,3 +38,31 @@ actual fun writeTextFile(filePath: String, content: String) {
     file.parentFile?.mkdirs()
     file.writeText(content)
 }
+
+actual fun readTextFile(filePath: String): String {
+    return File(filePath).readText()
+}
+
+actual fun deleteFile(filePath: String): Boolean {
+    return try {
+        File(filePath).delete()
+    } catch (_: Exception) {
+        false
+    }
+}
+
+actual fun deleteDirectory(path: String): Boolean {
+    return try {
+        File(path).deleteRecursively()
+    } catch (_: Exception) {
+        false
+    }
+}
+
+actual fun renameDirectory(oldPath: String, newPath: String): Boolean {
+    return try {
+        File(oldPath).renameTo(File(newPath))
+    } catch (_: Exception) {
+        false
+    }
+}

@@ -35,3 +35,27 @@ expect fun createNotebookDirectory(parentPath: String, title: String): String
  * Overwrites the file if it exists.
  */
 expect fun writeTextFile(filePath: String, content: String)
+
+/**
+ * Reads the full text content of the file at [filePath].
+ * @throws Exception if the file does not exist or cannot be read.
+ */
+expect fun readTextFile(filePath: String): String
+
+/**
+ * Deletes the file at [filePath]. No-op if the file does not exist.
+ * @return true if the file was deleted or did not exist, false on failure.
+ */
+expect fun deleteFile(filePath: String): Boolean
+
+/**
+ * Deletes the directory at [path] and all its contents recursively.
+ * @return true if the directory was deleted or did not exist, false on failure.
+ */
+expect fun deleteDirectory(path: String): Boolean
+
+/**
+ * Renames/moves the directory from [oldPath] to [newPath].
+ * @return true if the rename succeeded, false on failure.
+ */
+expect fun renameDirectory(oldPath: String, newPath: String): Boolean

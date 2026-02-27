@@ -7,7 +7,7 @@ class ListUtilsTest {
 
     @Test
     fun merge_bothNull_returnsEmpty() {
-        val result = ListUtils.merge(null, null)
+        val result = ListUtils.merge<String>(null, null)
         assertEquals(emptyList<String?>(), result)
     }
 

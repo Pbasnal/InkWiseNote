@@ -1,6 +1,7 @@
 package org.basnalcorp.shared.util
 
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -28,7 +29,7 @@ class MapsUtilsTest {
         val map2 = mapOf("a" to setOf(4L), "c" to setOf(5L))
         val result = MapsUtils.mergeMapsWithSets(map1, map2)
         assertTrue(result["a"]!!.containsAll(setOf(1L, 2L, 4L)))
-        assertEquals(setOf(3L), result["b"])
-        assertEquals(setOf(5L), result["c"])
+        assertEquals(setOf(3L), result["b"]!!.toSet())
+        assertEquals(setOf(5L), result["c"]!!.toSet())
     }
 }

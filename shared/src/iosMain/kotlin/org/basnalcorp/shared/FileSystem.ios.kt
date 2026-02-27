@@ -20,3 +20,23 @@ actual fun createNotebookDirectory(parentPath: String, title: String): String {
 actual fun writeTextFile(filePath: String, content: String) {
     // Stub until iOS file APIs are wired
 }
+
+actual fun readTextFile(filePath: String): String {
+    // Stub until iOS file APIs are wired
+    return ""
+}
+
+actual fun deleteFile(filePath: String): Boolean {
+    // Stub until iOS file APIs are wired
+    return false
+}
+
+actual fun deleteDirectory(path: String): Boolean {
+    // Stub until iOS file APIs are wired
+    return false
+}
+
+actual fun renameDirectory(oldPath: String, newPath: String): Boolean {
+    // Stub until iOS file APIs are wired
+    return false
+}
