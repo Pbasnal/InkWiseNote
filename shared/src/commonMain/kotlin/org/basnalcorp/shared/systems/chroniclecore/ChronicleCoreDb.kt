@@ -2,19 +2,13 @@ package org.basnalcorp.shared.systems.chroniclecore
 
 /**
  * Index database interface for ChronicleCore. All persistence for the read model
- * goes through this interface. Implementations may use SQLDelight, Room, or any other store.
+ * goes through this interface. Notebook existence is derived from FS (source of truth);
+ * this interface only stores note metadata.
  */
 interface ChronicleCoreDb {
 
-    fun insertNotebook(notebookId: String, displayName: String, creationTime: Long)
-
-    fun getNotebook(notebookId: String): ChronicleNotebook?
-
-    fun listNotebooks(): List<ChronicleNotebook>
-
-    fun updateNotebookDisplayName(notebookId: String, displayName: String)
-
-    fun deleteNotebook(notebookId: String)
+    /** Updates all notes belonging to [oldNotebookId] to [newNotebookId]. Used for rename. */
+    fun updateNotesNotebookId(newNotebookId: String, oldNotebookId: String)
 
     fun insertNote(
         noteId: Long,
@@ -28,6 +22,9 @@ interface ChronicleCoreDb {
     fun getNote(noteId: Long): ChronicleNoteMeta?
 
     fun listNotes(notebookId: String): List<ChronicleNoteMeta>
+
+    /** Notebook ids that have at least one note in DB (for resync DB cleanup). */
+    fun listNotebookIdsInDb(): List<String>
 
     fun updateNote(noteId: Long, title: String, lastModified: Long, filePath: String)
 

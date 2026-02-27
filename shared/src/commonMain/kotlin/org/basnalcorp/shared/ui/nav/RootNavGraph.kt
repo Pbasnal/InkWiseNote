@@ -11,6 +11,7 @@ import org.basnalcorp.shared.state.RelatedNotesStateHolder
 import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.screen.AdminScreen
+import org.basnalcorp.shared.ui.screen.ChronicleTestScreen
 import org.basnalcorp.shared.ui.screen.FileExplorerScreen
 import org.basnalcorp.shared.ui.screen.InitNoteScreen
 import org.basnalcorp.shared.ui.screen.NoteDetailScreen
@@ -22,6 +23,7 @@ import org.basnalcorp.shared.ui.screen.RelatedNotesScreen
 import org.basnalcorp.shared.ui.screen.SearchScreen
 import org.basnalcorp.shared.ui.screen.SmartNotebookScreen
 import org.basnalcorp.shared.domain.AtomicNote
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.theme.ThemeRegistry
 
@@ -44,7 +46,8 @@ fun RootNavGraph(
     relatedNotesStateHolder: RelatedNotesStateHolder? = null,
     onThemeToggle: (() -> Unit)? = null,
     onShowToast: ((String) -> Unit)? = null,
-    handwrittenNoteContent: (@Composable (Modifier, AtomicNote, Long) -> Unit)? = null
+    handwrittenNoteContent: (@Composable (Modifier, AtomicNote, Long) -> Unit)? = null,
+    chronicleCore: ChronicleCore? = null
 ) {
     val theme = ThemeRegistry.get(themeId)
     MaterialTheme(colorScheme = theme.colorScheme, typography = theme.typography) {
@@ -113,6 +116,13 @@ fun RootNavGraph(
                 bookId = route.bookId,
                 onNavigate = onNavigate,
                 onBack = onBack
+            )
+            is Route.ChronicleTest -> ChronicleTestScreen(
+                context = context,
+                chronicleCore = chronicleCore,
+                onBack = onBack,
+                onNavigate = onNavigate,
+                onShowToast = onShowToast
             )
         }
     }

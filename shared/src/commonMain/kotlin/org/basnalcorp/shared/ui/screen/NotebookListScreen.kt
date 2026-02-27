@@ -103,6 +103,11 @@ private fun NotebookListCompactLayout(
                             Text("⚙", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
+                    IconButton(onClick = { onNavigate(Route.ChronicleTest) }) {
+                        Box(Modifier.size(DesignComponents.topBarIconSize), contentAlignment = Alignment.Center) {
+                            Text("C", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
                     if (onThemeToggle != null) {
                         IconButton(onClick = onThemeToggle) {
                             Box(Modifier.size(DesignComponents.topBarIconSize), contentAlignment = Alignment.Center) {
@@ -186,6 +191,11 @@ private fun NotebookListExpandedLayout(
                     IconButton(onClick = { onNavigate(Route.Admin) }) {
                         Box(Modifier.size(DesignComponents.topBarIconSize), contentAlignment = Alignment.Center) {
                             Text("⚙", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    IconButton(onClick = { onNavigate(Route.ChronicleTest) }) {
+                        Box(Modifier.size(DesignComponents.topBarIconSize), contentAlignment = Alignment.Center) {
+                            Text("C", style = MaterialTheme.typography.titleMedium)
                         }
                     }
                     if (onThemeToggle != null) {

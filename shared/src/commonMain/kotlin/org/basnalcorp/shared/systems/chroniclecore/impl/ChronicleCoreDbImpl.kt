@@ -1,57 +1,23 @@
 package org.basnalcorp.shared.systems.chroniclecore.impl
 
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCoreDb
-import org.basnalcorp.shared.systems.chroniclecore.ChronicleNotebook
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleNoteMeta
 import org.basnalcorp.shared.db.NotesDatabase
 
 /**
  * ChronicleCore DB implementation using SQLDelight NotesDatabase.
  * Wire this in DI when constructing ChronicleCore.
+ * Notebook table removed; FS is source of truth for notebook existence.
  */
 class ChronicleCoreDbImpl(
     private val db: NotesDatabase
 ) : ChronicleCoreDb {
 
-    override fun insertNotebook(notebookId: String, displayName: String, creationTime: Long) {
-        db.chronicleNotebooksQueries.insertChronicleNotebook(
-            notebook_id = notebookId,
-            display_name = displayName,
-            creation_time = creationTime
+    override fun updateNotesNotebookId(newNotebookId: String, oldNotebookId: String) {
+        db.chronicleNotesQueries.updateNotesNotebookId(
+            newNotebookId,
+            oldNotebookId
         )
-    }
-
-    override fun getNotebook(notebookId: String): ChronicleNotebook? {
-        return db.chronicleNotebooksQueries.getChronicleNotebook(notebook_id = notebookId)
-            .executeAsOneOrNull()
-            ?.let { row ->
-                ChronicleNotebook(
-                    notebookId = row.notebook_id,
-                    displayName = row.display_name,
-                    creationTime = row.creation_time
-                )
-            }
-    }
-
-    override fun listNotebooks(): List<ChronicleNotebook> {
-        return db.chronicleNotebooksQueries.listChronicleNotebooks().executeAsList().map { row ->
-            ChronicleNotebook(
-                notebookId = row.notebook_id,
-                displayName = row.display_name,
-                creationTime = row.creation_time
-            )
-        }
-    }
-
-    override fun updateNotebookDisplayName(notebookId: String, displayName: String) {
-        db.chronicleNotebooksQueries.updateChronicleNotebookDisplayName(
-            display_name = displayName,
-            notebook_id = notebookId
-        )
-    }
-
-    override fun deleteNotebook(notebookId: String) {
-        db.chronicleNotebooksQueries.deleteChronicleNotebook(notebook_id = notebookId)
     }
 
     override fun insertNote(
@@ -100,6 +66,10 @@ class ChronicleCoreDbImpl(
                     filePath = row.file_path
                 )
             }
+    }
+
+    override fun listNotebookIdsInDb(): List<String> {
+        return db.chronicleNotesQueries.listDistinctNotebookIds().executeAsList().map { it }
     }
 
     override fun updateNote(noteId: Long, title: String, lastModified: Long, filePath: String) {

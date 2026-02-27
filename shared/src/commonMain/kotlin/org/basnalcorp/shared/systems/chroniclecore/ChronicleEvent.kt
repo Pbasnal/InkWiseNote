@@ -1,20 +1,19 @@
 package org.basnalcorp.shared.systems.chroniclecore
 
 /**
- * Domain events emitted after successful ChronicleCore commits.
+ * Domain events emitted after ChronicleCore commits (success or failure).
  * Ordered, in-process, at-most-once; not persisted.
+ * UI can use failure events to show alerts.
  */
 sealed class ChronicleEvent {
 
     data class NotebookCreated(
-        val notebookId: String,
-        val displayName: String,
-        val creationTime: Long
+        val notebookId: String
     ) : ChronicleEvent()
 
     data class NotebookRenamed(
-        val notebookId: String,
-        val newDisplayName: String
+        val oldNotebookId: String,
+        val newNotebookId: String
     ) : ChronicleEvent()
 
     data class NotebookDeleted(
@@ -38,5 +37,11 @@ sealed class ChronicleEvent {
         val noteId: Long,
         val notebookId: String,
         val lastModified: Long
+    ) : ChronicleEvent()
+
+    /** Emitted when a mutation fails so UI can show an alert. */
+    data class OperationFailed(
+        val operation: String,
+        val message: String
     ) : ChronicleEvent()
 }

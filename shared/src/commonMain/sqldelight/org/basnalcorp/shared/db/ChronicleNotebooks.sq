@@ -1,22 +1,4 @@
 CREATE TABLE chronicle_notebooks (
     notebook_id TEXT PRIMARY KEY NOT NULL,
-    display_name TEXT NOT NULL,
     creation_time INTEGER NOT NULL
 );
-
-insertChronicleNotebook:
-INSERT OR REPLACE INTO chronicle_notebooks(notebook_id, display_name, creation_time)
-VALUES (?, ?, ?);
-
-updateChronicleNotebookDisplayName:
-UPDATE chronicle_notebooks SET display_name = ?
-WHERE notebook_id = ?;
-
-getChronicleNotebook:
-SELECT * FROM chronicle_notebooks WHERE notebook_id = ?;
-
-listChronicleNotebooks:
-SELECT * FROM chronicle_notebooks ORDER BY creation_time DESC;
-
-deleteChronicleNotebook:
-DELETE FROM chronicle_notebooks WHERE notebook_id = ?;

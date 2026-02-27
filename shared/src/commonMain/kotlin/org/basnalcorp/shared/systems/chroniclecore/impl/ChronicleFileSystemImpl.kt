@@ -1,5 +1,6 @@
 package org.basnalcorp.shared.systems.chroniclecore.impl
 
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleFileEntry
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleFileSystem
 
 /**
@@ -11,7 +12,10 @@ class ChronicleFileSystemImpl(
     private val writeTextFile: (path: String, content: String) -> Unit,
     private val createDirectory: (path: String) -> Boolean,
     private val deleteFile: (path: String) -> Boolean,
-    private val deleteDirectory: (path: String) -> Boolean
+    private val deleteDirectory: (path: String) -> Boolean,
+    private val renameDirectoryFn: (oldPath: String, newPath: String) -> Boolean,
+    private val existsPath: (path: String) -> Boolean,
+    private val listDirectory: (path: String) -> List<ChronicleFileEntry>
 ) : ChronicleFileSystem {
 
     override fun readTextFile(path: String): String =
@@ -30,6 +34,12 @@ class ChronicleFileSystemImpl(
     override fun deleteDirectory(path: String): Boolean =
         deleteDirectory.invoke(path)
 
+    override fun renameDirectory(oldPath: String, newPath: String): Boolean =
+        renameDirectoryFn(oldPath, newPath)
+
     override fun exists(path: String): Boolean =
-        runCatching { readTextFile(path) }.isSuccess
+        existsPath(path)
+
+    override fun listDirectory(path: String): List<ChronicleFileEntry> =
+        listDirectory.invoke(path)
 }

@@ -40,3 +40,7 @@ actual fun renameDirectory(oldPath: String, newPath: String): Boolean {
     // Stub until iOS file APIs are wired
     return false
 }
+
+actual fun pathExists(path: String): Boolean {
+    return false
+}

@@ -37,7 +37,28 @@ interface ChronicleFileSystem {
     fun deleteDirectory(path: String): Boolean
 
     /**
+     * Renames/moves the directory from [oldPath] to [newPath].
+     * @return true if the rename succeeded, false on failure.
+     */
+    fun renameDirectory(oldPath: String, newPath: String): Boolean
+
+    /**
      * Returns true if a file or directory exists at [path], false otherwise.
      */
     fun exists(path: String): Boolean
+
+    /**
+     * Lists direct children (files and directories) at [path].
+     * Returns empty list if path is not a directory or on error.
+     */
+    fun listDirectory(path: String): List<ChronicleFileEntry>
 }
+
+/**
+ * A file or directory entry when listing a directory.
+ */
+data class ChronicleFileEntry(
+    val path: String,
+    val name: String,
+    val isDirectory: Boolean
+)

@@ -57,5 +57,10 @@
                 android:label="Search Queries"
                 android:exported="false"/>
 
+        <activity
+                android:name=".modules.chronicle.ChronicleTestActivity"
+                android:label="Chronicle Test"
+                android:exported="false"/>
+
     </application>
 </manifest>

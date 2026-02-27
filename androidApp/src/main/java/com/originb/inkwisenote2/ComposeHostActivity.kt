@@ -1,5 +1,3 @@
-package com.originb.inkwisenote2
-
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -25,6 +23,7 @@ import com.originb.inkwisenote2.common.ComposeRouteExtras
 import com.originb.inkwisenote2.compose.HandwrittenNoteContentAndroid
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.windowSizeClassFromWidth
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.koin.java.KoinJavaComponent.get
 
 /**
@@ -41,6 +40,7 @@ class ComposeHostActivity : ComponentActivity() {
         val noteDetailStateHolder = get<NoteDetailStateHolder>(NoteDetailStateHolder::class.java)
         val fileExplorerStateHolder = get<FileExplorerStateHolder>(FileExplorerStateHolder::class.java)
         val relatedNotesStateHolder = get<RelatedNotesStateHolder>(RelatedNotesStateHolder::class.java)
+        val chronicleCore = get<ChronicleCore>(ChronicleCore::class.java)
         val initialStack = intentToRouteStack(intent)
         setContent {
             val androidContext = LocalContext.current
@@ -75,7 +75,8 @@ class ComposeHostActivity : ComponentActivity() {
                             note = atomicNote,
                             bookId = bookId
                         )
-                    }
+                    },
+                    chronicleCore = chronicleCore
                 )
             }
         }

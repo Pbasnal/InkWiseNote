@@ -45,6 +45,9 @@ fun FileExplorerScreen(
     LaunchedEffect(initialPath) {
         stateHolder?.load(initialPath)
     }
+    LaunchedEffect(Unit) {
+        stateHolder?.refresh()
+    }
     val currentPath by (stateHolder?.currentPath ?: flowOf(null)).collectAsState(initial = null)
     val items by (stateHolder?.items ?: flowOf(emptyList())).collectAsState(initial = emptyList())
     val isLoading by (stateHolder?.isLoading ?: flowOf(false)).collectAsState(initial = false)

@@ -18,6 +18,7 @@ import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.Platform
 import org.basnalcorp.shared.ui.nav.Route
 import org.basnalcorp.shared.ui.nav.RootNavGraph
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.windowSizeClassFromWidth
 import org.koin.core.context.startKoin
@@ -41,6 +42,7 @@ fun main() {
             onCloseRequest = ::exitApplication,
             title = "InkWiseNote"
         ) {
+            val chronicleCore = get<ChronicleCore>(ChronicleCore::class.java)
             var backStack by remember { mutableStateOf(listOf<Route>(Route.Home)) }
             val currentRoute = backStack.last()
             var themeId by remember { mutableStateOf(ThemeId.Light) }
@@ -62,7 +64,8 @@ fun main() {
                     fileExplorerStateHolder = fileExplorerStateHolder,
                     relatedNotesStateHolder = relatedNotesStateHolder,
                     onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light },
-                    onShowToast = { msg -> println(msg) }
+                    onShowToast = { msg -> println(msg) },
+                    chronicleCore = chronicleCore
                 )
             }
         }

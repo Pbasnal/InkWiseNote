@@ -3,11 +3,11 @@ package org.basnalcorp.shared.systems.chroniclecore
 /**
  * Public read-model types returned by ChronicleCore read commands.
  * All reads go through the event loop and return these types.
+ * Notebook has no creationTime; FS is source of truth for existence.
  */
 data class ChronicleNotebook(
     val notebookId: String,
-    val displayName: String,
-    val creationTime: Long
+    val noteIds: List<Long>
 )
 
 data class ChronicleNoteMeta(

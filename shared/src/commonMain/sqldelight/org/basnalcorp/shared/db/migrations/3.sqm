@@ -1,0 +1,9 @@
+-- Ensure chronicle_notes exists (e.g. DB created before ChronicleNotes.sq or missing after notebook removal).
+CREATE TABLE IF NOT EXISTS chronicle_notes (
+    note_id INTEGER PRIMARY KEY NOT NULL,
+    notebook_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    creation_time INTEGER NOT NULL,
+    last_modified INTEGER NOT NULL,
+    file_path TEXT NOT NULL
+);

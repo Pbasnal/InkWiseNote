@@ -55,6 +55,11 @@ expect fun deleteFile(filePath: String): Boolean
 expect fun deleteDirectory(path: String): Boolean
 
 /**
+ * Returns true if a file or directory exists at [path], false otherwise.
+ */
+expect fun pathExists(path: String): Boolean
+
+/**
  * Renames/moves the directory from [oldPath] to [newPath].
  * @return true if the rename succeeded, false on failure.
  */

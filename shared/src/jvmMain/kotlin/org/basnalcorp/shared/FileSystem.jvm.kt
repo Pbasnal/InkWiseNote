@@ -66,3 +66,11 @@ actual fun renameDirectory(oldPath: String, newPath: String): Boolean {
         false
     }
 }
+
+actual fun pathExists(path: String): Boolean {
+    return try {
+        File(path).exists()
+    } catch (_: Exception) {
+        false
+    }
+}

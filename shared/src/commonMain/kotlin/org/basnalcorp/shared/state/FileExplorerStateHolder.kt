@@ -9,11 +9,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.basnalcorp.shared.FileExplorerItem
 import org.basnalcorp.shared.appStorageRoot
+import org.basnalcorp.shared.createDirectory
 import org.basnalcorp.shared.listDirectory
 
 /**
  * State holder for FileExplorerScreen (Phase 3).
- * Loads directory listing via [listDirectory]; [appStorageRoot] used when initialPath is null.
+ * Loads directory listing via [listDirectory]; when [initialPath] is null, uses
+ * app storage + "/notes" (Chronicle notes root) so test notebooks are visible.
  * Call [load] when route appears (e.g. LaunchedEffect(initialPath) { load(initialPath) }).
  */
 class FileExplorerStateHolder {
@@ -34,10 +36,17 @@ class FileExplorerStateHolder {
         get() = navigationStack.isNotEmpty()
 
     /**
-     * Load directory at [initialPath], or app storage root if null.
+     * Load directory at [initialPath], or Chronicle notes folder (app storage + "/notes") if null,
+     * so that Chronicle test notebooks are visible when opening File explorer.
      */
     fun load(initialPath: String?) {
-        val path = initialPath?.takeIf { it.isNotBlank() } ?: appStorageRoot()
+        val path = when {
+            initialPath?.isNotBlank() == true -> initialPath
+            else -> appStorageRoot() + "/notes"
+        }
+        if (path == appStorageRoot() + "/notes") {
+            createDirectory(path)
+        }
         navigationStack.clear()
         _currentPath.value = path
         refresh()

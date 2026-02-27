@@ -1,0 +1,6 @@
+-- Ensure chronicle_notebooks exists (notebooks table; FS is source of truth).
+-- Safe when the table was never created or was dropped.
+CREATE TABLE IF NOT EXISTS chronicle_notebooks (
+    notebook_id TEXT PRIMARY KEY NOT NULL,
+    creation_time INTEGER NOT NULL
+);

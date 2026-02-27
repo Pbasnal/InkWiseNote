@@ -47,4 +47,7 @@ sealed class Route {
 
     /** Related notes for a book. */
     data class RelatedNotes(val bookId: Long) : Route()
+
+    /** Chronicle test: add notebook / add note (for FS verification). */
+    data object ChronicleTest : Route()
 }

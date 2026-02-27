@@ -1,0 +1,9 @@
+-- Add chronicle_notes table (for DBs created before ChronicleNotes.sq was added).
+CREATE TABLE IF NOT EXISTS chronicle_notes (
+    note_id INTEGER PRIMARY KEY NOT NULL,
+    notebook_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    creation_time INTEGER NOT NULL,
+    last_modified INTEGER NOT NULL,
+    file_path TEXT NOT NULL
+);

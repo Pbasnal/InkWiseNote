@@ -5,6 +5,7 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.basnalcorp.shared.db.NotesDatabase
 import java.io.File
 
+
 actual fun createDriver(): SqlDriver {
     val root = File(appStorageRoot())
     root.mkdirs()
@@ -12,6 +13,12 @@ actual fun createDriver(): SqlDriver {
     val driver = JdbcSqliteDriver("jdbc:sqlite:${dbFile.absolutePath}")
     if (!dbFile.exists() || dbFile.length() == 0L) {
         NotesDatabase.Schema.create(driver)
+    } else {
+        NotesDatabase.Schema.migrate(
+            driver = driver,
+            oldVersion = 0,
+            newVersion = NotesDatabase.Schema.version,
+        )
     }
     return driver
 }
