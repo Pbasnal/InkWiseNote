@@ -24,17 +24,22 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
+import org.basnalcorp.shared.systems.markdownnote.MarkdownBody
 import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.component.DesignTopAppBar
 import org.basnalcorp.shared.ui.nav.Route
 import org.basnalcorp.shared.ui.theme.DesignColors
 import org.basnalcorp.shared.ui.theme.DesignComponents
+import org.basnalcorp.shared.debug.reportComposerDebug
 
 /**
  * Chronicle markdown note editor: loads note via [MarkdownNoteSystem.getNote],
  * edits title and body, saves via [MarkdownNoteSystem.updateNote] with expectedLastModified.
+ * Toggle between Raw (editable source) and Preview (rendered body) via the top bar.
  */
+private enum class ViewMode { Raw, Preview }
+
 @Composable
 fun ChronicleNoteDetailScreen(
     context: LayoutContext,
@@ -46,11 +51,15 @@ fun ChronicleNoteDetailScreen(
     onShowToast: ((String) -> Unit)? = null
 ) {
     val scope = rememberCoroutineScope()
+    var viewMode by remember { mutableStateOf(ViewMode.Raw) }
     var title by remember { mutableStateOf("") }
     var body by remember { mutableStateOf("") }
     var expectedLastModified by remember { mutableStateOf(0L) }
     var loaded by remember { mutableStateOf(false) }
 
+    // #region agent log
+    LaunchedEffect(Unit) { reportComposerDebug() }
+    // #endregion
     LaunchedEffect(notebookId, noteId, markdownNoteSystem) {
         if (markdownNoteSystem == null) return@LaunchedEffect
         val note = markdownNoteSystem.getNote(notebookId, noteId)
@@ -95,14 +104,33 @@ fun ChronicleNoteDetailScreen(
                     }
                 },
                 actions = {
-                    Text(
-                        text = "Save",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = DesignColors.primaryBase,
-                        modifier = Modifier
-                            .padding(DesignComponents.touchTargetMin / 2)
-                            .clickable { save() }
-                    )
+                    if (viewMode == ViewMode.Raw) {
+                        Text(
+                            text = "Preview",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = DesignColors.primaryBase,
+                            modifier = Modifier
+                                .padding(DesignComponents.touchTargetMin / 2)
+                                .clickable { viewMode = ViewMode.Preview }
+                        )
+                        Text(
+                            text = "Save",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = DesignColors.primaryBase,
+                            modifier = Modifier
+                                .padding(DesignComponents.touchTargetMin / 2)
+                                .clickable { save() }
+                        )
+                    } else {
+                        Text(
+                            text = "Raw",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = DesignColors.primaryBase,
+                            modifier = Modifier
+                                .padding(DesignComponents.touchTargetMin / 2)
+                                .clickable { viewMode = ViewMode.Raw }
+                        )
+                    }
                 }
             )
         }
@@ -126,44 +154,67 @@ fun ChronicleNoteDetailScreen(
                     .padding(padding)
             )
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp)
-            ) {
-                BasicTextField(
-                    value = title,
-                    onValueChange = { title = it },
+            when (viewMode) {
+                ViewMode.Raw -> Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    textStyle = MaterialTheme.typography.titleLarge.copy(color = DesignColors.textPrimary),
-                    singleLine = true,
-                    decorationBox = { inner ->
-                        Column {
-                            Text("Title", style = MaterialTheme.typography.labelMedium, color = DesignColors.textMuted)
-                            inner()
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    BasicTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        textStyle = MaterialTheme.typography.titleLarge.copy(color = DesignColors.textPrimary),
+                        singleLine = true,
+                        decorationBox = { inner ->
+                            Column {
+                                Text("Title", style = MaterialTheme.typography.labelMedium, color = DesignColors.textMuted)
+                                inner()
+                            }
                         }
-                    }
-                )
-                BasicTextField(
-                    value = body,
-                    onValueChange = { body = it },
+                    )
+                    BasicTextField(
+                        value = body,
+                        onValueChange = { body = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(color = DesignColors.textPrimary),
+                        cursorBrush = SolidColor(DesignColors.primaryBase),
+                        singleLine = false,
+                        decorationBox = { inner ->
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Text("Body", style = MaterialTheme.typography.labelMedium, color = DesignColors.textMuted)
+                                inner()
+                            }
+                        }
+                    )
+                }
+                ViewMode.Preview -> Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = DesignColors.textPrimary),
-                    cursorBrush = SolidColor(DesignColors.primaryBase),
-                    singleLine = false,
-                    decorationBox = { inner ->
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            Text("Body", style = MaterialTheme.typography.labelMedium, color = DesignColors.textMuted)
-                            inner()
-                        }
-                    }
-                )
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text(
+                        text = title.ifBlank { "Untitled" },
+                        style = MaterialTheme.typography.titleLarge,
+                        color = DesignColors.textPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    )
+                    MarkdownBody(
+                        content = body,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                    )
+                }
             }
         }
     }

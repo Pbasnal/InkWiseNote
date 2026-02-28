@@ -1,3 +1,5 @@
+package com.originb.inkwisenote2
+
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity

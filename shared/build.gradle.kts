@@ -74,6 +74,8 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
                 implementation("io.insert-koin:koin-core:3.5.6")
                 implementation("app.cash.sqldelight:runtime:2.0.2")
+                implementation("com.mikepenz:multiplatform-markdown-renderer:0.38.0")
+                implementation("com.mikepenz:multiplatform-markdown-renderer-m3:0.38.0")
             }
         }
 
@@ -87,6 +89,9 @@ kotlin {
         androidMain {
             dependencies {
                 implementation("app.cash.sqldelight:android-driver:2.0.2")
+                // Pin Compose runtime so compiler-generated APIs (shouldExecute, getCurrentCompositeKeyHashCode) exist
+                implementation("androidx.compose.runtime:runtime:1.10.2")
+                implementation("androidx.compose.runtime:runtime-saveable:1.10.2")
             }
         }
 
@@ -116,6 +121,14 @@ kotlin {
         }
     }
 
+}
+
+// Force one Compose runtime so compiler-generated APIs (shouldExecute, getCurrentCompositeKeyHashCode) exist
+configurations.all {
+    resolutionStrategy {
+        force("androidx.compose.runtime:runtime:1.10.2")
+        force("androidx.compose.runtime:runtime-saveable:1.10.2")
+    }
 }
 
 sqldelight {

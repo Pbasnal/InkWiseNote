@@ -27,6 +27,9 @@ android {
         resolutionStrategy {
             force("org.projectlombok:lombok:1.18.30")
             force("io.insert-koin:koin-core:3.5.6")
+            // Force one Compose runtime so compiler-generated APIs (shouldExecute, getCurrentCompositeKeyHashCode) exist
+            force("androidx.compose.runtime:runtime:1.10.2")
+            force("androidx.compose.runtime:runtime-saveable:1.10.2")
         }
     }
 
@@ -78,6 +81,7 @@ kotlin {
 
 dependencies {
     implementation(project(":shared"))
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")
     implementation("com.google.android.gms:play-services-base:18.5.0") // Ensure this is added
     implementation("com.google.mlkit:digital-ink-recognition:18.0.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
@@ -108,17 +112,18 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     implementation("androidx.core:core-ktx:1.17.0")
 
-    // Compose BOM
-    implementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    // Compose BOM – use recent BOM so Composer has shouldExecute (avoids NoSuchMethodError when opening Preview)
+    implementation(platform("androidx.compose:compose-bom:2025.08.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.room:room-compiler:2.8.4")
 
     // Compose testing
-    androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
+    androidTestImplementation(platform("androidx.compose:compose-bom:2025.08.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

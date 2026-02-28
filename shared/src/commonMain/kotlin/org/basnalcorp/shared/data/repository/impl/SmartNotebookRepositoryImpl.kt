@@ -13,7 +13,7 @@ import org.basnalcorp.shared.domain.TextNote
 import org.basnalcorp.shared.util.isNullOrWhitespace
 import org.basnalcorp.shared.createNotebookDirectory
 import org.basnalcorp.shared.writeTextFile
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 class SmartNotebookRepositoryImpl(
     private val atomicNotes: AtomicNotesRepository,

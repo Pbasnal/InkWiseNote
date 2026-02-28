@@ -16,11 +16,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.nav.Route
+import kotlin.time.Clock
 
 /**
  * Minimal test UI for ChronicleCore: add notebook and add note.

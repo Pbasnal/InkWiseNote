@@ -2,7 +2,6 @@ package com.originb.inkwisenote2.common
 
 import android.content.Context
 import android.content.Intent
-import com.originb.inkwisenote2.ComposeHostActivity
 import com.originb.inkwisenote2.modules.queries.ui.QueryCreationActivity
 import com.originb.inkwisenote2.modules.queries.ui.QueryResultsActivity
 import com.originb.inkwisenote2.modules.smarthome.SmartHomeActivity
@@ -26,7 +25,7 @@ class Routing {
     object SmartNotebookActivity {
         @JvmStatic
         fun newNoteIntent(packageContext: Context, currentDirectoryPath: String?) {
-            val intent = Intent(packageContext, ComposeHostActivity::class.java)
+            val intent = Intent(packageContext, com.originb.inkwisenote2.ComposeHostActivity::class.java)
             intent.putExtra(ComposeRouteExtras.ROUTE, ComposeRouteExtras.ROUTE_SMART_NOTEBOOK)
             intent.putExtra(ComposeRouteExtras.WORKING_PATH, currentDirectoryPath)
             packageContext.startActivity(intent)
@@ -34,7 +33,7 @@ class Routing {
 
         @JvmStatic
         fun openNotebookIntent(packageContext: Context, currentDirectoryPath: String?, bookId: Long?) {
-            val intent = Intent(packageContext, ComposeHostActivity::class.java)
+            val intent = Intent(packageContext, com.originb.inkwisenote2.ComposeHostActivity::class.java)
             intent.putExtra(ComposeRouteExtras.ROUTE, ComposeRouteExtras.ROUTE_SMART_NOTEBOOK)
             intent.putExtra(ComposeRouteExtras.WORKING_PATH, currentDirectoryPath)
             intent.putExtra(ComposeRouteExtras.BOOK_ID, bookId ?: -1L)
@@ -48,7 +47,7 @@ class Routing {
             bookTitle: String?,
             commaSeparatedNoteIds: String?
         ) {
-            val intent = Intent(packageContext, ComposeHostActivity::class.java)
+            val intent = Intent(packageContext, com.originb.inkwisenote2.ComposeHostActivity::class.java)
             intent.putExtra(ComposeRouteExtras.ROUTE, ComposeRouteExtras.ROUTE_SMART_NOTEBOOK)
             intent.putExtra(ComposeRouteExtras.WORKING_PATH, currentDirectoryPath)
             intent.putExtra(ComposeRouteExtras.BOOK_TITLE, bookTitle)
@@ -64,7 +63,7 @@ class Routing {
             commaSeparatedNoteIds: String?,
             selectedNoteId: Long
         ) {
-            val intent = Intent(packageContext, ComposeHostActivity::class.java)
+            val intent = Intent(packageContext, com.originb.inkwisenote2.ComposeHostActivity::class.java)
             intent.putExtra(ComposeRouteExtras.ROUTE, ComposeRouteExtras.ROUTE_SMART_NOTEBOOK)
             intent.putExtra(ComposeRouteExtras.WORKING_PATH, currentDirectoryPath)
             intent.putExtra(ComposeRouteExtras.BOOK_TITLE, bookTitle)
@@ -78,7 +77,7 @@ class Routing {
     object RelatedNotesActivity {
         @JvmStatic
         fun openRelatedNotesIntent(packageContext: Context, bookId: Long?) {
-            val intent = Intent(packageContext, ComposeHostActivity::class.java)
+            val intent = Intent(packageContext, com.originb.inkwisenote2.ComposeHostActivity::class.java)
             intent.putExtra(ComposeRouteExtras.ROUTE, ComposeRouteExtras.ROUTE_RELATED_NOTES)
             intent.putExtra(ComposeRouteExtras.BOOK_ID, bookId ?: -1L)
             packageContext.startActivity(intent)

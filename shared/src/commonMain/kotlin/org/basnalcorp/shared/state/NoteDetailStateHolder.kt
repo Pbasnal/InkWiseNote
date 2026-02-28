@@ -12,7 +12,7 @@ import org.basnalcorp.shared.data.repository.TextNotesRepository
 import org.basnalcorp.shared.domain.AtomicNote
 import org.basnalcorp.shared.domain.TextNote
 import org.basnalcorp.shared.writeTextFile
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 /**
  * State holder for NoteDetailScreen (Phase 2).

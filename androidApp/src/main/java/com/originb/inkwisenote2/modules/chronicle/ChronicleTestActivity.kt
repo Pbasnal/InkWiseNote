@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
 import org.koin.java.KoinJavaComponent.get
+import kotlin.OptIn
 
 /**
  * Minimal test UI for ChronicleCore: add notebook and add note.
@@ -27,6 +29,7 @@ import org.koin.java.KoinJavaComponent.get
  */
 class ChronicleTestActivity : ComponentActivity() {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val chronicleCore = get<ChronicleCore>(ChronicleCore::class.java)
