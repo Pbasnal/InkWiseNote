@@ -24,6 +24,7 @@ import com.originb.inkwisenote2.compose.HandwrittenNoteContentAndroid
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.windowSizeClassFromWidth
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
+import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
 import org.koin.java.KoinJavaComponent.get
 
 /**
@@ -41,6 +42,7 @@ class ComposeHostActivity : ComponentActivity() {
         val fileExplorerStateHolder = get<FileExplorerStateHolder>(FileExplorerStateHolder::class.java)
         val relatedNotesStateHolder = get<RelatedNotesStateHolder>(RelatedNotesStateHolder::class.java)
         val chronicleCore = get<ChronicleCore>(ChronicleCore::class.java)
+        val markdownNoteSystem = get<MarkdownNoteSystem>(MarkdownNoteSystem::class.java)
         val initialStack = intentToRouteStack(intent)
         setContent {
             val androidContext = LocalContext.current
@@ -76,7 +78,8 @@ class ComposeHostActivity : ComponentActivity() {
                             bookId = bookId
                         )
                     },
-                    chronicleCore = chronicleCore
+                    chronicleCore = chronicleCore,
+                    markdownNoteSystem = markdownNoteSystem
                 )
             }
         }

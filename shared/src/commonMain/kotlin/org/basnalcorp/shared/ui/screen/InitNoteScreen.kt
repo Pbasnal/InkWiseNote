@@ -50,6 +50,7 @@ import org.basnalcorp.shared.state.NoteDetailStateHolder
 import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
+import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.component.DesignCard
 import org.basnalcorp.shared.ui.nav.Route
@@ -110,6 +111,7 @@ fun InitNoteScreen(
     stateHolder: SmartNotebookStateHolder? = null,
     noteDetailStateHolder: NoteDetailStateHolder? = null,
     chronicleCore: ChronicleCore? = null,
+    markdownNoteSystem: MarkdownNoteSystem? = null,
     onNavigate: (Route) -> Unit,
     onBack: () -> Unit,
     onShowToast: ((String) -> Unit)? = null
@@ -117,6 +119,7 @@ fun InitNoteScreen(
     val t = NewNotePageTokens
     val scope = rememberCoroutineScope()
     val isChronicleMode = chronicleNotebookId != null && chronicleCore != null
+    val canAddMarkdownNote = isChronicleMode && markdownNoteSystem != null
 
     var notebookTitle by remember(chronicleNotebookId) {
         mutableStateOf(chronicleNotebookId?.takeIf { it.isNotBlank() } ?: "")
@@ -247,6 +250,28 @@ fun InitNoteScreen(
                 FooterMeta()
             } else if (isChronicleMode) {
                 MetadataSection()
+                SecondaryNoteCard(
+                    text = "New Markdown Note",
+                    selected = false,
+                    onClick = {
+                        if (!canAddMarkdownNote) return@SecondaryNoteCard
+                        val notebookId = chronicleNotebookId!!.trim()
+                        if (notebookId.isBlank()) {
+                            onShowToast?.invoke("Notebook name is blank")
+                            return@SecondaryNoteCard
+                        }
+                        scope.launch {
+                            when (val r = markdownNoteSystem!!.createNote(notebookId, "Untitled", "", "markdown")) {
+                                is ChronicleCommandResult.Success ->
+                                    onNavigate(Route.ChronicleNoteDetail(notebookId = notebookId, noteId = r.value.noteId))
+                                is ChronicleCommandResult.Failure ->
+                                    onShowToast?.invoke("Create failed: ${r.message}")
+                                is ChronicleCommandResult.FailButRetry ->
+                                    onShowToast?.invoke("Retry: ${r.message}")
+                            }
+                        }
+                    }
+                )
                 Text(
                     text = "Note types coming soon. You can rename the notebook above.",
                     style = MaterialTheme.typography.bodyMedium,

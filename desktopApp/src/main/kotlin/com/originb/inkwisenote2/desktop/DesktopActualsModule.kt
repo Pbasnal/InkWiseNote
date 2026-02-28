@@ -23,6 +23,7 @@ import org.basnalcorp.shared.systems.chroniclecore.ChronicleFileEntry
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleFileSystem
 import org.basnalcorp.shared.systems.chroniclecore.impl.ChronicleCoreDbImpl
 import org.basnalcorp.shared.systems.chroniclecore.impl.ChronicleFileSystemImpl
+import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
 import org.koin.dsl.module
 
 /**
@@ -61,4 +62,5 @@ val desktopActualsModule = module {
             scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
         )
     }
+    single { MarkdownNoteSystem(get()) }
 }

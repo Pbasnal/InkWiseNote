@@ -55,4 +55,10 @@ sealed class Route {
 
     /** Chronicle test: add notebook / add note (for FS verification). */
     data object ChronicleTest : Route()
+
+    /** Chronicle markdown note editor: load/save via MarkdownNoteSystem. */
+    data class ChronicleNoteDetail(
+        val notebookId: String,
+        val noteId: Long
+    ) : Route()
 }
