@@ -23,6 +23,12 @@ android {
         compose = true
     }
 
+    packaging {
+        resources {
+            pickFirsts += "META-INF/gradle/incremental.annotation.processors"
+        }
+    }
+
     configurations.all {
         resolutionStrategy {
             force("org.projectlombok:lombok:1.18.30")
@@ -31,6 +37,8 @@ android {
             force("androidx.compose.runtime:runtime:1.10.2")
             force("androidx.compose.runtime:runtime-saveable:1.10.2")
         }
+        // Resolve duplicate class error: com.intellij:annotations vs org.jetbrains:annotations (same classes, different artifacts)
+        exclude(group = "com.intellij", module = "annotations")
     }
 
     defaultConfig {
