@@ -1,0 +1,32 @@
+#!/bin/sh
+# Run Gradle with JDK 21. The Kotlin compiler used to compile build scripts does not support JDK 25.
+# Usage: ./gradlew-jdk21 [gradle args...]
+
+JAVA_HOME_21=""
+for candidate in \
+  "$JAVA_HOME" \
+  "/usr/lib/jvm/java-21-openjdk" \
+  "/usr/lib/jvm/java-21" \
+  "/usr/lib/jvm/jdk-21" \
+  "/opt/homebrew/opt/openjdk@21" \
+  "/usr/local/opt/openjdk@21" \
+  "$HOME/.sdkman/candidates/java/21.0.2-tem" \
+  "$HOME/.sdkman/candidates/java/21.0.1-tem" \
+  "$HOME/.sdkman/candidates/java/21.0.0-tem"; do
+  if [ -n "$candidate" ] && [ -x "$candidate/bin/java" ]; then
+    ver=$("$candidate/bin/java" -version 2>&1)
+    if echo "$ver" | grep -q '"21'; then
+      JAVA_HOME_21="$candidate"
+      break
+    fi
+  fi
+done
+
+if [ -z "$JAVA_HOME_21" ]; then
+  echo "JDK 21 not found. This build requires JDK 21 (Kotlin build scripts do not support JDK 25)." >&2
+  echo "Install JDK 21 and set JAVA_HOME to it, or put it in one of the paths checked by this script." >&2
+  exit 1
+fi
+
+export JAVA_HOME="$JAVA_HOME_21"
+exec ./gradlew "$@"

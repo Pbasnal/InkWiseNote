@@ -64,6 +64,10 @@ fun ChronicleNoteDetailScreen(
         if (markdownNoteSystem == null) return@LaunchedEffect
         val note = markdownNoteSystem.getNote(notebookId, noteId)
         if (note != null) {
+            if (note.noteType == "handwritten") {
+                onNavigate(Route.ChronicleHandwrittenNoteDetail(notebookId = notebookId, noteId = noteId))
+                return@LaunchedEffect
+            }
             title = note.title
             body = note.body
             expectedLastModified = note.lastModified

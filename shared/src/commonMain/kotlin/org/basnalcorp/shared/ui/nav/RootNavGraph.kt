@@ -11,6 +11,7 @@ import org.basnalcorp.shared.state.RelatedNotesStateHolder
 import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.screen.AdminScreen
+import org.basnalcorp.shared.ui.screen.ChronicleHandwrittenNoteScreen
 import org.basnalcorp.shared.ui.screen.ChronicleNoteDetailScreen
 import org.basnalcorp.shared.ui.screen.ChronicleTestScreen
 import org.basnalcorp.shared.ui.screen.FileExplorerScreen
@@ -25,6 +26,7 @@ import org.basnalcorp.shared.ui.screen.SearchScreen
 import org.basnalcorp.shared.ui.screen.SmartNotebookScreen
 import org.basnalcorp.shared.domain.AtomicNote
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleFileSystem
 import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.theme.ThemeRegistry
@@ -50,7 +52,9 @@ fun RootNavGraph(
     onShowToast: ((String) -> Unit)? = null,
     handwrittenNoteContent: (@Composable (Modifier, AtomicNote, Long) -> Unit)? = null,
     chronicleCore: ChronicleCore? = null,
-    markdownNoteSystem: MarkdownNoteSystem? = null
+    markdownNoteSystem: MarkdownNoteSystem? = null,
+    chronicleFileSystem: ChronicleFileSystem? = null,
+    notesRoot: String? = null
 ) {
     val theme = ThemeRegistry.get(themeId)
     MaterialTheme(colorScheme = theme.colorScheme, typography = theme.typography) {
@@ -137,6 +141,17 @@ fun RootNavGraph(
                 notebookId = route.notebookId,
                 noteId = route.noteId,
                 markdownNoteSystem = markdownNoteSystem,
+                onBack = onBack,
+                onNavigate = onNavigate,
+                onShowToast = onShowToast
+            )
+            is Route.ChronicleHandwrittenNoteDetail -> ChronicleHandwrittenNoteScreen(
+                context = context,
+                notebookId = route.notebookId,
+                noteId = route.noteId,
+                chronicleCore = chronicleCore,
+                chronicleFileSystem = chronicleFileSystem,
+                notesRoot = notesRoot,
                 onBack = onBack,
                 onNavigate = onNavigate,
                 onShowToast = onShowToast

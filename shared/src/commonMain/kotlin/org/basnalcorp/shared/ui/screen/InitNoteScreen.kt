@@ -50,7 +50,9 @@ import org.basnalcorp.shared.state.NoteDetailStateHolder
 import org.basnalcorp.shared.state.SmartNotebookStateHolder
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCommandResult
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
+import org.basnalcorp.shared.systems.handwritten.setStrokesBlockInBody
 import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
+import kotlin.time.Clock
 import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.component.DesignCard
 import org.basnalcorp.shared.ui.nav.Route
@@ -272,8 +274,40 @@ fun InitNoteScreen(
                         }
                     }
                 )
+                SecondaryNoteCard(
+                    text = "New Handwritten Note",
+                    selected = false,
+                    onClick = {
+                        if (chronicleCore == null || chronicleNotebookId == null) return@SecondaryNoteCard
+                        val notebookId = chronicleNotebookId!!.trim()
+                        if (notebookId.isBlank()) {
+                            onShowToast?.invoke("Notebook name is blank")
+                            return@SecondaryNoteCard
+                        }
+                        scope.launch {
+                            val creationTime = Clock.System.now().toEpochMilliseconds()
+                            val body = setStrokesBlockInBody("", "$creationTime.strokes.json")
+                            when (val r = chronicleCore.createNote(
+                                notebookId = notebookId,
+                                title = "Untitled",
+                                body = body,
+                                optionalFrontmatter = mapOf(
+                                    "note_type" to "handwritten",
+                                    "creation_time" to creationTime.toString()
+                                )
+                            )) {
+                                is ChronicleCommandResult.Success ->
+                                    onNavigate(Route.ChronicleHandwrittenNoteDetail(notebookId = notebookId, noteId = r.value.noteId))
+                                is ChronicleCommandResult.Failure ->
+                                    onShowToast?.invoke("Create failed: ${r.message}")
+                                is ChronicleCommandResult.FailButRetry ->
+                                    onShowToast?.invoke("Retry: ${r.message}")
+                            }
+                        }
+                    }
+                )
                 Text(
-                    text = "Note types coming soon. You can rename the notebook above.",
+                    text = "You can rename the notebook above.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = t.textSecondary,
                     fontSize = t.captionSize,

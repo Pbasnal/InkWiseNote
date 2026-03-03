@@ -27,8 +27,11 @@ InkwiseNote is an Android application for managing notes. It allows users to cre
 
 ### Prerequisites
 
+- **JDK 21** (required; the build does not support JDK 25)
 - Android Studio
 - Gradle
+
+If your system default is JDK 25, install JDK 21 and either set `JAVA_HOME` to it before running Gradle, or use the wrapper script: `./gradlew-jdk21` (e.g. `./gradlew-jdk21 assembleDebug`).
 
 ### Installation
 

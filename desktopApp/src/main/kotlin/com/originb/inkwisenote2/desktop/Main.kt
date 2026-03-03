@@ -18,7 +18,9 @@ import org.basnalcorp.shared.ui.LayoutContext
 import org.basnalcorp.shared.ui.Platform
 import org.basnalcorp.shared.ui.nav.Route
 import org.basnalcorp.shared.ui.nav.RootNavGraph
+import org.basnalcorp.shared.appStorageRoot
 import org.basnalcorp.shared.systems.chroniclecore.ChronicleCore
+import org.basnalcorp.shared.systems.chroniclecore.ChronicleFileSystem
 import org.basnalcorp.shared.systems.markdownnote.MarkdownNoteSystem
 import org.basnalcorp.shared.ui.theme.ThemeId
 import org.basnalcorp.shared.ui.windowSizeClassFromWidth
@@ -44,7 +46,9 @@ fun main() {
             title = "InkWiseNote"
         ) {
             val chronicleCore = get<ChronicleCore>(ChronicleCore::class.java)
+            val chronicleFileSystem = get<ChronicleFileSystem>(ChronicleFileSystem::class.java)
             val markdownNoteSystem = get<MarkdownNoteSystem>(MarkdownNoteSystem::class.java)
+            val notesRoot = appStorageRoot() + "/notes"
             var backStack by remember { mutableStateOf(listOf<Route>(Route.Home)) }
             val currentRoute = backStack.last()
             var themeId by remember { mutableStateOf(ThemeId.Light) }
@@ -68,7 +72,9 @@ fun main() {
                     onThemeToggle = { themeId = if (themeId == ThemeId.Light) ThemeId.Dark else ThemeId.Light },
                     onShowToast = { msg -> println(msg) },
                     chronicleCore = chronicleCore,
-                    markdownNoteSystem = markdownNoteSystem
+                    markdownNoteSystem = markdownNoteSystem,
+                    chronicleFileSystem = chronicleFileSystem,
+                    notesRoot = notesRoot
                 )
             }
         }

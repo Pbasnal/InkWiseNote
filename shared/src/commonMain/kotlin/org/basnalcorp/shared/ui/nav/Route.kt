@@ -61,4 +61,10 @@ sealed class Route {
         val notebookId: String,
         val noteId: Long
     ) : Route()
+
+    /** Chronicle handwritten note: toolbar + DrawingSurface, load/save strokes file + body. */
+    data class ChronicleHandwrittenNoteDetail(
+        val notebookId: String,
+        val noteId: Long
+    ) : Route()
 }
