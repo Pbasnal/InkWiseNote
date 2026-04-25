@@ -27,7 +27,7 @@ android {
     defaultConfig {
         applicationId = "com.originb.inkwisenote2"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 7
         versionName = "Release 0.1.138"
 
